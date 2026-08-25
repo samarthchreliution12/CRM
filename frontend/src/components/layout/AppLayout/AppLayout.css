@@ -1,0 +1,35 @@
+.app-layout-container {
+  min-height: 100vh;
+  background-color: #f8fafc;
+}
+
+.app-main-content {
+  margin-left: 260px;
+  margin-top: 70px;
+  padding: 2rem;
+  min-height: calc(100vh - 70px);
+  transition: margin-left 0.25s ease-in-out;
+}
+
+/* Sidebar Backdrop overlay on mobile when sidebar is expanded */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(15, 23, 42, 0.5);
+  z-index: 45;
+}
+
+@media (max-width: 1024px) {
+  .app-main-content {
+    margin-left: 0;
+    padding: 1.5rem 1.25rem;
+  }
+
+  .sidebar-backdrop.active {
+    display: block;
+  }
+}

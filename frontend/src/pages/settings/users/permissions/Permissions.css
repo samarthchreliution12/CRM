@@ -1,0 +1,135 @@
+.permissions-view-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.permissions-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.permissions-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.permissions-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+  letter-spacing: -0.02em;
+}
+
+.permissions-subtitle {
+  font-size: 0.925rem;
+  color: var(--text-secondary, #64748b);
+}
+
+.permissions-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.role-selector-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #f8fafc;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: var(--radius-sm, 6px);
+}
+
+.role-selector-icon {
+  color: #0284c7;
+}
+
+.role-selector-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.role-selector-select {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #0f172a;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  cursor: pointer;
+  outline: none;
+}
+
+.role-selector-select:focus {
+  border-color: #0284c7;
+}
+
+.btn-save-matrix {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  background-color: var(--primary-button, #0f172a);
+  color: #ffffff;
+  border-radius: var(--radius-sm, 6px);
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.15s ease;
+}
+
+.btn-save-matrix:hover:not(:disabled) {
+  background-color: var(--primary-button-hover, #1e293b);
+}
+
+.btn-save-matrix:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.role-summary-info-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #f1f5f9;
+  border-left: 4px solid #0284c7;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.role-summary-badge {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #0284c7;
+  background-color: #e0f2fe;
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.role-summary-desc {
+  font-size: 0.875rem;
+  color: #475569;
+  flex: 1;
+}
+
+.role-summary-count {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #0f172a;
+}

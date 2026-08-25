@@ -1,0 +1,6 @@
+/* Signup Module Specific Styles */
+.signup-role-badge {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}

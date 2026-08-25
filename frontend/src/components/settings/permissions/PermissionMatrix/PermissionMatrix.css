@@ -1,0 +1,124 @@
+.matrix-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background-color: #ffffff;
+}
+
+.matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.matrix-table th {
+  background-color: #f8fafc;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.matrix-table th.col-action {
+  text-align: center;
+  width: 120px;
+}
+
+.matrix-table td {
+  padding: 1.125rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+.matrix-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.matrix-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+.module-info-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.module-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.module-name-text {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 0.975rem;
+}
+
+.module-subtext {
+  font-size: 0.775rem;
+  color: var(--text-secondary);
+}
+
+.cell-checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.matrix-checkbox {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--primary-button);
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.matrix-checkbox:focus {
+  outline: 2px solid var(--border-focus);
+}
+
+.matrix-controls-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 1.25rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.matrix-action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-matrix-action {
+  padding: 0.45rem 0.875rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background-color: #ffffff;
+  color: var(--text-primary);
+  font-size: 0.825rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-matrix-action:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+}
