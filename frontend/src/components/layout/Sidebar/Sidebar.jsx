@@ -46,7 +46,11 @@ const Sidebar = ({ isOpen, onClose }) => {
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.path;
-          const isImplemented = item.path === "/dashboard" || item.path === "/clients";
+          const isImplemented =
+            item.path === "/dashboard" ||
+            item.path === "/clients" ||
+            item.path === "/documents" ||
+            item.path === "/communication";
           return (
             <Link
               key={item.name}

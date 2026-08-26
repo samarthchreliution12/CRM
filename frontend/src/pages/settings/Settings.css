@@ -40,6 +40,7 @@
   justify-content: space-between;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
+  gap: 1rem;
 }
 
 .settings-card-item:hover {

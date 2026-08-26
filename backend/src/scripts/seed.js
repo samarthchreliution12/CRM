@@ -1,19 +1,30 @@
 require("dotenv").config();
-const pool = require("../config/database");
 const bcrypt = require("bcryptjs");
+const pool = require("../config/database");
 
 const ROLES = [
-  { name: "Admin", description: "Full system administrator access", status: "active" },
-  { name: "Staff", description: "Staff operational access", status: "active" },
-  { name: "Client", description: "Client account access", status: "active" },
+  { name: "Admin", description: "Full system access and control", status: "active" },
+  { name: "Staff", description: "Standard staff access for client and lead management", status: "active" },
+  { name: "Client", description: "Client portal user access", status: "active" },
 ];
 
 const CLIENT_TYPES = [
-  { name: "Individual", description: "Individual retail client account", status: "active" },
-  { name: "HUF", description: "Hindu Undivided Family account", status: "active" },
-  { name: "Company", description: "Corporate corporate/institutional entity account", status: "active" },
-  { name: "Trust", description: "Registered trust or non-profit account", status: "active" },
-  { name: "NRI", description: "Non-Resident Individual account", status: "active" },
+  { name: "Individual", description: "Single individual client", status: "active" },
+  { name: "HUF", description: "Hindu Undivided Family", status: "active" },
+  { name: "Company", description: "Corporate or Private Limited Company", status: "active" },
+  { name: "Partnership", description: "Partnership firm", status: "active" },
+  { name: "Trust", description: "Registered Trust or Society", status: "active" },
+];
+
+const CLIENT_SERVICES = [
+  { name: "Demat", description: "Demat account services", status: "active" },
+  { name: "Trading", description: "Equity & F&O trading account", status: "active" },
+  { name: "Mutual Fund", description: "Mutual fund distribution and advisory", status: "active" },
+  { name: "Insurance", description: "Life and Health insurance", status: "active" },
+  { name: "PMS", description: "Portfolio Management Services", status: "active" },
+  { name: "AIF", description: "Alternative Investment Funds", status: "active" },
+  { name: "Bonds", description: "Government and corporate bonds", status: "active" },
+  { name: "Fixed Deposit", description: "Corporate and bank fixed deposits", status: "active" },
 ];
 
 const PERMISSIONS = [
@@ -22,6 +33,18 @@ const PERMISSIONS = [
   { permission_key: "client.create", module: "client", action: "create", description: "Create new client records" },
   { permission_key: "client.edit", module: "client", action: "edit", description: "Update client records" },
   { permission_key: "client.delete", module: "client", action: "delete", description: "Delete client records" },
+
+  // Client Types Module
+  { permission_key: "client_type.view", module: "client_type", action: "view", description: "View client types" },
+  { permission_key: "client_type.create", module: "client_type", action: "create", description: "Create client types" },
+  { permission_key: "client_type.edit", module: "client_type", action: "edit", description: "Update client types" },
+  { permission_key: "client_type.delete", module: "client_type", action: "delete", description: "Delete client types" },
+
+  // Client Services Module
+  { permission_key: "client_service.view", module: "client_service", action: "view", description: "View client services" },
+  { permission_key: "client_service.create", module: "client_service", action: "create", description: "Create client services" },
+  { permission_key: "client_service.edit", module: "client_service", action: "edit", description: "Update client services" },
+  { permission_key: "client_service.delete", module: "client_service", action: "delete", description: "Delete client services" },
 
   // Lead Module
   { permission_key: "lead.view", module: "lead", action: "view", description: "View lead records" },
@@ -40,6 +63,8 @@ const PERMISSIONS = [
   { permission_key: "document.view", module: "document", action: "view", description: "View document records" },
   { permission_key: "document.create", module: "document", action: "create", description: "Upload document records" },
   { permission_key: "document.edit", module: "document", action: "edit", description: "Update document records" },
+  { permission_key: "document.update", module: "document", action: "update", description: "Replace document records" },
+  { permission_key: "document.verify", module: "document", action: "verify", description: "Approve or reject document records" },
   { permission_key: "document.delete", module: "document", action: "delete", description: "Delete document records" },
 
   // Communication Module
@@ -53,9 +78,10 @@ const ROLE_PERMISSION_MAP = {
   Admin: PERMISSIONS.map((p) => p.permission_key),
   Staff: [
     "client.view", "client.create", "client.edit",
+    "client_type.view", "client_service.view",
     "lead.view", "lead.create", "lead.edit",
     "task.view", "task.create", "task.edit",
-    "document.view", "communication.view"
+    "document.view", "document.create", "document.edit", "document.update", "document.verify", "communication.view"
   ],
   Client: [
     "client.view"
@@ -68,7 +94,6 @@ async function seedDatabase() {
   try {
     await client.query("BEGIN");
 
-    // Clean up any roles not in target list (e.g. Manager)
     const allowedRoleNames = ROLES.map((r) => r.name);
     await client.query("DELETE FROM roles WHERE name NOT IN ($1, $2, $3)", allowedRoleNames);
 
@@ -84,7 +109,6 @@ async function seedDatabase() {
       );
       roleMap[r.name] = res.rows[0].id;
     }
-    console.log("Seeded roles:", Object.keys(roleMap));
 
     // 2. Seed Client Types
     for (const ct of CLIENT_TYPES) {
@@ -95,9 +119,18 @@ async function seedDatabase() {
         [ct.name, ct.description, ct.status]
       );
     }
-    console.log("Seeded client types:", CLIENT_TYPES.map((ct) => ct.name));
 
-    // 3. Seed Permissions
+    // 3. Seed Client Services
+    for (const cs of CLIENT_SERVICES) {
+      await client.query(
+        `INSERT INTO client_services (name, description, status)
+         VALUES ($1, $2, $3)
+         ON CONFLICT (name) DO UPDATE SET description = EXCLUDED.description, status = EXCLUDED.status, updated_at = CURRENT_TIMESTAMP`,
+        [cs.name, cs.description, cs.status]
+      );
+    }
+
+    // 4. Seed Permissions
     const permMap = {};
     for (const p of PERMISSIONS) {
       const res = await client.query(
@@ -109,9 +142,8 @@ async function seedDatabase() {
       );
       permMap[p.permission_key] = res.rows[0].id;
     }
-    console.log("Seeded permissions:", Object.keys(permMap).length, "permissions");
 
-    // 4. Seed Role-Permissions Mapping
+    // 5. Seed Role-Permissions Mapping
     for (const [roleName, permKeys] of Object.entries(ROLE_PERMISSION_MAP)) {
       const roleId = roleMap[roleName];
       if (!roleId) continue;
@@ -128,9 +160,8 @@ async function seedDatabase() {
         );
       }
     }
-    console.log("Seeded role-permission mappings.");
 
-    // 5. Optionally seed initial admin account if SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD are provided
+    // 6. Optionally seed initial admin account
     if (process.env.SEED_ADMIN_EMAIL && process.env.SEED_ADMIN_PASSWORD) {
       const adminRoleId = roleMap["Admin"];
       const passwordHash = await bcrypt.hash(process.env.SEED_ADMIN_PASSWORD, 10);
@@ -140,7 +171,6 @@ async function seedDatabase() {
          ON CONFLICT (email) DO NOTHING`,
         ["System Admin", process.env.SEED_ADMIN_EMAIL, passwordHash, adminRoleId]
       );
-      console.log(`Seeded admin user from environment: ${process.env.SEED_ADMIN_EMAIL}`);
     }
 
     await client.query("COMMIT");

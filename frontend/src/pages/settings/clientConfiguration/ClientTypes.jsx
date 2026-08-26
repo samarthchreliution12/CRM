@@ -1,0 +1,502 @@
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import AppLayout from "../../../components/layout/AppLayout/AppLayout";
+import ClientService from "../../../services/client.service";
+import useAuth from "../../../hooks/useAuth";
+import {
+  ArrowLeft,
+  Plus,
+  Search,
+  Filter,
+  Edit2,
+  Trash2,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+} from "lucide-react";
+import "./ClientTypes.css";
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return "N/A";
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  } catch (e) {
+    return dateStr;
+  }
+};
+
+const ClientTypes = () => {
+  const navigate = useNavigate();
+  const { token, user } = useAuth();
+  const permissions = user?.permissions || [];
+
+  const canCreate = permissions.includes("client_type.create") || user?.role?.name === "Admin";
+  const canEdit = permissions.includes("client_type.edit") || user?.role?.name === "Admin";
+  const canDelete = permissions.includes("client_type.delete") || user?.role?.name === "Admin";
+
+  // Data & Loading States
+  const [clientTypes, setClientTypes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  // Pagination State
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 1,
+  });
+
+  // Filter & Search State
+  const [search, setSearch] = useState("");
+
+  // Modal States
+  const [showFormModal, setShowFormModal] = useState(false);
+  const [editingType, setEditingType] = useState(null);
+  const [formData, setFormData] = useState({ name: "", description: "", status: "active" });
+  const [formError, setFormError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteError, setDeleteError] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Fetch Client Types from Backend API
+  const fetchClientTypes = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const res = await ClientService.getAdminClientTypes(
+        {
+          search: search.trim(),
+          status: "all",
+          page: pagination.page,
+          limit: pagination.limit,
+        },
+        token
+      );
+
+      if (res && res.data) {
+        setClientTypes(res.data.client_types || []);
+        if (res.data.pagination) {
+          setPagination((prev) => ({
+            ...prev,
+            total: res.data.pagination.total || 0,
+            totalPages: res.data.pagination.totalPages || 1,
+          }));
+        }
+      }
+    } catch (err) {
+      if (err.statusCode === 403) {
+        setError("You do not have permission to access client types management.");
+      } else {
+        setError(err.message || "Failed to load client types.");
+      }
+      setClientTypes([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [token, pagination.page, pagination.limit, search]);
+
+  useEffect(() => {
+    fetchClientTypes();
+  }, [fetchClientTypes]);
+
+  // Handlers
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
+  const handleOpenAddModal = () => {
+    setEditingType(null);
+    setFormData({ name: "", description: "", status: "active" });
+    setFormError("");
+    setShowFormModal(true);
+  };
+
+  const handleOpenEditModal = (type) => {
+    setEditingType(type);
+    setFormData({
+      name: type.name || "",
+      description: type.description || "",
+      status: "active",
+    });
+    setFormError("");
+    setShowFormModal(true);
+  };
+
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.name || !formData.name.trim()) {
+      setFormError("Client type name is required.");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setFormError("");
+
+      const payload = {
+        name: formData.name.trim(),
+        description: formData.description ? formData.description.trim() : null,
+        status: "active",
+      };
+
+      if (editingType) {
+        await ClientService.updateClientType(editingType.id, payload, token);
+        setSuccessMessage("Client type updated successfully.");
+      } else {
+        await ClientService.createClientType(payload, token);
+        setSuccessMessage("Client type created successfully.");
+      }
+
+      setShowFormModal(false);
+      fetchClientTypes();
+      setTimeout(() => setSuccessMessage(""), 4000);
+    } catch (err) {
+      setFormError(err.message || "Failed to save client type.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    try {
+      setIsDeleting(true);
+      setDeleteError("");
+
+      await ClientService.deleteClientType(deleteTarget.id, token);
+      setDeleteTarget(null);
+      setSuccessMessage("Client type deleted successfully.");
+      fetchClientTypes();
+      setTimeout(() => setSuccessMessage(""), 4000);
+    } catch (err) {
+      if (err.statusCode === 409) {
+        setDeleteError("This client type is currently being used by clients and cannot be deleted.");
+      } else {
+        setDeleteError(err.message || "Failed to delete client type.");
+      }
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const startRecord = pagination.total > 0 ? (pagination.page - 1) * pagination.limit + 1 : 0;
+  const endRecord = Math.min(pagination.page * pagination.limit, pagination.total);
+
+  return (
+    <AppLayout title="Client Types">
+      <div className="client-config-container">
+        {/* Navigation & Header */}
+        <div className="client-config-header-row">
+          <div className="client-config-title-group">
+            <button
+              type="button"
+              className="btn-back-settings"
+              onClick={() => navigate("/settings")}
+            >
+              <ArrowLeft size={16} />
+              <span>Back to Settings</span>
+            </button>
+            <h2 className="client-config-title">Client Types</h2>
+            <p className="client-config-desc">
+              Manage the types available when creating client profiles.
+            </p>
+          </div>
+
+          {canCreate && (
+            <button type="button" className="btn-add-config" onClick={handleOpenAddModal}>
+              <Plus size={16} />
+              <span>Add Client Type</span>
+            </button>
+          )}
+        </div>
+
+        {/* Global Success / Error Banners */}
+        {successMessage && (
+          <div className="banner-success">
+            <CheckCircle2 size={18} />
+            <span>{successMessage}</span>
+          </div>
+        )}
+
+        {error && (
+          <div className="banner-error">
+            <AlertCircle size={18} />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Controls Bar: Search & Refresh */}
+        <div className="client-config-controls-bar">
+          <div className="config-search-box" style={{ width: "100%", maxWidth: "560px" }}>
+            <Search size={18} className="config-search-icon" />
+            <input
+              type="text"
+              placeholder="Search Client Types by name or description..."
+              className="config-search-input"
+              value={search}
+              onChange={handleSearchChange}
+            />
+          </div>
+
+          <div className="config-filter-group">
+            <button
+              type="button"
+              className="btn-filter-refresh"
+              title="Refresh Client Types"
+              onClick={fetchClientTypes}
+            >
+              <Filter size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* Client Types Table Card */}
+        <div className="client-config-table-card">
+          <div className="config-table-wrapper">
+            <table className="config-table">
+              <thead>
+                <tr>
+                  <th>NAME</th>
+                  <th>DESCRIPTION</th>
+                  <th>CREATED AT</th>
+                  {(canEdit || canDelete) && <th style={{ width: "100px" }}>ACTIONS</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan="4" className="empty-state-cell">
+                      <div className="flex-center-gap">
+                        <Loader2 size={18} className="animate-spin" />
+                        <span>Loading client types...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : clientTypes.length === 0 ? (
+                  <tr>
+                    <td colSpan="4" className="empty-state-cell">
+                      No client types found.
+                    </td>
+                  </tr>
+                ) : (
+                  clientTypes.map((type) => (
+                    <tr key={type.id}>
+                      <td style={{ fontWeight: 700 }}>{type.name}</td>
+                      <td>{type.description || "N/A"}</td>
+                      <td>{formatDate(type.created_at)}</td>
+                      {(canEdit || canDelete) && (
+                        <td>
+                          <div className="table-actions-cell">
+                            {canEdit && (
+                              <button
+                                type="button"
+                                className="btn-action-icon edit"
+                                title="Edit Client Type"
+                                onClick={() => handleOpenEditModal(type)}
+                              >
+                                <Edit2 size={15} />
+                              </button>
+                            )}
+                            {canDelete && (
+                              <button
+                                type="button"
+                                className="btn-action-icon delete"
+                                title="Delete Client Type"
+                                onClick={() => {
+                                  setDeleteTarget(type);
+                                  setDeleteError("");
+                                }}
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination Footer */}
+          {!loading && pagination.total > 0 && (
+            <div className="config-pagination-bar">
+              <span className="pagination-text">
+                Showing {startRecord} to {endRecord} of {pagination.total} client types
+              </span>
+              <div className="pagination-controls">
+                <button
+                  type="button"
+                  className="btn-pagination"
+                  onClick={() => setPagination((prev) => ({ ...prev, page: prev.page - 1 }))}
+                  disabled={pagination.page <= 1}
+                >
+                  <ChevronLeft size={16} />
+                  <span>Previous</span>
+                </button>
+                <span className="pagination-indicator">
+                  Page {pagination.page} of {pagination.totalPages}
+                </span>
+                <button
+                  type="button"
+                  className="btn-pagination"
+                  onClick={() => setPagination((prev) => ({ ...prev, page: prev.page + 1 }))}
+                  disabled={pagination.page >= pagination.totalPages}
+                >
+                  <span>Next</span>
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* MODAL 1: ADD / EDIT CLIENT TYPE */}
+        {showFormModal && (
+          <div className="modal-backdrop">
+            <div className="modal-container" style={{ maxWidth: "480px" }}>
+              <div className="modal-header">
+                <h3 className="modal-title">
+                  {editingType ? "Edit Client Type" : "Add Client Type"}
+                </h3>
+                <button
+                  type="button"
+                  className="btn-close-modal"
+                  onClick={() => setShowFormModal(false)}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form onSubmit={handleFormSubmit}>
+                <div className="modal-body">
+                  {formError && (
+                    <div className="modal-error-banner">
+                      <AlertCircle size={16} />
+                      <span>{formError}</span>
+                    </div>
+                  )}
+
+                  <div className="form-group">
+                    <label className="form-label">
+                      Client Type Name <span className="required-star">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input"
+                      placeholder="e.g. Individual, HUF, Company"
+                      value={formData.name}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Description</label>
+                    <textarea
+                      className="form-textarea"
+                      placeholder="Brief description of this client type..."
+                      rows="3"
+                      value={formData.description}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div className="modal-footer">
+                  <button
+                    type="button"
+                    className="btn-cancel"
+                    onClick={() => setShowFormModal(false)}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn-save" disabled={isSubmitting}>
+                    {isSubmitting ? "Saving..." : editingType ? "Update Type" : "Create Type"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL 2: DELETE CONFIRMATION */}
+        {deleteTarget && (
+          <div className="modal-backdrop">
+            <div className="modal-container" style={{ maxWidth: "440px" }}>
+              <div className="modal-header">
+                <h3 className="modal-title" style={{ color: "#b91c1c" }}>
+                  Delete Client Type
+                </h3>
+                <button
+                  type="button"
+                  className="btn-close-modal"
+                  onClick={() => {
+                    setDeleteTarget(null);
+                    setDeleteError("");
+                  }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="modal-body">
+                {deleteError ? (
+                  <div className="modal-error-banner" style={{ backgroundColor: "#fef2f2", borderColor: "#fecaca" }}>
+                    <AlertCircle size={16} style={{ color: "#b91c1c" }} />
+                    <span style={{ color: "#b91c1c", fontWeight: 600 }}>{deleteError}</span>
+                  </div>
+                ) : (
+                  <p style={{ fontSize: "0.9rem", color: "#334155" }}>
+                    Are you sure you want to delete client type <strong>{deleteTarget.name}</strong>?
+                  </p>
+                )}
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn-cancel"
+                  onClick={() => {
+                    setDeleteTarget(null);
+                    setDeleteError("");
+                  }}
+                  disabled={isDeleting}
+                >
+                  {deleteError ? "Close" : "Cancel"}
+                </button>
+                {!deleteError && (
+                  <button
+                    type="button"
+                    className="btn-confirm-delete"
+                    onClick={handleDeleteConfirm}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? "Deleting..." : "Delete"}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </AppLayout>
+  );
+};
+
+export default ClientTypes;

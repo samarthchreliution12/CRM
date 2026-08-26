@@ -1,6 +1,70 @@
 const pool = require("../config/database");
 
 class ClientModel {
+  /**
+   * Helper to resolve and validate service IDs from service_ids or service names array.
+   */
+  static async resolveAndValidateServices(serviceInputs, clientObj = null) {
+    if (!serviceInputs || !Array.isArray(serviceInputs) || serviceInputs.length === 0) {
+      return [];
+    }
+
+    // Deduplicate inputs
+    const uniqueInputs = Array.from(new Set(serviceInputs));
+    const serviceIdsToValidate = [];
+    const serviceNamesToResolve = [];
+
+    for (const val of uniqueInputs) {
+      if (typeof val === "number" || (typeof val === "string" && /^\d+$/.test(val.trim()))) {
+        serviceIdsToValidate.push(parseInt(val, 10));
+      } else if (typeof val === "string" && val.trim()) {
+        serviceNamesToResolve.push(val.trim());
+      }
+    }
+
+    // Resolve string names to IDs
+    if (serviceNamesToResolve.length > 0) {
+      const nameRes = await pool.query(
+        `SELECT id, name, status FROM client_services WHERE LOWER(name) = ANY($1::text[])`,
+        [serviceNamesToResolve.map((n) => n.toLowerCase())]
+      );
+      for (const row of nameRes.rows) {
+        if (!serviceIdsToValidate.includes(row.id)) {
+          serviceIdsToValidate.push(row.id);
+        }
+      }
+    }
+
+    if (serviceIdsToValidate.length === 0) {
+      return [];
+    }
+
+    // Validate existence and active status
+    const validRes = await pool.query(
+      `SELECT id, name, status FROM client_services WHERE id = ANY($1::int[])`,
+      [serviceIdsToValidate]
+    );
+
+    const foundIds = validRes.rows.map((r) => r.id);
+    const missingIds = serviceIdsToValidate.filter((id) => !foundIds.includes(id));
+
+    if (missingIds.length > 0) {
+      const err = new Error(`Invalid service ID(s): ${missingIds.join(", ")} do not exist.`);
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const inactiveServices = validRes.rows.filter((r) => r.status !== "active");
+    if (inactiveServices.length > 0) {
+      const inactiveNames = inactiveServices.map((s) => `${s.name} (ID: ${s.id})`).join(", ");
+      const err = new Error(`Inactive service(s) cannot be assigned: ${inactiveNames}`);
+      err.statusCode = 400;
+      throw err;
+    }
+
+    return serviceIdsToValidate;
+  }
+
   static async findAll({ search = "", status = "", client_type_id = "", page = 1, limit = 10 }) {
     const offset = (page - 1) * limit;
     const params = [];
@@ -41,11 +105,20 @@ class ClientModel {
       SELECT
         c.id, c.ucc_no, c.name, c.business_name, c.mobile_no, c.whatsapp_no, c.email, c.pan, c.dob, c.gender, c.occupation,
         c.client_type_id, ct.name AS client_type_name,
-        c.status, c.services,
-        c.created_at, c.updated_at
+        c.status,
+        c.created_at, c.updated_at,
+        COALESCE(
+          JSON_AGG(
+            JSON_BUILD_OBJECT('id', cs.id, 'name', cs.name)
+          ) FILTER (WHERE cs.id IS NOT NULL),
+          '[]'::json
+        ) AS services
       FROM clients c
       INNER JOIN client_types ct ON ct.id = c.client_type_id
+      LEFT JOIN client_service_assignments csa ON csa.client_id = c.id
+      LEFT JOIN client_services cs ON cs.id = csa.service_id
       ${whereClause}
+      GROUP BY c.id, ct.name
       ORDER BY c.id DESC
       LIMIT $${params.length + 1} OFFSET $${params.length + 2}
     `;
@@ -91,11 +164,20 @@ class ClientModel {
       SELECT
         c.id, c.ucc_no, c.name, c.business_name, c.mobile_no, c.whatsapp_no, c.email, c.pan, c.dob, c.gender, c.occupation,
         c.client_type_id, ct.name AS client_type_name, ct.description AS client_type_desc,
-        c.status, c.services,
-        c.created_at, c.updated_at
+        c.status,
+        c.created_at, c.updated_at,
+        COALESCE(
+          JSON_AGG(
+            JSON_BUILD_OBJECT('id', cs.id, 'name', cs.name, 'description', cs.description)
+          ) FILTER (WHERE cs.id IS NOT NULL),
+          '[]'::json
+        ) AS services
       FROM clients c
       INNER JOIN client_types ct ON ct.id = c.client_type_id
+      LEFT JOIN client_service_assignments csa ON csa.client_id = c.id
+      LEFT JOIN client_services cs ON cs.id = csa.service_id
       WHERE c.id = $1
+      GROUP BY c.id, ct.name, ct.description
     `;
     const clientResult = await pool.query(clientQuery, [id]);
     if (clientResult.rows.length === 0) return null;
@@ -155,38 +237,61 @@ class ClientModel {
     occupation,
     client_type_id,
     status = "active",
+    service_ids = [],
     services = [],
   }) {
-    const query = `
-      INSERT INTO clients (
-        ucc_no, name, business_name, mobile_no, whatsapp_no, email, pan, dob, gender, occupation,
-        client_type_id, status, services
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb)
-      RETURNING id, ucc_no, name, business_name, mobile_no, whatsapp_no, email, pan, dob, gender, occupation,
-                client_type_id, status, services, created_at, updated_at
-    `;
-    const values = [
-      ucc_no.trim().toUpperCase(),
-      name.trim(),
-      business_name ? business_name.trim() : null,
-      mobile_no ? mobile_no.trim() : null,
-      whatsapp_no ? whatsapp_no.trim() : null,
-      email ? email.trim().toLowerCase() : null,
-      pan ? pan.trim().toUpperCase() : null,
-      dob || null,
-      gender ? gender.trim() : null,
-      occupation ? occupation.trim() : null,
-      client_type_id,
-      status ? status.trim().toLowerCase() : "active",
-      JSON.stringify(Array.isArray(services) ? services : []),
-    ];
+    const combinedServices = [...(Array.isArray(service_ids) ? service_ids : []), ...(Array.isArray(services) ? services : [])];
+    const validServiceIds = await this.resolveAndValidateServices(combinedServices);
 
-    const result = await pool.query(query, values);
-    const row = result.rows[0];
-    return {
-      ...row,
-      services: Array.isArray(row.services) ? row.services : [],
-    };
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      const query = `
+        INSERT INTO clients (
+          ucc_no, name, business_name, mobile_no, whatsapp_no, email, pan, dob, gender, occupation,
+          client_type_id, status, services
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb)
+        RETURNING id, ucc_no, name, business_name, mobile_no, whatsapp_no, email, pan, dob, gender, occupation,
+                  client_type_id, status, created_at, updated_at
+      `;
+      const values = [
+        ucc_no.trim().toUpperCase(),
+        name.trim(),
+        business_name ? business_name.trim() : null,
+        mobile_no ? mobile_no.trim() : null,
+        whatsapp_no ? whatsapp_no.trim() : null,
+        email ? email.trim().toLowerCase() : null,
+        pan ? pan.trim().toUpperCase() : null,
+        dob || null,
+        gender ? gender.trim() : null,
+        occupation ? occupation.trim() : null,
+        client_type_id,
+        status ? status.trim().toLowerCase() : "active",
+        JSON.stringify([]),
+      ];
+
+      const result = await client.query(query, values);
+      const newClient = result.rows[0];
+
+      // Save service assignments in junction table
+      if (validServiceIds.length > 0) {
+        for (const sId of validServiceIds) {
+          await client.query(
+            `INSERT INTO client_service_assignments (client_id, service_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+            [newClient.id, sId]
+          );
+        }
+      }
+
+      await client.query("COMMIT");
+      return this.findById(newClient.id);
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
   }
 
   static async update(
@@ -204,9 +309,19 @@ class ClientModel {
       occupation,
       client_type_id,
       status,
+      service_ids,
       services,
     }
   ) {
+    let validServiceIds = null;
+    if (service_ids !== undefined || services !== undefined) {
+      const combinedServices = [
+        ...(Array.isArray(service_ids) ? service_ids : []),
+        ...(Array.isArray(services) ? services : []),
+      ];
+      validServiceIds = await this.resolveAndValidateServices(combinedServices);
+    }
+
     const fields = [];
     const values = [];
     let idx = 1;
@@ -259,29 +374,47 @@ class ClientModel {
       fields.push(`status = $${idx++}`);
       values.push(status.trim().toLowerCase());
     }
-    if (services !== undefined) {
-      fields.push(`services = $${idx++}::jsonb`);
-      values.push(JSON.stringify(Array.isArray(services) ? services : []));
-    }
 
     fields.push(`updated_at = CURRENT_TIMESTAMP`);
     values.push(id);
 
-    const query = `
-      UPDATE clients
-      SET ${fields.join(", ")}
-      WHERE id = $${idx}
-      RETURNING id, ucc_no, name, business_name, mobile_no, whatsapp_no, email, pan, dob, gender, occupation,
-                client_type_id, status, services, created_at, updated_at
-    `;
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
 
-    const result = await pool.query(query, values);
-    const row = result.rows[0];
-    if (!row) return null;
-    return {
-      ...row,
-      services: Array.isArray(row.services) ? row.services : [],
-    };
+      if (fields.length > 1) {
+        const query = `
+          UPDATE clients
+          SET ${fields.join(", ")}
+          WHERE id = $${idx}
+          RETURNING id
+        `;
+        const result = await client.query(query, values);
+        if (result.rows.length === 0) {
+          await client.query("ROLLBACK");
+          return null;
+        }
+      }
+
+      // Replace service assignments if service_ids or services was passed
+      if (validServiceIds !== null) {
+        await client.query(`DELETE FROM client_service_assignments WHERE client_id = $1`, [id]);
+        for (const sId of validServiceIds) {
+          await client.query(
+            `INSERT INTO client_service_assignments (client_id, service_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+            [id, sId]
+          );
+        }
+      }
+
+      await client.query("COMMIT");
+      return this.findById(id);
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
   }
 
   static async updateStatus(id, status) {
@@ -299,8 +432,10 @@ class ClientModel {
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
-      // Delete family members first
+      // Delete family members
       await client.query("DELETE FROM client_family_members WHERE client_id = $1", [id]);
+      // Delete service assignments
+      await client.query("DELETE FROM client_service_assignments WHERE client_id = $1", [id]);
       // Delete client
       const res = await client.query("DELETE FROM clients WHERE id = $1 RETURNING id", [id]);
       await client.query("COMMIT");

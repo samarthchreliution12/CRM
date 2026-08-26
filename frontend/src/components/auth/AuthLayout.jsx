@@ -7,8 +7,8 @@ const AuthLayout = ({ children }) => {
       {/* Left Dark Branding Section */}
       <div className="auth-branding-panel">
         <div className="auth-logo">
-          <div className="auth-logo-icon">CRM</div>
-          <span>CRM Platform</span>
+          {/* <div className="auth-logo-icon">logo</div> */}
+          <span>Company name</span>
         </div>
 
         <div className="auth-branding-content">

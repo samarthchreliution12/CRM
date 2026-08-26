@@ -6,17 +6,6 @@ import useAuth from "../../hooks/useAuth";
 import { ArrowLeft, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import "./AddClient.css";
 
-const AVAILABLE_SERVICES = [
-  "Demat",
-  "Trading",
-  "IPO",
-  "SLBM",
-  "Mutual Fund",
-  "Insurance",
-  "Physical Shares",
-  "IEPF",
-];
-
 const AddClient = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -38,13 +27,14 @@ const AddClient = () => {
     occupation: "",
     client_type_id: "",
     status: "active",
-    services: [],
+    service_ids: [],
   });
 
-  // Dynamic Options State
+  // Dynamic API Options State
   const [clientTypes, setClientTypes] = useState([]);
-  const [loadingTypes, setLoadingTypes] = useState(true);
-  const [typesError, setTypesError] = useState("");
+  const [availableServices, setAvailableServices] = useState([]);
+  const [loadingConfig, setLoadingConfig] = useState(true);
+  const [configError, setConfigError] = useState("");
   const [loadingInitial, setLoadingInitial] = useState(isEditMode);
 
   // Form Submission & Validation State
@@ -53,29 +43,39 @@ const AddClient = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch Client Types dynamically from GET /api/client-types
+  // Fetch Client Types & Client Services dynamically from real backend APIs
   useEffect(() => {
     let isMounted = true;
-    const fetchTypes = async () => {
+    const fetchConfig = async () => {
       try {
-        setLoadingTypes(true);
-        setTypesError("");
-        const res = await ClientService.getClientTypes(token);
-        if (isMounted && res && res.data && res.data.client_types) {
-          setClientTypes(res.data.client_types);
+        setLoadingConfig(true);
+        setConfigError("");
+
+        const [typesRes, servicesRes] = await Promise.all([
+          ClientService.getClientTypes(token),
+          ClientService.getClientServices(token),
+        ]);
+
+        if (isMounted) {
+          if (typesRes && typesRes.data && typesRes.data.client_types) {
+            setClientTypes(typesRes.data.client_types);
+          }
+          if (servicesRes && servicesRes.data && servicesRes.data.client_services) {
+            setAvailableServices(servicesRes.data.client_services);
+          }
         }
       } catch (err) {
         if (isMounted) {
-          setTypesError(err.message || "Failed to load Client Types from server.");
+          setConfigError(err.message || "Failed to load client types and services from server.");
         }
       } finally {
         if (isMounted) {
-          setLoadingTypes(false);
+          setLoadingConfig(false);
         }
       }
     };
 
-    fetchTypes();
+    fetchConfig();
     return () => {
       isMounted = false;
     };
@@ -97,6 +97,14 @@ const AddClient = () => {
             dobFormatted = new Date(c.dob).toISOString().split("T")[0];
           }
 
+          // Extract assigned service IDs (supports objects array [{id: 1, name: "Demat"}] or ID array)
+          let assignedServiceIds = [];
+          if (Array.isArray(c.services)) {
+            assignedServiceIds = c.services
+              .map((s) => (typeof s === "object" ? s.id : s))
+              .filter(Boolean);
+          }
+
           setFormData({
             ucc_no: c.ucc_no || "",
             name: c.name || "",
@@ -111,7 +119,7 @@ const AddClient = () => {
             occupation: c.occupation || "",
             client_type_id: c.client_type?.id || c.client_type_id || "",
             status: c.status || "active",
-            services: Array.isArray(c.services) ? c.services : [],
+            service_ids: assignedServiceIds,
           });
         }
       } catch (err) {
@@ -139,7 +147,6 @@ const AddClient = () => {
     setFormData((prev) => {
       const updated = { ...prev, [name]: val };
 
-      // Synchronization logic: Mobile -> WhatsApp when checkbox is checked
       if (name === "mobile_no" && prev.same_as_whatsapp) {
         updated.whatsapp_no = val;
       }
@@ -152,20 +159,19 @@ const AddClient = () => {
       return updated;
     });
 
-    // Clear field-level error on change
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
   };
 
-  // Toggle Services Multi-Select Checkboxes
-  const handleServiceToggle = (serviceName) => {
+  // Toggle Services Multi-Select Checkboxes by ID
+  const handleServiceToggle = (serviceId) => {
     setFormData((prev) => {
-      const exists = prev.services.includes(serviceName);
-      const updatedServices = exists
-        ? prev.services.filter((s) => s !== serviceName)
-        : [...prev.services, serviceName];
-      return { ...prev, services: updatedServices };
+      const exists = prev.service_ids.includes(serviceId);
+      const updatedIds = exists
+        ? prev.service_ids.filter((idItem) => idItem !== serviceId)
+        : [...prev.service_ids, serviceId];
+      return { ...prev, service_ids: updatedIds };
     });
   };
 
@@ -245,7 +251,7 @@ const AddClient = () => {
         occupation: formData.occupation.trim() || null,
         client_type_id: parseInt(formData.client_type_id, 10),
         status: formData.status || "active",
-        services: formData.services,
+        service_ids: formData.service_ids,
       };
 
       if (isEditMode) {
@@ -507,17 +513,17 @@ const AddClient = () => {
           <div className="form-section">
             <h3 className="section-title">Client Classification</h3>
             <div className="form-grid-2">
-              {/* Dynamic Client Type Dropdown */}
+              {/* Dynamic Client Type Dropdown from API */}
               <div className="form-group">
                 <label className="form-label">
                   Client Type <span className="required-star">*</span>
                 </label>
-                {loadingTypes ? (
+                {loadingConfig ? (
                   <div className="form-input" style={{ color: "#64748b" }}>
                     Loading Client Types...
                   </div>
-                ) : typesError ? (
-                  <div className="error-text">{typesError}</div>
+                ) : configError ? (
+                  <div className="error-text">{configError}</div>
                 ) : (
                   <select
                     name="client_type_id"
@@ -554,29 +560,35 @@ const AddClient = () => {
             </div>
           </div>
 
-          {/* SECTION 3: SERVICES (MULTI-SELECT CHECKBOX LIST) */}
+          {/* SECTION 3: SERVICES (DYNAMIC MULTI-SELECT CHECKBOX LIST FROM API) */}
           <div className="form-section">
-            <h3 className="section-title">Services</h3>
-            <div className="services-checkbox-grid">
-              {AVAILABLE_SERVICES.map((service) => {
-                const isSelected = formData.services.includes(service);
-                return (
-                  <div
-                    key={service}
-                    className={`service-checkbox-item ${isSelected ? "selected" : ""}`}
-                    onClick={() => handleServiceToggle(service)}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => {}} // Handled by parent div
-                      className="checkbox-inline-input"
-                    />
-                    <span className="service-checkbox-label">{service}</span>
-                  </div>
-                );
-              })}
-            </div>
+            <h3 className="section-title">Subscribed Services</h3>
+            {loadingConfig ? (
+              <p style={{ color: "#64748b", fontSize: "0.875rem" }}>Loading available services...</p>
+            ) : availableServices.length === 0 ? (
+              <p style={{ color: "#64748b", fontSize: "0.875rem" }}>No active services available.</p>
+            ) : (
+              <div className="services-checkbox-grid">
+                {availableServices.map((serviceItem) => {
+                  const isSelected = formData.service_ids.includes(serviceItem.id);
+                  return (
+                    <div
+                      key={serviceItem.id}
+                      className={`service-checkbox-item ${isSelected ? "selected" : ""}`}
+                      onClick={() => handleServiceToggle(serviceItem.id)}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => {}} // Handled by parent container click
+                        className="checkbox-inline-input"
+                      />
+                      <span className="service-checkbox-label">{serviceItem.name}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* FORM ACTIONS FOOTER */}

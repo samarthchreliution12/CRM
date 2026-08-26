@@ -66,6 +66,8 @@ function requireRole(...allowedRoles) {
 
 /**
  * Authorization middleware to check if user has required permission(s).
+ * If a single string or multiple arguments are passed, checks all of them.
+ * If an array is passed as first argument, checks if user has ANY of the permissions in that array.
  */
 function requirePermission(...requiredPermissions) {
   return (req, res, next) => {
@@ -74,7 +76,15 @@ function requirePermission(...requiredPermissions) {
     }
 
     const userPermissions = req.user.permissions || [];
-    const hasPermission = requiredPermissions.every((perm) => userPermissions.includes(perm));
+
+    let hasPermission = false;
+    if (requiredPermissions.length === 1 && Array.isArray(requiredPermissions[0])) {
+      // Any of the permissions in the array
+      hasPermission = requiredPermissions[0].some((perm) => userPermissions.includes(perm));
+    } else {
+      // All permissions specified in arguments
+      hasPermission = requiredPermissions.every((perm) => userPermissions.includes(perm));
+    }
 
     if (!hasPermission) {
       return sendError(res, 403, "Forbidden: Required permission missing");

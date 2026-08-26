@@ -14,8 +14,12 @@ import Profile from "./pages/profile/Profile";
 import Clients from "./pages/clients/Clients";
 import AddClient from "./pages/clients/AddClient";
 import ClientDetails from "./pages/clients/ClientDetails";
+import Documents from "./pages/documents/Documents";
+import Communication from "./pages/communication/Communication";
 import Settings from "./pages/settings/Settings";
 import UserAccess from "./pages/settings/users/UserAccess";
+import ClientTypes from "./pages/settings/clientConfiguration/ClientTypes";
+import ClientServices from "./pages/settings/clientConfiguration/ClientServices";
 
 import "./styles/global.css";
 
@@ -100,6 +104,22 @@ function App() {
             }
           />
           <Route
+            path="/documents"
+            element={
+              <ProtectedRoute>
+                <Documents />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/communication"
+            element={
+              <ProtectedRoute>
+                <Communication />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/profile"
             element={
               <ProtectedRoute>
@@ -123,6 +143,26 @@ function App() {
               <ProtectedRoute>
                 <AdminRoute>
                   <UserAccess />
+                </AdminRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/client-configuration/types"
+            element={
+              <ProtectedRoute>
+                <AdminRoute>
+                  <ClientTypes />
+                </AdminRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/client-configuration/services"
+            element={
+              <ProtectedRoute>
+                <AdminRoute>
+                  <ClientServices />
                 </AdminRoute>
               </ProtectedRoute>
             }

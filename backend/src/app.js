@@ -9,8 +9,14 @@ const authRoutes = require("./routes/auth.routes");
 const adminStaffRoutes = require("./routes/adminStaff.routes");
 const permissionRoutes = require("./routes/permission.routes");
 const rolePermissionRoutes = require("./routes/rolePermission.routes");
+const adminClientTypeRoutes = require("./routes/adminClientType.routes");
+const adminClientServiceRoutes = require("./routes/adminClientService.routes");
 const clientRoutes = require("./routes/client.routes");
 const clientTypeRoutes = require("./routes/clientType.routes");
+const clientServiceRoutes = require("./routes/clientService.routes");
+const whatsappRoutes = require("./routes/whatsapp.routes");
+const documentRoutes = require("./routes/document.routes");
+const adminDocumentRoutes = require("./routes/adminDocument.routes");
 const errorHandler = require("./middleware/error.middleware");
 
 const app = express();
@@ -51,16 +57,22 @@ app.get("/api/health", (req, res) => {
 // Authentication Routes
 app.use("/api/auth", authRoutes);
 
-// Admin Staff Management Routes
+// Admin Management Routes
 app.use("/api/admin/staff", adminStaffRoutes);
-
-// Admin Permission & Role-Permission Routes
 app.use("/api/admin/permissions", permissionRoutes);
 app.use("/api/admin/roles", rolePermissionRoutes);
+app.use("/api/admin/client-types", adminClientTypeRoutes);
+app.use("/api/admin/client-services", adminClientServiceRoutes);
+app.use("/api/admin/documents", adminDocumentRoutes);
 
 // Client Module Routes
 app.use("/api/clients", clientRoutes);
 app.use("/api/client-types", clientTypeRoutes);
+app.use("/api/client-services", clientServiceRoutes);
+app.use("/api/clients/:clientId/documents", documentRoutes);
+
+// WhatsApp Module Routes
+app.use("/api/whatsapp", whatsappRoutes);
 
 // Centralized Error Handling Middleware
 app.use(errorHandler);

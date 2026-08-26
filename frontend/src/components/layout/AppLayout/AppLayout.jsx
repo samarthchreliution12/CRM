@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Sidebar from "../Sidebar/Sidebar";
 import Header from "../Header/Header";
+import InternalChat from "../InternalChat/InternalChat";
 import "./AppLayout.css";
 
 const AppLayout = ({ children, title = "Dashboard" }) => {
@@ -22,6 +23,9 @@ const AppLayout = ({ children, title = "Dashboard" }) => {
       <Header title={title} onToggleSidebar={toggleSidebar} />
 
       <main className="app-main-content">{children}</main>
+
+      {/* Global Internal Communication Chat Widget */}
+      <InternalChat />
     </div>
   );
 };

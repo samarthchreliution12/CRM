@@ -18,7 +18,10 @@ import {
   Users,
   Eye,
   EyeOff,
+  Download,
 } from "lucide-react";
+import DocumentUploadModal from "../documents/DocumentUploadModal";
+import DocumentReviewDrawer from "../documents/DocumentReviewDrawer";
 import "./ClientDetails.css";
 
 const getInitials = (name) => {
@@ -85,7 +88,13 @@ const maskPan = (pan) => {
 const ClientDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
+  const permissions = user?.permissions || [];
+
+  const canCreateDoc = permissions.includes("document.create") || user?.role?.name === "Admin";
+  const canUpdateDoc = permissions.includes("document.update") || permissions.includes("document.edit") || user?.role?.name === "Admin";
+  const canVerifyDoc = permissions.includes("document.verify") || user?.role?.name === "Admin";
+  const canDeleteDoc = permissions.includes("document.delete") || user?.role?.name === "Admin";
 
   // Client Data & Loading State
   const [client, setClient] = useState(null);
@@ -97,6 +106,50 @@ const ClientDetails = () => {
 
   // Tab State: 'overview' | 'services' | 'documents' | 'family' | 'ucc'
   const [activeTab, setActiveTab] = useState("overview");
+
+  // Client Documents State
+  const [documents, setDocuments] = useState([]);
+  const [loadingDocs, setLoadingDocs] = useState(false);
+  const [isDocUploadOpen, setIsDocUploadOpen] = useState(false);
+  const [targetReplaceDoc, setTargetReplaceDoc] = useState(null);
+  const [isDocReviewOpen, setIsDocReviewOpen] = useState(false);
+
+  // Fetch Documents for Client
+  const fetchDocuments = useCallback(async () => {
+    if (!id || !token) return;
+    try {
+      setLoadingDocs(true);
+      const res = await ClientService.getClientDocuments(id, token);
+      setDocuments(res?.data?.documents || []);
+    } catch (err) {
+      console.error("Failed to fetch client documents:", err);
+    } finally {
+      setLoadingDocs(false);
+    }
+  }, [id, token]);
+
+  useEffect(() => {
+    fetchDocuments();
+  }, [fetchDocuments]);
+
+  // Handler to download decrypted document file
+  const handleDownloadDocument = async (doc) => {
+    try {
+      if (!id) return;
+      const { blob } = await ClientService.getDocumentFileBlob(id, doc.id, token);
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = doc.original_file_name || `${doc.document_type || "document"}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (err) {
+      console.error("Download failed:", err);
+      alert("Failed to download document. Please try again.");
+    }
+  };
 
   // Modals State
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -117,6 +170,7 @@ const ClientDetails = () => {
 
   const [deleteFamilyTarget, setDeleteFamilyTarget] = useState(null);
   const [isDeletingFamily, setIsDeletingFamily] = useState(false);
+
 
   // Toggle reveal state for specific contact fields (mobile, email, whatsapp, pan, etc.)
   const toggleRevealField = (fieldKey) => {
@@ -301,7 +355,13 @@ const ClientDetails = () => {
                 </div>
               )}
               <div className="client-badges-row">
-                <span className="badge-tag type">{client.client_type?.name || "Individual"}</span>
+                <span className="badge-tag type">
+                  {typeof client.client_type === "object" && client.client_type !== null
+                    ? client.client_type.name || "Individual"
+                    : typeof client.client_type === "string"
+                    ? client.client_type
+                    : client.client_type_name || "Individual"}
+                </span>
                 {client.category && (
                   <span className="badge-tag role">{client.category}</span>
                 )}
@@ -570,7 +630,13 @@ const ClientDetails = () => {
                     </div>
                     <div className="info-kv-item">
                       <span className="info-kv-label">Client Type</span>
-                      <span className="info-kv-value">{client.client_type?.name || "Individual"}</span>
+                      <span className="info-kv-value">
+                        {typeof client.client_type === "object" && client.client_type !== null
+                          ? client.client_type.name || "Individual"
+                          : typeof client.client_type === "string"
+                          ? client.client_type
+                          : client.client_type_name || "Individual"}
+                      </span>
                     </div>
                     {client.category && (
                       <div className="info-kv-item">
@@ -602,12 +668,22 @@ const ClientDetails = () => {
                     </p>
                   ) : (
                     <div className="services-pills-grid">
-                      {subscribedServices.map((srv) => (
-                        <div key={srv} className="service-status-card">
-                          <span className="service-card-name">{srv}</span>
-                          <span className="service-card-status">● ACTIVE</span>
-                        </div>
-                      ))}
+                      {subscribedServices.map((srv, idx) => {
+                        const serviceName =
+                          typeof srv === "object" && srv !== null
+                            ? srv.name || srv.description || String(srv.id || idx)
+                            : String(srv);
+                        const serviceKey =
+                          typeof srv === "object" && srv !== null
+                            ? srv.id || idx
+                            : srv;
+                        return (
+                          <div key={serviceKey} className="service-status-card">
+                            <span className="service-card-name">{serviceName}</span>
+                            <span className="service-card-status">● ACTIVE</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -701,12 +777,22 @@ const ClientDetails = () => {
                 </p>
               ) : (
                 <div className="services-pills-grid">
-                  {subscribedServices.map((srv) => (
-                    <div key={srv} className="service-status-card">
-                      <span className="service-card-name">{srv}</span>
-                      <span className="service-card-status">● ACTIVE</span>
-                    </div>
-                  ))}
+                  {subscribedServices.map((srv, idx) => {
+                    const serviceName =
+                      typeof srv === "object" && srv !== null
+                        ? srv.name || srv.description || String(srv.id || idx)
+                        : String(srv);
+                    const serviceKey =
+                      typeof srv === "object" && srv !== null
+                        ? srv.id || idx
+                        : srv;
+                    return (
+                      <div key={serviceKey} className="service-status-card">
+                        <span className="service-card-name">{serviceName}</span>
+                        <span className="service-card-status">● ACTIVE</span>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -717,10 +803,99 @@ const ClientDetails = () => {
             <div className="details-card">
               <div className="card-header-row">
                 <h3 className="card-title">Client Documents</h3>
+                {canCreateDoc && (
+                  <button
+                    type="button"
+                    className="btn-add-member-sm"
+                    onClick={() => {
+                      setTargetReplaceDoc(null);
+                      setIsDocUploadOpen(true);
+                    }}
+                  >
+                    <Plus size={14} />
+                    <span>Upload Document</span>
+                  </button>
+                )}
               </div>
-              <p style={{ color: "#64748b", fontSize: "0.875rem", fontStyle: "italic" }}>
-                No documents available.
-              </p>
+
+              {loadingDocs ? (
+                <div style={{ textAlign: "center", padding: "2rem", color: "#64748b" }}>
+                  <Loader2 size={24} className="animate-spin" style={{ margin: "0 auto 0.5rem auto" }} />
+                  <p style={{ fontSize: "0.875rem" }}>Loading documents...</p>
+                </div>
+              ) : documents.length === 0 ? (
+                <p style={{ color: "#64748b", fontSize: "0.875rem", fontStyle: "italic" }}>
+                  No documents available for this client.
+                </p>
+              ) : (
+                <div className="clients-table-wrapper">
+                  <table className="clients-table">
+                    <thead>
+                      <tr>
+                        <th>TYPE</th>
+                        <th>FILE NAME</th>
+                        <th>UPLOAD DATE</th>
+                        <th>STATUS</th>
+                        <th style={{ width: "240px" }}>ACTIONS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {documents.map((doc) => {
+                        const statusClass = doc.status ? doc.status.toLowerCase() : "pending";
+                        return (
+                          <tr key={doc.id}>
+                            <td style={{ fontWeight: 600, color: "#0f172a" }}>
+                              {doc.document_name || doc.document_type}
+                            </td>
+                            <td>{doc.original_file_name}</td>
+                            <td>{formatDate(doc.created_at)}</td>
+                            <td>
+                              <span className={`badge-tag ${statusClass === "verified" ? "active" : statusClass === "rejected" ? "inactive" : "role"}`}>
+                                {doc.status || "PENDING"}
+                              </span>
+                            </td>
+                            <td>
+                              <div style={{ display: "flex", gap: "6px" }}>
+                                <button
+                                  type="button"
+                                  className="btn-add-member-sm"
+                                  style={{ backgroundColor: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" }}
+                                  onClick={() => setIsDocReviewOpen(true)}
+                                >
+                                  <Eye size={13} />
+                                  <span>Review</span>
+                                </button>
+                                {canUpdateDoc && (
+                                  <button
+                                    type="button"
+                                    className="btn-add-member-sm"
+                                    style={{ backgroundColor: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1" }}
+                                    onClick={() => {
+                                      setTargetReplaceDoc(doc);
+                                      setIsDocUploadOpen(true);
+                                    }}
+                                  >
+                                    <span>Replace</span>
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  className="btn-add-member-sm"
+                                  style={{ backgroundColor: "#f1f5f9", color: "#334155", border: "1px solid #cbd5e1" }}
+                                  onClick={() => handleDownloadDocument(doc)}
+                                >
+                                  <Download size={14} />
+                                  <span>Download</span>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
 
@@ -1086,6 +1261,34 @@ const ClientDetails = () => {
             </div>
           </div>
         )}
+
+        {/* MODAL 4: DOCUMENT UPLOAD & REPLACE MODAL */}
+        <DocumentUploadModal
+          isOpen={isDocUploadOpen}
+          onClose={() => {
+            setIsDocUploadOpen(false);
+            setTargetReplaceDoc(null);
+          }}
+          client={client}
+          targetDocument={targetReplaceDoc}
+          onSuccess={fetchDocuments}
+        />
+
+        {/* MODAL 5: DOCUMENT REVIEW DRAWER */}
+        <DocumentReviewDrawer
+          isOpen={isDocReviewOpen}
+          onClose={() => setIsDocReviewOpen(false)}
+          client={client}
+          documents={documents}
+          canVerify={canVerifyDoc}
+          canUpdate={canUpdateDoc}
+          canDelete={canDeleteDoc}
+          onOpenReplace={(doc) => {
+            setTargetReplaceDoc(doc);
+            setIsDocUploadOpen(true);
+          }}
+          onRefreshAll={fetchDocuments}
+        />
       </div>
     </AppLayout>
   );

@@ -357,7 +357,13 @@ const Clients = () => {
                         <td>
                           <span className="client-id-badge">{client.ucc_no}</span>
                         </td>
-                        <td>{client.client_type?.name || "Standard"}</td>
+                        <td>
+                          {typeof client.client_type === "object" && client.client_type !== null
+                            ? client.client_type.name || "Standard"
+                            : typeof client.client_type === "string"
+                            ? client.client_type
+                            : client.client_type_name || "Standard"}
+                        </td>
                         <td>
                           <div className="contact-cell">
                             {client.mobile_no && (

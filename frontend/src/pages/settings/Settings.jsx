@@ -1,15 +1,18 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../../components/layout/AppLayout/AppLayout";
-import { Users, ArrowRight } from "lucide-react";
+import useAuth from "../../hooks/useAuth";
+import { Users, ArrowRight, FolderCog } from "lucide-react";
 import "./Settings.css";
 
 const Settings = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const permissions = user?.permissions || [];
+  const isAdmin = user?.role?.name === "Admin";
 
-  const handleCardClick = () => {
-    navigate("/settings/users");
-  };
+  const canViewUsers = isAdmin || permissions.includes("staff.view");
+  const canViewConfig = isAdmin || permissions.includes("client_type.view") || permissions.includes("client_service.view");
 
   return (
     <AppLayout title="Settings">
@@ -22,34 +25,98 @@ const Settings = () => {
         </div>
 
         <div className="settings-cards-grid">
-          {/* User & Access Card Only */}
-          <div className="settings-card-item" onClick={handleCardClick}>
-            <div className="settings-card-top">
-              <div className="settings-card-icon-wrapper">
-                <Users size={24} />
+          {/* 1. User & Access Card */}
+          {canViewUsers && (
+            <div className="settings-card-item" onClick={() => navigate("/settings/users")}>
+              <div className="settings-card-top">
+                <div className="settings-card-icon-wrapper">
+                  <Users size={24} />
+                </div>
+                <div className="settings-card-content">
+                  <h3 className="settings-card-title">User & Access</h3>
+                  <p className="settings-card-description">
+                    Manage users, staff access, roles and permissions.
+                  </p>
+                </div>
               </div>
-              <div className="settings-card-content">
-                <h3 className="settings-card-title">User & Access</h3>
-                <p className="settings-card-description">
-                  Manage users, staff access, roles and permissions.
-                </p>
-              </div>
-            </div>
 
-            <div className="settings-card-footer">
-              <button
-                type="button"
-                className="btn-manage-settings"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleCardClick();
-                }}
-              >
-                <span>Manage</span>
-                <ArrowRight size={16} />
-              </button>
+              <div className="settings-card-footer">
+                <button
+                  type="button"
+                  className="btn-manage-settings"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate("/settings/users");
+                  }}
+                >
+                  <span>Manage</span>
+                  <ArrowRight size={16} />
+                </button>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* 2. Client Configuration Card (Admin Only) */}
+          {canViewConfig && (
+            <div className="settings-card-item">
+              <div className="settings-card-top">
+                <div className="settings-card-icon-wrapper" style={{ backgroundColor: "#e0f2fe", color: "#0284c7" }}>
+                  <FolderCog size={24} />
+                </div>
+                <div className="settings-card-content">
+                  <h3 className="settings-card-title">Client Configuration</h3>
+                  <p className="settings-card-description">
+                    Manage client types and available client services.
+                  </p>
+                </div>
+              </div>
+
+              <div className="settings-card-options-list" style={{ padding: "0 1.5rem 1rem 1.5rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <button
+                  type="button"
+                  className="btn-config-option"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "0.625rem 0.875rem",
+                    backgroundColor: "#f8fafc",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "6px",
+                    fontSize: "0.875rem",
+                    fontWeight: "600",
+                    color: "#0f172a",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => navigate("/settings/client-configuration/types")}
+                >
+                  <span>1. Client Types</span>
+                  <ArrowRight size={14} color="#64748b" />
+                </button>
+                <button
+                  type="button"
+                  className="btn-config-option"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "0.625rem 0.875rem",
+                    backgroundColor: "#f8fafc",
+                    border: "1px solid #e2e8f0",
+                    borderRadius: "6px",
+                    fontSize: "0.875rem",
+                    fontWeight: "600",
+                    color: "#0f172a",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => navigate("/settings/client-configuration/services")}
+                >
+                  <span>2. Client Services</span>
+                  <ArrowRight size={14} color="#64748b" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </AppLayout>
