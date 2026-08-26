@@ -125,7 +125,7 @@ const Clients = () => {
       }
     } catch (err) {
       if (err.statusCode === 403) {
-        setError("You do not have permission to view clients.");
+        setError("You do not have permission to view clients. Contact Your administrator.");
       } else {
         setError(err.message || "Failed to fetch clients from database.");
       }

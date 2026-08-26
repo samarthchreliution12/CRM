@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { X, AlertCircle } from "lucide-react";
 import "./PermissionFormModal.css";
 
-const MODULE_OPTIONS = ["Client", "Lead", "Task", "Document", "Communication", "System"];
+const MODULE_OPTIONS = ["Client", "Lead", "Document", "Communication", "System"];
 
 const PermissionFormModal = ({ isOpen, onClose, onSubmit, initialData = null, isSubmitting = false }) => {
   const isEditMode = Boolean(initialData);

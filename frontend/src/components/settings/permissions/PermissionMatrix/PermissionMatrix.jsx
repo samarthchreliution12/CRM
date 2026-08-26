@@ -16,12 +16,6 @@ export const MODULES_CONFIG = [
     description: "Lead pipeline & prospect assignments",
   },
   {
-    name: "Task",
-    prefix: "task",
-    icon: CheckSquare,
-    description: "Operational tasks & staff assignments",
-  },
-  {
     name: "Documents",
     prefix: "document",
     icon: FileText,

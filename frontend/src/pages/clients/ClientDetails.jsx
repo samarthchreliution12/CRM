@@ -1269,7 +1269,7 @@ const ClientDetails = () => {
             setIsDocUploadOpen(false);
             setTargetReplaceDoc(null);
           }}
-          client={client}
+          initialClient={client}
           targetDocument={targetReplaceDoc}
           onSuccess={fetchDocuments}
         />

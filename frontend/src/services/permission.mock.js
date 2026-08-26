@@ -8,10 +8,8 @@ const INITIAL_PERMISSIONS = [
   { id: 6, permission_key: "lead.create", description: "Create new lead records", module: "Lead", created_at: "2026-08-20T10:00:00Z" },
   { id: 7, permission_key: "lead.edit", description: "Edit lead records", module: "Lead", created_at: "2026-08-20T10:00:00Z" },
   { id: 8, permission_key: "lead.assign", description: "Assign leads to staff members", module: "Lead", created_at: "2026-08-20T10:00:00Z" },
-  { id: 9, permission_key: "task.view", description: "View assigned tasks", module: "Task", created_at: "2026-08-20T10:00:00Z" },
-  { id: 10, permission_key: "task.create", description: "Create new tasks", module: "Task", created_at: "2026-08-20T10:00:00Z" },
-  { id: 11, permission_key: "document.view", description: "View document repository", module: "Document", created_at: "2026-08-20T10:00:00Z" },
-  { id: 12, permission_key: "communication.view", description: "View communication history", module: "Communication", created_at: "2026-08-20T10:00:00Z" },
+  { id: 9, permission_key: "document.view", description: "View document repository", module: "Document", created_at: "2026-08-20T10:00:00Z" },
+  { id: 10, permission_key: "communication.view", description: "View communication history", module: "Communication", created_at: "2026-08-20T10:00:00Z" },
 ];
 
 let localPermissions = [...INITIAL_PERMISSIONS];
