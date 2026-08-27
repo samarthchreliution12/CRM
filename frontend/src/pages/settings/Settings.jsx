@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../../components/layout/AppLayout/AppLayout";
 import useAuth from "../../hooks/useAuth";
-import { Users, ArrowRight, FolderCog } from "lucide-react";
+import { Users, ArrowRight, FolderCog, ShieldAlert } from "lucide-react";
 import "./Settings.css";
 
 const Settings = () => {
@@ -113,6 +113,37 @@ const Settings = () => {
                 >
                   <span>2. Client Services</span>
                   <ArrowRight size={14} color="#64748b" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* 3. Audit Logs Card (Admin Only) */}
+          {isAdmin && (
+            <div className="settings-card-item" onClick={() => navigate("/settings/audit-logs")}>
+              <div className="settings-card-top">
+                <div className="settings-card-icon-wrapper" style={{ backgroundColor: "#fef3c7", color: "#d97706" }}>
+                  <ShieldAlert size={24} />
+                </div>
+                <div className="settings-card-content">
+                  <h3 className="settings-card-title">Audit Logs</h3>
+                  <p className="settings-card-description">
+                    Track important activities, security events, and data changes.
+                  </p>
+                </div>
+              </div>
+
+              <div className="settings-card-footer">
+                <button
+                  type="button"
+                  className="btn-manage-settings"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate("/settings/audit-logs");
+                  }}
+                >
+                  <span>View Logs</span>
+                  <ArrowRight size={16} />
                 </button>
               </div>
             </div>

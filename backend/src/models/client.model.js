@@ -447,6 +447,84 @@ class ClientModel {
       client.release();
     }
   }
+
+  static async findForExport({ client_ids = [], filters = {} }) {
+    const params = [];
+    const conditions = [];
+
+    // If client_ids is provided and non-empty, it takes priority
+    if (Array.isArray(client_ids) && client_ids.length > 0) {
+      const validIds = client_ids
+        .map((id) => parseInt(id, 10))
+        .filter((id) => !isNaN(id) && id > 0);
+
+      if (validIds.length > 0) {
+        params.push(validIds);
+        conditions.push(`c.id = ANY($${params.length}::int[])`);
+      } else {
+        return [];
+      }
+    } else if (filters && typeof filters === "object") {
+      const { search, status, client_type, client_type_id } = filters;
+
+      if (search && typeof search === "string" && search.trim()) {
+        params.push(`%${search.trim()}%`);
+        const pIdx = params.length;
+        conditions.push(`(
+          c.name ILIKE $${pIdx} OR
+          c.business_name ILIKE $${pIdx} OR
+          c.ucc_no ILIKE $${pIdx} OR
+          c.mobile_no ILIKE $${pIdx} OR
+          c.whatsapp_no ILIKE $${pIdx} OR
+          c.email ILIKE $${pIdx} OR
+          c.pan ILIKE $${pIdx}
+        )`);
+      }
+
+      if (status && typeof status === "string" && status.trim() && status.toLowerCase() !== "all") {
+        params.push(status.trim().toLowerCase());
+        conditions.push(`c.status = $${params.length}`);
+      }
+
+      const typeVal = client_type_id || client_type;
+      if (typeVal) {
+        if (parseInt(typeVal, 10)) {
+          params.push(parseInt(typeVal, 10));
+          conditions.push(`c.client_type_id = $${params.length}`);
+        } else if (typeof typeVal === "string" && typeVal.trim()) {
+          params.push(typeVal.trim().toLowerCase());
+          conditions.push(`LOWER(ct.name) = $${params.length}`);
+        }
+      }
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
+    const query = `
+      SELECT
+        c.id,
+        c.ucc_no,
+        c.name,
+        c.business_name,
+        ct.name AS client_type_name,
+        c.mobile_no,
+        c.whatsapp_no,
+        c.email,
+        c.pan,
+        c.dob,
+        c.gender,
+        c.occupation,
+        c.status,
+        c.created_at
+      FROM clients c
+      INNER JOIN client_types ct ON ct.id = c.client_type_id
+      ${whereClause}
+      ORDER BY c.id DESC
+    `;
+
+    const result = await pool.query(query, params);
+    return result.rows;
+  }
 }
 
 module.exports = ClientModel;

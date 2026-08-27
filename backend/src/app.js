@@ -19,6 +19,7 @@ const documentRoutes = require("./routes/document.routes");
 const adminDocumentRoutes = require("./routes/adminDocument.routes");
 const communicationRoutes = require("./routes/communication.routes");
 const groupRoutes = require("./routes/group.routes");
+const adminAuditLogRoutes = require("./routes/adminAuditLog.routes");
 const errorHandler = require("./middleware/error.middleware");
 
 const app = express();
@@ -70,6 +71,7 @@ app.use("/api/admin/roles", rolePermissionRoutes);
 app.use("/api/admin/client-types", adminClientTypeRoutes);
 app.use("/api/admin/client-services", adminClientServiceRoutes);
 app.use("/api/admin/documents", adminDocumentRoutes);
+app.use("/api/admin/audit-logs", adminAuditLogRoutes);
 
 // Client Module Routes
 app.use("/api/clients", clientRoutes);
@@ -79,6 +81,10 @@ app.use("/api/clients/:clientId/documents", documentRoutes);
 
 // WhatsApp Module Routes
 app.use("/api/whatsapp", whatsappRoutes);
+
+// Leads Module Routes
+const leadRoutes = require("./routes/lead.routes");
+app.use("/api/leads", leadRoutes);
 
 // Internal Communication Routes
 app.use("/api/communication", communicationRoutes);

@@ -3,6 +3,7 @@ const path = require("path");
 const crypto = require("crypto");
 const DocumentModel = require("../models/document.model");
 const ClientModel = require("../models/client.model");
+const AuditService = require("./audit.service");
 const { encryptBuffer, decryptBuffer } = require("../utils/encryption.util");
 const { isValidDocumentType, validateUploadedFile } = require("../utils/fileValidation.util");
 
@@ -92,6 +93,21 @@ class DocumentService {
         client_id: numericClientId,
         document_id: newDoc.id,
         action: "DOCUMENT_UPLOADED",
+      });
+
+      await AuditService.log({
+        userId,
+        action: "UPLOAD",
+        module: "DOCUMENTS",
+        entityType: "DOCUMENT",
+        entityId: newDoc.id,
+        description: `Uploaded document ${newDoc.document_type} (${file.originalname}) for client #${numericClientId}`,
+        newValues: {
+          document_type: newDoc.document_type,
+          document_name: newDoc.document_name,
+          original_file_name: file.originalname,
+          file_size: file.size,
+        },
       });
 
       return newDoc;
@@ -199,6 +215,17 @@ class DocumentService {
       document_id: numericDocId,
       action: isDownload ? "DOCUMENT_DOWNLOADED" : "DOCUMENT_VIEWED",
     });
+
+    if (isDownload) {
+      await AuditService.log({
+        userId,
+        action: "DOWNLOAD",
+        module: "DOCUMENTS",
+        entityType: "DOCUMENT",
+        entityId: numericDocId,
+        description: `Downloaded document ${doc.document_type} (${doc.original_file_name}) for client #${numericClientId}`,
+      });
+    }
 
     return {
       buffer: decryptedBuffer,
@@ -313,6 +340,17 @@ class DocumentService {
         action: "DOCUMENT_REPLACED",
       });
 
+      await AuditService.log({
+        userId,
+        action: "REPLACE",
+        module: "DOCUMENTS",
+        entityType: "DOCUMENT",
+        entityId: numericDocId,
+        description: `Replaced document ${updatedDoc.document_type} for client #${numericClientId}`,
+        oldValues: { document_type: doc.document_type, original_file_name: doc.original_file_name },
+        newValues: { document_type: updatedDoc.document_type, original_file_name: updatedDoc.original_file_name },
+      });
+
       return updatedDoc;
     } catch (dbErr) {
       // Transaction safety: Clean up newly written file if DB update fails, keeping old file intact
@@ -357,6 +395,17 @@ class DocumentService {
       action: "DOCUMENT_APPROVED",
     });
 
+    await AuditService.log({
+      userId,
+      action: "APPROVE",
+      module: "DOCUMENTS",
+      entityType: "DOCUMENT",
+      entityId: numericDocId,
+      description: `Approved document #${numericDocId} (${doc.document_type}) for client #${doc.client_id}`,
+      oldValues: { status: doc.status },
+      newValues: { status: approvedDoc.status },
+    });
+
     return approvedDoc;
   }
 
@@ -394,6 +443,17 @@ class DocumentService {
       client_id: doc.client_id,
       document_id: numericDocId,
       action: "DOCUMENT_REJECTED",
+    });
+
+    await AuditService.log({
+      userId,
+      action: "REJECT",
+      module: "DOCUMENTS",
+      entityType: "DOCUMENT",
+      entityId: numericDocId,
+      description: `Rejected document #${numericDocId} (${doc.document_type}) for client #${doc.client_id}: ${reasonStr}`,
+      oldValues: { status: doc.status },
+      newValues: { status: rejectedDoc.status, rejection_reason: reasonStr },
     });
 
     return rejectedDoc;
@@ -438,6 +498,15 @@ class DocumentService {
       client_id: numericClientId,
       document_id: numericDocId,
       action: "DOCUMENT_DELETED",
+    });
+
+    await AuditService.log({
+      userId,
+      action: "DELETE",
+      module: "DOCUMENTS",
+      entityType: "DOCUMENT",
+      entityId: numericDocId,
+      description: `Deleted document ${doc.document_type} (${doc.original_file_name}) for client #${numericClientId}`,
     });
 
     // Delete physical encrypted storage file

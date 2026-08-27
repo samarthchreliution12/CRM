@@ -233,8 +233,11 @@ async function runClientAPITests() {
     const tempClientRes = await makeRequest("POST", "/api/clients", {
       ucc_no: "APIUCC004",
       name: "Temp Client For Delete",
+      pan: "ABCDE1234F",
+      dob: "1990-05-15",
       client_type_id: individualType.id,
     }, adminToken);
+    assert(tempClientRes.statusCode === 201 && tempClientRes.body.success, "Temp client created for delete");
     const tempClientId = tempClientRes.body.data.client.id;
 
     const adminDeleteRes = await makeRequest("DELETE", `/api/clients/${tempClientId}`, null, adminToken);
@@ -244,8 +247,11 @@ async function runClientAPITests() {
     const tempClientRes2 = await makeRequest("POST", "/api/clients", {
       ucc_no: "APIUCC005",
       name: "Temp Client For Staff Delete",
+      pan: "ABCDE5678G",
+      dob: "1988-10-20",
       client_type_id: individualType.id,
     }, adminToken);
+    assert(tempClientRes2.statusCode === 201 && tempClientRes2.body.success, "Temp client created for staff delete");
     const tempClientId2 = tempClientRes2.body.data.client.id;
 
     const staffDeleteRes = await makeRequest("DELETE", `/api/clients/${tempClientId2}`, null, staffToken);
@@ -258,10 +264,20 @@ async function runClientAPITests() {
     // --- 2. Client Validation Tests ---
     console.log("\n--- 2. Client Validation Tests ---");
 
+    // Missing DOB or PAN rejected
+    const noDobPanRes = await makeRequest("POST", "/api/clients", {
+      ucc_no: "APIUCCNODOB",
+      name: "No DOB PAN Client",
+      client_type_id: individualType.id,
+    }, adminToken);
+    assert(noDobPanRes.statusCode === 400, "Client creation without DOB and PAN rejected (400 Bad Request)");
+
     // Duplicate UCC rejected
     const dupUccRes = await makeRequest("POST", "/api/clients", {
       ucc_no: "APIUCC001",
       name: "Duplicate UCC Client",
+      pan: "ABCDE9999Z",
+      dob: "1991-01-01",
       client_type_id: individualType.id,
     }, adminToken);
     assert(dupUccRes.statusCode === 409, "Duplicate UCC number rejected (409 Conflict)");
@@ -271,6 +287,8 @@ async function runClientAPITests() {
       ucc_no: "APIUCC006",
       name: "Invalid Email Client",
       email: "invalid-email-format",
+      pan: "ABCDE8888X",
+      dob: "1991-01-01",
       client_type_id: individualType.id,
     }, adminToken);
     assert(invalidEmailRes.statusCode === 400, "Invalid email format rejected (400 Bad Request)");
@@ -280,6 +298,8 @@ async function runClientAPITests() {
       ucc_no: "APIUCC007",
       name: "Invalid Mobile Client",
       mobile_no: "123",
+      pan: "ABCDE7777Y",
+      dob: "1991-01-01",
       client_type_id: individualType.id,
     }, adminToken);
     assert(invalidMobileRes.statusCode === 400, "Invalid mobile number format rejected (400 Bad Request)");
@@ -289,6 +309,7 @@ async function runClientAPITests() {
       ucc_no: "APIUCC008",
       name: "Invalid PAN Client",
       pan: "INVALIDPAN123",
+      dob: "1991-01-01",
       client_type_id: individualType.id,
     }, adminToken);
     assert(invalidPanRes.statusCode === 400, "Invalid PAN number format rejected (400 Bad Request)");
@@ -297,6 +318,8 @@ async function runClientAPITests() {
     const invalidTypeRes = await makeRequest("POST", "/api/clients", {
       ucc_no: "APIUCC009",
       name: "Invalid Type Client",
+      pan: "ABCDE6666W",
+      dob: "1991-01-01",
       client_type_id: 99999,
     }, adminToken);
     assert(invalidTypeRes.statusCode === 400, "Invalid client_type_id rejected (400 Bad Request)");

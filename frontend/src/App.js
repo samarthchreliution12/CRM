@@ -12,6 +12,7 @@ import ResetPassword from "./pages/auth/ResetPassword/ResetPassword";
 import Dashboard from "./pages/dashboard/Dashboard";
 import Profile from "./pages/profile/Profile";
 import Clients from "./pages/clients/Clients";
+import Leads from "./pages/leads/Leads";
 import AddClient from "./pages/clients/AddClient";
 import ClientDetails from "./pages/clients/ClientDetails";
 import Documents from "./pages/documents/Documents";
@@ -20,6 +21,7 @@ import Settings from "./pages/settings/Settings";
 import UserAccess from "./pages/settings/users/UserAccess";
 import ClientTypes from "./pages/settings/clientConfiguration/ClientTypes";
 import ClientServices from "./pages/settings/clientConfiguration/ClientServices";
+import AuditLogs from "./pages/settings/auditLogs/AuditLogs";
 
 import "./styles/global.css";
 
@@ -68,6 +70,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/leads"
+            element={
+              <ProtectedRoute>
+                <Leads />
               </ProtectedRoute>
             }
           />
@@ -163,6 +173,16 @@ function App() {
               <ProtectedRoute>
                 <AdminRoute>
                   <ClientServices />
+                </AdminRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/audit-logs"
+            element={
+              <ProtectedRoute>
+                <AdminRoute>
+                  <AuditLogs />
                 </AdminRoute>
               </ProtectedRoute>
             }

@@ -2,13 +2,14 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const UserModel = require("../models/user.model");
 const RoleModel = require("../models/role.model");
+const AuditService = require("./audit.service");
 const config = require("../config/env");
 
 class AuthService {
   /**
    * Authenticates user email and password.
    */
-  static async login(email, password) {
+  static async login(email, password, context = {}) {
     const user = await UserModel.findByEmail(email);
 
     if (!user) {
@@ -47,6 +48,16 @@ class AuthService {
       config.jwtSecret,
       { expiresIn: config.jwtExpiresIn }
     );
+
+    await AuditService.log({
+      userId: userProfile.id,
+      action: "LOGIN",
+      module: "AUTH",
+      entityType: "USER",
+      entityId: userProfile.id,
+      description: `User logged in: ${userProfile.email}`,
+      ipAddress: context.ipAddress,
+    });
 
     return {
       token,

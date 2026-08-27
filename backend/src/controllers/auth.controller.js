@@ -8,7 +8,8 @@ class AuthController {
   static async login(req, res, next) {
     try {
       const { email, password } = req.body;
-      const result = await AuthService.login(email.trim(), password);
+      const context = { ipAddress: req.ip || req.headers["x-forwarded-for"] };
+      const result = await AuthService.login(email.trim(), password, context);
       return sendSuccess(res, 200, "Login successful", result);
     } catch (error) {
       next(error);

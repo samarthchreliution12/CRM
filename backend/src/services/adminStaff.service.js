@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const UserModel = require("../models/user.model");
 const RoleModel = require("../models/role.model");
+const AuditService = require("./audit.service");
 
 class AdminStaffService {
   /**
@@ -26,7 +27,7 @@ class AdminStaffService {
   /**
    * Create a new Staff user account.
    */
-  static async createStaff({ name, email, mobile, password, role_id, roleId }) {
+  static async createStaff({ name, email, mobile, password, role_id, roleId }, context = {}) {
     const trimmedEmail = email.trim().toLowerCase();
 
     // Check email uniqueness
@@ -57,13 +58,25 @@ class AdminStaffService {
     });
 
     const createdStaff = await UserModel.findStaffById(newUser.id);
+
+    await AuditService.log({
+      userId: context.userId,
+      action: "CREATE",
+      module: "USERS",
+      entityType: "USER",
+      entityId: createdStaff.id,
+      description: `Created staff user: ${createdStaff.name} (${createdStaff.email})`,
+      newValues: { name: createdStaff.name, email: createdStaff.email, mobile: createdStaff.mobile, role_id: createdStaff.role_id },
+      ipAddress: context.ipAddress,
+    });
+
     return createdStaff;
   }
 
   /**
    * Update Staff user profile fields.
    */
-  static async updateStaff(id, { name, email, mobile, role_id, roleId }) {
+  static async updateStaff(id, { name, email, mobile, role_id, roleId }, context = {}) {
     const targetStaff = await UserModel.findStaffById(id);
     if (!targetStaff) {
       const error = new Error("Staff user not found");
@@ -94,13 +107,29 @@ class AdminStaffService {
     });
 
     const updatedStaff = await UserModel.findStaffById(id);
+
+    const { oldValues, newValues } = AuditService.calculateDiff(targetStaff, updatedStaff);
+    if (oldValues || newValues) {
+      await AuditService.log({
+        userId: context.userId,
+        action: "UPDATE",
+        module: "USERS",
+        entityType: "USER",
+        entityId: updatedStaff.id,
+        description: `Updated staff user: ${updatedStaff.name} (${updatedStaff.email})`,
+        oldValues,
+        newValues,
+        ipAddress: context.ipAddress,
+      });
+    }
+
     return updatedStaff;
   }
 
   /**
    * Update Staff user status (active / inactive).
    */
-  static async updateStaffStatus(id, status) {
+  static async updateStaffStatus(id, status, context = {}) {
     const targetStaff = await UserModel.findStaffById(id);
     if (!targetStaff) {
       const error = new Error("Staff user not found");
@@ -110,13 +139,26 @@ class AdminStaffService {
 
     const cleanStatus = status.trim().toLowerCase();
     const updatedStaff = await UserModel.updateStaffStatus(id, cleanStatus);
+
+    await AuditService.log({
+      userId: context.userId,
+      action: "UPDATE",
+      module: "USERS",
+      entityType: "USER",
+      entityId: targetStaff.id,
+      description: `Updated status for user '${targetStaff.name}' from '${targetStaff.status}' to '${updatedStaff.status}'`,
+      oldValues: { status: targetStaff.status },
+      newValues: { status: updatedStaff.status },
+      ipAddress: context.ipAddress,
+    });
+
     return updatedStaff;
   }
 
   /**
    * Delete Staff user account.
    */
-  static async deleteStaff(id, adminUserId) {
+  static async deleteStaff(id, adminUserId, context = {}) {
     const targetStaff = await UserModel.findStaffById(id);
     if (!targetStaff) {
       const error = new Error("Staff user not found");
@@ -131,6 +173,17 @@ class AdminStaffService {
     }
 
     await UserModel.deleteStaff(id);
+
+    await AuditService.log({
+      userId: context.userId || adminUserId,
+      action: "DELETE",
+      module: "USERS",
+      entityType: "USER",
+      entityId: targetStaff.id,
+      description: `Deleted staff user: ${targetStaff.name} (${targetStaff.email})`,
+      ipAddress: context.ipAddress,
+    });
+
     return { message: "Staff user deleted successfully" };
   }
 }

@@ -1,5 +1,6 @@
 const RoleModel = require("../models/role.model");
 const PermissionModel = require("../models/permission.model");
+const AuditService = require("./audit.service");
 
 class RolePermissionService {
   static async getRoles() {
@@ -26,13 +27,16 @@ class RolePermissionService {
     };
   }
 
-  static async replaceRolePermissions(roleId, permissionIds) {
+  static async replaceRolePermissions(roleId, permissionIds, context = {}) {
     const role = await RoleModel.findById(roleId);
     if (!role) {
       const error = new Error("Role not found");
       error.statusCode = 404;
       throw error;
     }
+
+    const oldPerms = await PermissionModel.getPermissionsByRoleId(roleId);
+    const oldPermissionIds = oldPerms.map((p) => p.id);
 
     // Verify all permission IDs exist
     if (permissionIds && permissionIds.length > 0) {
@@ -50,6 +54,18 @@ class RolePermissionService {
 
     // Execute transactional replacement
     const updatedPermissions = await PermissionModel.replaceRolePermissions(roleId, permissionIds);
+
+    await AuditService.log({
+      userId: context.userId,
+      action: "UPDATE",
+      module: "PERMISSIONS",
+      entityType: "ROLE",
+      entityId: role.id,
+      description: `Updated permissions for role '${role.name}'`,
+      oldValues: { permission_ids: oldPermissionIds },
+      newValues: { permission_ids: permissionIds },
+      ipAddress: context.ipAddress,
+    });
 
     return {
       role_id: role.id,

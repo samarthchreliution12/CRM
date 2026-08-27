@@ -33,6 +33,7 @@ export const ACTION_COLUMNS = [
   { label: "Read", suffix: "view" },
   { label: "Create", suffix: "create" },
   { label: "Update", suffix: "edit" },
+  { label: "Verify", suffix: "verify" },
   { label: "Delete", suffix: "delete" },
 ];
 

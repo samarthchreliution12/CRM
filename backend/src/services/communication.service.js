@@ -1,5 +1,6 @@
 const CommunicationModel = require("../models/communication.model");
 const pool = require("../config/database");
+const AuditService = require("./audit.service");
 
 class CommunicationService {
   // Get all active conversations for the logged in user
@@ -110,6 +111,15 @@ class CommunicationService {
     const channelName = name.trim().startsWith("#") ? name.trim() : `#${name.trim()}`;
     const conversation = await CommunicationModel.createChannelConversation(channelName, userId);
 
+    await AuditService.log({
+      userId,
+      action: "CREATE",
+      module: "COMMUNICATION",
+      entityType: "CHANNEL",
+      entityId: conversation.id,
+      description: `Created channel: ${conversation.name}`,
+    });
+
     return {
       id: conversation.id,
       type: "channel",
@@ -168,7 +178,19 @@ class CommunicationService {
       throw err;
     }
 
-    return await CommunicationModel.addConversationMembers(conversationId, userIds);
+    const result = await CommunicationModel.addConversationMembers(conversationId, userIds);
+
+    await AuditService.log({
+      userId,
+      action: "ADD_MEMBER",
+      module: "COMMUNICATION",
+      entityType: "CHANNEL",
+      entityId: conversationId,
+      description: `Added member(s) to channel '${conversation.name}'`,
+      newValues: { user_ids: userIds },
+    });
+
+    return result;
   }
 
   // Remove a member from a conversation
@@ -209,6 +231,15 @@ class CommunicationService {
     }
 
     await CommunicationModel.removeConversationMember(conversationId, parsedTargetId);
+
+    await AuditService.log({
+      userId,
+      action: "REMOVE_MEMBER",
+      module: "COMMUNICATION",
+      entityType: "CHANNEL",
+      entityId: conversationId,
+      description: `Removed member #${parsedTargetId} from channel '${conversation.name}'`,
+    });
 
     return await CommunicationModel.getConversationMembers(conversationId);
   }
@@ -443,6 +474,15 @@ class CommunicationService {
 
     // 5. Execute deletion in atomic transaction
     await CommunicationModel.deleteChannel(parsedChannelId);
+
+    await AuditService.log({
+      userId,
+      action: "DELETE",
+      module: "COMMUNICATION",
+      entityType: "CHANNEL",
+      entityId: parsedChannelId,
+      description: `Deleted channel: ${conversation.name}`,
+    });
 
     return {
       success: true,

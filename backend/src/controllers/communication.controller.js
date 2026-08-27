@@ -68,8 +68,8 @@ class CommunicationController {
       const userId = req.user.id;
       const userRole = req.user.role?.name || "";
       const conversationId = parseInt(req.params.conversationId, 10);
-      const { user_ids } = req.body;
-      const updatedMembers = await CommunicationService.addConversationMembers(userId, userRole, conversationId, user_ids);
+      const userIds = req.body.user_ids || req.body.userIds;
+      const updatedMembers = await CommunicationService.addConversationMembers(userId, userRole, conversationId, userIds);
       return res.status(200).json({
         success: true,
         message: "Members added successfully",

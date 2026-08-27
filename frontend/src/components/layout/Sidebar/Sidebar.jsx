@@ -46,6 +46,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           const isActive = location.pathname === item.path;
           const isImplemented =
             item.path === "/dashboard" ||
+            item.path === "/leads" ||
             item.path === "/clients" ||
             item.path === "/documents" ||
             item.path === "/communication";

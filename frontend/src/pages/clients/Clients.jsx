@@ -16,6 +16,8 @@ import {
   ChevronDown,
   Download,
   Upload,
+  X,
+  CheckCircle2,
 } from "lucide-react";
 import "./Clients.css";
 
@@ -61,11 +63,18 @@ const Clients = () => {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   // Import / Export Dropdown & Selection State
   const [isImpExpOpen, setIsImpExpOpen] = useState(false);
   const [selectedClientIds, setSelectedClientIds] = useState([]);
   const dropdownRef = useRef(null);
+
+  // Export Modal State
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [exportScope, setExportScope] = useState("all"); // 'all' | 'filtered' | 'selected'
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState("");
 
   // Reveal Contact State (Row/Client scoped state: { [clientId]: boolean })
   const [revealedClients, setRevealedClients] = useState({});
@@ -225,16 +234,74 @@ const Clients = () => {
   // Import / Export UI Handlers
   const handleImportClick = () => {
     setIsImpExpOpen(false);
-    alert("Import Clients feature is ready in UI. Backend API integration coming soon.");
+    alert("Import Data feature is coming soon.");
   };
 
-  const handleExportClick = () => {
+  const handleOpenExportModal = () => {
     setIsImpExpOpen(false);
-    const count = selectedClientIds.length;
-    if (count > 0) {
-      alert(`Export Selected (${count} client${count > 1 ? "s" : ""}) feature is ready in UI. Backend API integration coming soon.`);
-    } else {
-      alert("Export Clients feature is ready in UI. Backend API integration coming soon.");
+    setExportError("");
+    setExportScope(selectedClientIds.length > 0 ? "selected" : "all");
+    setIsExportModalOpen(true);
+  };
+
+  const handleCloseExportModal = () => {
+    if (isExporting) return;
+    setIsExportModalOpen(false);
+    setExportError("");
+  };
+
+  const handlePerformExport = async () => {
+    if (isExporting) return;
+    try {
+      setIsExporting(true);
+      setExportError("");
+
+      let payload = {
+        client_ids: [],
+        filters: {},
+        format: "csv",
+      };
+
+      if (exportScope === "selected") {
+        payload.client_ids = selectedClientIds;
+      } else if (exportScope === "filtered") {
+        payload.filters = {
+          search: search.trim(),
+          status: statusFilter !== "all" ? statusFilter : "",
+          client_type_id: typeFilter !== "all" ? typeFilter : "",
+        };
+      }
+
+      const { blob, filename } = await ClientService.exportClients(payload, token);
+
+      // Trigger browser file download
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      if (link.parentNode) {
+        link.parentNode.removeChild(link);
+      }
+      window.URL.revokeObjectURL(blobUrl);
+
+      // Success UX behavior
+      setIsExportModalOpen(false);
+      setSuccessMessage("Clients exported successfully.");
+      setTimeout(() => {
+        setSuccessMessage("");
+      }, 4000);
+    } catch (err) {
+      if (err.statusCode === 403) {
+        setExportError("You do not have permission to export clients.");
+      } else if (err.statusCode === 404) {
+        setExportError("No clients found to export.");
+      } else {
+        setExportError(err.message || "Unable to export clients. Please try again.");
+      }
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -289,25 +356,29 @@ const Clients = () => {
                     onClick={handleImportClick}
                   >
                     <Upload size={14} className="menu-icon import-icon" />
-                    <span>Import Clients</span>
+                    <span>Import Data</span>
                   </button>
                   <button
                     type="button"
                     className="dropdown-menu-item"
-                    onClick={handleExportClick}
+                    onClick={handleOpenExportModal}
                   >
                     <Download size={14} className="menu-icon export-icon" />
-                    <span>
-                      {selectedClientIds.length > 0
-                        ? `Export Selected (${selectedClientIds.length})`
-                        : "Export Clients"}
-                    </span>
+                    <span>Export Data</span>
                   </button>
                 </div>
               )}
             </div>
           </div>
         </div>
+
+        {/* Success Banner */}
+        {successMessage && (
+          <div className="banner-success">
+            <CheckCircle2 size={18} />
+            <span>{successMessage}</span>
+          </div>
+        )}
 
         {/* Global Error Banner */}
         {error && (
@@ -580,6 +651,140 @@ const Clients = () => {
           )}
         </div>
       </div>
+
+      {/* Export Clients Modal */}
+      {isExportModalOpen && (
+        <div className="modal-backdrop" onClick={handleCloseExportModal}>
+          <div className="export-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="export-modal-header">
+              <div className="export-modal-header-text">
+                <h3 className="export-modal-title">Export Clients</h3>
+                <p className="export-modal-desc">
+                  Choose which client data you want to export.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn-export-modal-close"
+                onClick={handleCloseExportModal}
+                disabled={isExporting}
+                aria-label="Close modal"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="export-modal-body">
+              {exportError && (
+                <div className="banner-error" style={{ marginBottom: "1.25rem" }}>
+                  <AlertCircle size={16} />
+                  <span>{exportError}</span>
+                </div>
+              )}
+
+              <div className="export-option-group">
+                <label className="export-label">Select Export Scope</label>
+                <div className="export-radio-list">
+                  <label className={`export-radio-item ${exportScope === "all" ? "selected" : ""}`}>
+                    <input
+                      type="radio"
+                      name="exportScope"
+                      value="all"
+                      checked={exportScope === "all"}
+                      onChange={() => setExportScope("all")}
+                      disabled={isExporting}
+                    />
+                    <div className="export-radio-label-text">
+                      <span className="radio-main-text">All Clients</span>
+                      <span className="radio-sub-text">Export all client records accessible in the system.</span>
+                    </div>
+                  </label>
+
+                  <label className={`export-radio-item ${exportScope === "filtered" ? "selected" : ""}`}>
+                    <input
+                      type="radio"
+                      name="exportScope"
+                      value="filtered"
+                      checked={exportScope === "filtered"}
+                      onChange={() => setExportScope("filtered")}
+                      disabled={isExporting}
+                    />
+                    <div className="export-radio-label-text">
+                      <span className="radio-main-text">Current Filtered Clients</span>
+                      <span className="radio-sub-text">
+                        Export clients matching active filters ({search ? `Search: "${search}"` : "Active page filters"}).
+                      </span>
+                    </div>
+                  </label>
+
+                  <label
+                    className={`export-radio-item ${exportScope === "selected" ? "selected" : ""} ${
+                      selectedClientIds.length === 0 ? "disabled" : ""
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="exportScope"
+                      value="selected"
+                      checked={exportScope === "selected"}
+                      onChange={() => setExportScope("selected")}
+                      disabled={selectedClientIds.length === 0 || isExporting}
+                    />
+                    <div className="export-radio-label-text">
+                      <span className="radio-main-text">
+                        Selected Clients ({selectedClientIds.length})
+                      </span>
+                      <span className="radio-sub-text">
+                        {selectedClientIds.length > 0
+                          ? `Export only the ${selectedClientIds.length} checked client(s).`
+                          : "No clients checked in table."}
+                      </span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <div className="export-option-group" style={{ marginTop: "1.25rem" }}>
+                <label className="export-label">Export Format</label>
+                <div className="export-format-card">
+                  <span className="format-dot">●</span>
+                  <span className="format-name">CSV</span>
+                  <span className="format-note">(Comma-Separated Values)</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="export-modal-footer">
+              <button
+                type="button"
+                className="btn-export-cancel"
+                onClick={handleCloseExportModal}
+                disabled={isExporting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-export-submit"
+                onClick={handlePerformExport}
+                disabled={isExporting}
+              >
+                {isExporting ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Exporting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download size={16} />
+                    <span>Export Clients</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppLayout>
   );
 };

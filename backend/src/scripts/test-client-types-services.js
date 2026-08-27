@@ -233,6 +233,8 @@ async function runTests() {
     const createClientRes = await makeRequest("POST", "/api/clients", {
       ucc_no: "CTSUCC001",
       name: "Client Service Test 1",
+      pan: "ABCDE1234F",
+      dob: "1995-01-01",
       client_type_id: testCtId1,
       service_ids: [testCsId1, testCsId2]
     }, adminToken);
@@ -261,6 +263,8 @@ async function runTests() {
     const dupAssignClientRes = await makeRequest("POST", "/api/clients", {
       ucc_no: "CTSUCC002",
       name: "Client Service Dup Test",
+      pan: "ABCDE2222X",
+      dob: "1995-01-01",
       client_type_id: testCtId1,
       service_ids: [testCsId1, testCsId1] // Passed twice
     }, adminToken);
@@ -270,6 +274,8 @@ async function runTests() {
     const invalidCsRes = await makeRequest("POST", "/api/clients", {
       ucc_no: "CTSUCC003",
       name: "Invalid Service Client",
+      pan: "ABCDE3333Y",
+      dob: "1995-01-01",
       client_type_id: testCtId1,
       service_ids: [99999]
     }, adminToken);
@@ -279,6 +285,8 @@ async function runTests() {
     const inactiveCsAssignRes = await makeRequest("POST", "/api/clients", {
       ucc_no: "CTSUCC004",
       name: "Inactive Service Client",
+      pan: "ABCDE4444Z",
+      dob: "1995-01-01",
       client_type_id: testCtId1,
       service_ids: [inactiveCsId]
     }, adminToken);

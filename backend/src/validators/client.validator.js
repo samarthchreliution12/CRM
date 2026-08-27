@@ -36,11 +36,29 @@ function validateCreateClientInput(data) {
     }
   }
 
-  if (data.pan && data.pan.trim()) {
-    const panClean = data.pan.trim().toUpperCase();
+  // PAN is MANDATORY for Client creation
+  if (!data.pan || !data.pan.toString().trim()) {
+    errors.push({ field: "pan", message: "PAN number is required to create a client" });
+  } else {
+    const panClean = data.pan.toString().trim().toUpperCase();
     const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
     if (!panRegex.test(panClean)) {
       errors.push({ field: "pan", message: "Invalid PAN number format (e.g. ABCDE1234F)" });
+    }
+  }
+
+  // DOB is MANDATORY for Client creation
+  if (!data.dob || !data.dob.toString().trim()) {
+    errors.push({ field: "dob", message: "Date of birth (dob) is required to create a client" });
+  } else {
+    const dobDate = new Date(data.dob);
+    if (isNaN(dobDate.getTime())) {
+      errors.push({ field: "dob", message: "Invalid date of birth format" });
+    } else {
+      const today = new Date();
+      if (dobDate > today) {
+        errors.push({ field: "dob", message: "Date of birth cannot be in the future" });
+      }
     }
   }
 

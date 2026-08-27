@@ -30,7 +30,8 @@ class RolePermissionController {
         return sendError(res, 400, "Validation failed", validation.errors);
       }
 
-      const result = await RolePermissionService.replaceRolePermissions(roleId, req.body.permission_ids);
+      const context = { userId: req.user?.id, ipAddress: req.ip || req.headers["x-forwarded-for"] };
+      const result = await RolePermissionService.replaceRolePermissions(roleId, req.body.permission_ids, context);
       return sendSuccess(res, 200, "Role permissions updated successfully", result);
     } catch (error) {
       return sendError(res, error.statusCode || 500, error.message, error.errors);

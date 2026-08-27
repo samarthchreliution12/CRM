@@ -17,6 +17,13 @@ class UserModel {
   }
 
   /**
+   * Find user by ID.
+   */
+  static async findById(id) {
+    return this.findByIdWithRoleAndPermissions(id);
+  }
+
+  /**
    * Find user by ID with role name and assigned permissions (excluding password_hash).
    */
   static async findByIdWithRoleAndPermissions(id) {

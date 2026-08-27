@@ -6,7 +6,8 @@ class GroupController {
   static async createGroup(req, res, next) {
     try {
       const { name, description } = req.body;
-      const group = await GroupService.createGroup({ name, description });
+      const context = { userId: req.user?.id, ipAddress: req.ip || req.headers["x-forwarded-for"] };
+      const group = await GroupService.createGroup({ name, description }, context);
       return sendSuccess(res, 201, "Group created successfully", { group });
     } catch (err) {
       next(err);
@@ -39,7 +40,8 @@ class GroupController {
     try {
       const { id } = req.params;
       const userIds = req.body.userIds || req.body.user_ids || req.body.userIds;
-      const result = await GroupService.addMembers(id, userIds);
+      const context = { userId: req.user?.id, ipAddress: req.ip || req.headers["x-forwarded-for"] };
+      const result = await GroupService.addMembers(id, userIds, context);
       return sendSuccess(res, 200, result.message, result);
     } catch (err) {
       next(err);
@@ -50,7 +52,8 @@ class GroupController {
   static async removeMember(req, res, next) {
     try {
       const { id, userId } = req.params;
-      const result = await GroupService.removeMember(id, userId);
+      const context = { userId: req.user?.id, ipAddress: req.ip || req.headers["x-forwarded-for"] };
+      const result = await GroupService.removeMember(id, userId, context);
       return sendSuccess(res, 200, result.message, result);
     } catch (err) {
       next(err);
@@ -61,7 +64,8 @@ class GroupController {
   static async updatePermissions(req, res, next) {
     try {
       const { id } = req.params;
-      const result = await GroupService.updatePermissions(id, req.body);
+      const context = { userId: req.user?.id, ipAddress: req.ip || req.headers["x-forwarded-for"] };
+      const result = await GroupService.updatePermissions(id, req.body, context);
       return sendSuccess(res, 200, result.message, result);
     } catch (err) {
       next(err);
@@ -72,7 +76,8 @@ class GroupController {
   static async deleteGroup(req, res, next) {
     try {
       const { id } = req.params;
-      const result = await GroupService.deleteGroup(id);
+      const context = { userId: req.user?.id, ipAddress: req.ip || req.headers["x-forwarded-for"] };
+      const result = await GroupService.deleteGroup(id, context);
       return sendSuccess(res, 200, result.message, result);
     } catch (err) {
       next(err);

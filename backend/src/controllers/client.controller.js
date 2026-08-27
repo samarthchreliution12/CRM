@@ -37,7 +37,8 @@ class ClientController {
         return sendError(res, 400, "Validation failed", validation.errors);
       }
 
-      const client = await ClientService.createClient(req.body);
+      const context = { userId: req.user?.id, ipAddress: req.ip || req.headers["x-forwarded-for"] };
+      const client = await ClientService.createClient(req.body, context);
       return sendSuccess(res, 201, "Client created successfully", { client });
     } catch (error) {
       return sendError(res, error.statusCode || 500, error.message, error.errors);
@@ -52,7 +53,8 @@ class ClientController {
         return sendError(res, 400, "Validation failed", validation.errors);
       }
 
-      const client = await ClientService.updateClient(id, req.body);
+      const context = { userId: req.user?.id, ipAddress: req.ip || req.headers["x-forwarded-for"] };
+      const client = await ClientService.updateClient(id, req.body, context);
       return sendSuccess(res, 200, "Client updated successfully", { client });
     } catch (error) {
       return sendError(res, error.statusCode || 500, error.message, error.errors);
@@ -67,7 +69,8 @@ class ClientController {
         return sendError(res, 400, "Validation failed", validation.errors);
       }
 
-      const client = await ClientService.updateClientStatus(id, req.body.status);
+      const context = { userId: req.user?.id, ipAddress: req.ip || req.headers["x-forwarded-for"] };
+      const client = await ClientService.updateClientStatus(id, req.body.status, context);
       return sendSuccess(res, 200, "Client status updated successfully", { client });
     } catch (error) {
       return sendError(res, error.statusCode || 500, error.message, error.errors);
@@ -77,8 +80,30 @@ class ClientController {
   static async deleteClient(req, res) {
     try {
       const { id } = req.params;
-      await ClientService.deleteClient(id);
+      const context = { userId: req.user?.id, ipAddress: req.ip || req.headers["x-forwarded-for"] };
+      await ClientService.deleteClient(id, context);
       return sendSuccess(res, 200, "Client deleted successfully");
+    } catch (error) {
+      return sendError(res, error.statusCode || 500, error.message, error.errors);
+    }
+  }
+
+  static async exportClients(req, res) {
+    try {
+      const { client_ids, filters, format } = req.body || {};
+      const context = { userId: req.user?.id, ipAddress: req.ip || req.headers["x-forwarded-for"] };
+      const result = await ClientService.exportClients(
+        {
+          client_ids,
+          filters,
+          format,
+        },
+        context
+      );
+
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader("Content-Disposition", `attachment; filename="${result.filename}"`);
+      return res.status(200).send(result.csvContent);
     } catch (error) {
       return sendError(res, error.statusCode || 500, error.message, error.errors);
     }

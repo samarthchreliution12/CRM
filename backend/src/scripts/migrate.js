@@ -203,6 +203,85 @@ async function runMigrations() {
         updated_at = CURRENT_TIMESTAMP;
     `);
 
+    // Migration step 8: Ensure audit_logs table and indexes exist
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        action VARCHAR(50) NOT NULL,
+        module VARCHAR(50) NOT NULL,
+        entity_type VARCHAR(50) NOT NULL,
+        entity_id INTEGER,
+        description TEXT,
+        old_values JSONB,
+        new_values JSONB,
+        ip_address VARCHAR(50),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id);
+      CREATE INDEX IF NOT EXISTS idx_audit_logs_module ON audit_logs(module);
+      CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action);
+      CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_type, entity_id);
+    `);
+
+    // Migration step 9: Ensure leads table, indexes, and permissions exist
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS leads (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(150) NOT NULL,
+        mobile_no VARCHAR(20),
+        whatsapp_no VARCHAR(20),
+        email VARCHAR(150),
+        company_name VARCHAR(150),
+        client_type_id INTEGER REFERENCES client_types(id) ON DELETE SET NULL,
+        source VARCHAR(50),
+        service_id INTEGER REFERENCES client_services(id) ON DELETE SET NULL,
+        status VARCHAR(30) DEFAULT 'new' NOT NULL,
+        assigned_to INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        priority VARCHAR(20) DEFAULT 'medium' NOT NULL,
+        next_follow_up_at TIMESTAMP WITH TIME ZONE,
+        last_contacted_at TIMESTAMP WITH TIME ZONE,
+        notes TEXT,
+        created_by INTEGER NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+        converted_client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL,
+        converted_at TIMESTAMP WITH TIME ZONE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status);
+      CREATE INDEX IF NOT EXISTS idx_leads_assigned_to ON leads(assigned_to);
+      CREATE INDEX IF NOT EXISTS idx_leads_created_by ON leads(created_by);
+      CREATE INDEX IF NOT EXISTS idx_leads_client_type ON leads(client_type_id);
+      CREATE INDEX IF NOT EXISTS idx_leads_service ON leads(service_id);
+      CREATE INDEX IF NOT EXISTS idx_leads_converted_client ON leads(converted_client_id);
+      CREATE INDEX IF NOT EXISTS idx_leads_next_follow_up ON leads(next_follow_up_at);
+
+      INSERT INTO permissions (permission_key, description, module, action)
+      VALUES 
+        ('lead.read', 'View lead records', 'lead', 'read'),
+        ('lead.view', 'View lead records', 'lead', 'view'),
+        ('lead.create', 'Create lead records', 'lead', 'create'),
+        ('lead.update', 'Update lead records', 'lead', 'update'),
+        ('lead.edit', 'Update lead records', 'lead', 'edit'),
+        ('lead.assign', 'Assign lead records', 'lead', 'assign'),
+        ('lead.delete', 'Delete lead records', 'lead', 'delete')
+      ON CONFLICT (permission_key) DO UPDATE SET 
+        description = EXCLUDED.description, 
+        module = EXCLUDED.module, 
+        action = EXCLUDED.action, 
+        updated_at = CURRENT_TIMESTAMP;
+
+      INSERT INTO role_permissions (role_id, permission_id)
+      SELECT r.id, p.id
+      FROM roles r
+      CROSS JOIN permissions p
+      WHERE r.name IN ('Admin', 'Staff') AND p.module = 'lead'
+      ON CONFLICT DO NOTHING;
+    `);
+
     console.log("Database migrations completed successfully.");
   } catch (error) {
     console.error("Migration error:", error);

@@ -23,6 +23,7 @@ router.post("/conversations/direct", CommunicationController.getOrCreateDirectCo
 
 // POST /api/communication/conversations/channels - Create a channel
 router.post("/conversations/channels", CommunicationController.createChannel);
+router.post("/channels", CommunicationController.createChannel);
 
 // GET /api/communication/conversations/:conversationId/members - Get conversation members
 router.get("/conversations/:conversationId/members", CommunicationController.getConversationMembers);

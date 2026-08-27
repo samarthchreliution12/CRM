@@ -292,6 +292,66 @@ class ClientService {
     );
   }
 
+  /**
+   * Export clients to CSV downloadable blob file.
+   */
+  static async exportClients({ client_ids = [], filters = {}, format = "csv" } = {}, token) {
+    const url = `${API_BASE_URL}/clients/export`;
+    const headers = {
+      "Content-Type": "application/json",
+    };
+
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const body = JSON.stringify({
+      client_ids,
+      filters,
+      format,
+    });
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers,
+      body,
+    });
+
+    if (!response.ok) {
+      let errorMessage = "Unable to export clients. Please try again.";
+      let statusCode = response.status;
+      try {
+        const errorJson = await response.json();
+        if (errorJson && errorJson.message) {
+          errorMessage = errorJson.message;
+        }
+      } catch (e) {
+        if (response.status === 403) {
+          errorMessage = "You do not have permission to export clients.";
+        } else if (response.status === 404) {
+          errorMessage = "No clients found to export.";
+        }
+      }
+      const error = new Error(errorMessage);
+      error.statusCode = statusCode;
+      throw error;
+    }
+
+    const blob = await response.blob();
+
+    // Extract filename from Content-Disposition header if available
+    let filename = `clients-export-${new Date().toISOString().split("T")[0]}.csv`;
+    const contentDisposition = response.headers.get("Content-Disposition");
+    if (contentDisposition) {
+      const match = contentDisposition.match(/filename="?([^";]+)"?/);
+      if (match && match[1]) {
+        filename = match[1].trim();
+      }
+    }
+
+    return { blob, filename };
+  }
+
   /* ======================================================
    * CLIENT DOCUMENTS API METHODS
    * ====================================================== */

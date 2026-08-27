@@ -1,10 +1,11 @@
 const GroupModel = require("../models/group.model");
 const PermissionModel = require("../models/permission.model");
 const pool = require("../config/database");
+const AuditService = require("./audit.service");
 
 class GroupService {
   // Create custom group
-  static async createGroup({ name, description }) {
+  static async createGroup({ name, description }, context = {}) {
     if (!name || !name.trim()) {
       const err = new Error("Group name is required.");
       err.statusCode = 400;
@@ -19,6 +20,18 @@ class GroupService {
     }
 
     const group = await GroupModel.createGroup({ name, description });
+
+    await AuditService.log({
+      userId: context.userId,
+      action: "CREATE",
+      module: "GROUPS",
+      entityType: "GROUP",
+      entityId: group.id,
+      description: `Created group: ${group.name}`,
+      newValues: { name: group.name, description: group.description },
+      ipAddress: context.ipAddress,
+    });
+
     return group;
   }
 
@@ -78,7 +91,7 @@ class GroupService {
   }
 
   // Add staff members to group
-  static async addMembers(groupId, userIds) {
+  static async addMembers(groupId, userIds, context = {}) {
     const parsedGroupId = parseInt(groupId, 10);
     if (!parsedGroupId || isNaN(parsedGroupId)) {
       const err = new Error("Invalid group ID.");
@@ -125,6 +138,17 @@ class GroupService {
     await GroupModel.addMembers(parsedGroupId, uniqueUserIds);
     const updatedMembers = await GroupModel.getGroupMembers(parsedGroupId);
 
+    await AuditService.log({
+      userId: context.userId,
+      action: "ADD_MEMBERS",
+      module: "GROUPS",
+      entityType: "GROUP",
+      entityId: parsedGroupId,
+      description: `Added ${uniqueUserIds.length} user(s) to group '${group.name}'`,
+      newValues: { user_ids: uniqueUserIds },
+      ipAddress: context.ipAddress,
+    });
+
     return {
       message: `${uniqueUserIds.length} user(s) successfully added to group '${group.name}'.`,
       members: updatedMembers.map((m) => ({
@@ -139,7 +163,7 @@ class GroupService {
   }
 
   // Remove member from group (reassigns user to default Staff role)
-  static async removeMember(groupId, userId) {
+  static async removeMember(groupId, userId, context = {}) {
     const parsedGroupId = parseInt(groupId, 10);
     const parsedUserId = parseInt(userId, 10);
 
@@ -173,13 +197,23 @@ class GroupService {
     const defaultStaffRoleId = await GroupModel.getDefaultStaffRoleId();
     await GroupModel.removeMember(parsedGroupId, parsedUserId, defaultStaffRoleId);
 
+    await AuditService.log({
+      userId: context.userId,
+      action: "REMOVE_MEMBER",
+      module: "GROUPS",
+      entityType: "GROUP",
+      entityId: parsedGroupId,
+      description: `Removed user '${user.name}' from group '${group.name}'`,
+      ipAddress: context.ipAddress,
+    });
+
     return {
       message: `User '${user.name}' successfully removed from group '${group.name}' and reassigned to Staff role.`,
     };
   }
 
   // Update group permissions
-  static async updatePermissions(groupId, payload) {
+  static async updatePermissions(groupId, payload, context = {}) {
     const parsedGroupId = parseInt(groupId, 10);
     if (!parsedGroupId || isNaN(parsedGroupId)) {
       const err = new Error("Invalid group ID.");
@@ -193,6 +227,9 @@ class GroupService {
       err.statusCode = 404;
       throw err;
     }
+
+    const oldPerms = await PermissionModel.getPermissionsByRoleId(parsedGroupId);
+    const oldPermissionIds = oldPerms.map((p) => p.id);
 
     let permissionIdsToAssign = [];
 
@@ -273,6 +310,18 @@ class GroupService {
 
     const updatedPermissions = await PermissionModel.replaceRolePermissions(parsedGroupId, finalPermissionIds);
 
+    await AuditService.log({
+      userId: context.userId,
+      action: "UPDATE",
+      module: "PERMISSIONS",
+      entityType: "GROUP",
+      entityId: parsedGroupId,
+      description: `Updated permissions for group '${group.name}'`,
+      oldValues: { permission_ids: oldPermissionIds },
+      newValues: { permission_ids: finalPermissionIds },
+      ipAddress: context.ipAddress,
+    });
+
     return {
       message: `Permissions updated successfully for group '${group.name}'.`,
       group_id: parsedGroupId,
@@ -288,7 +337,7 @@ class GroupService {
   }
 
   // Delete group
-  static async deleteGroup(groupId) {
+  static async deleteGroup(groupId, context = {}) {
     const parsedGroupId = parseInt(groupId, 10);
     if (!parsedGroupId || isNaN(parsedGroupId)) {
       const err = new Error("Invalid group ID.");
@@ -317,6 +366,16 @@ class GroupService {
     }
 
     await GroupModel.deleteGroup(parsedGroupId);
+
+    await AuditService.log({
+      userId: context.userId,
+      action: "DELETE",
+      module: "GROUPS",
+      entityType: "GROUP",
+      entityId: parsedGroupId,
+      description: `Deleted group: ${group.name}`,
+      ipAddress: context.ipAddress,
+    });
 
     return {
       message: `Group '${group.name}' deleted successfully.`,

@@ -10,6 +10,7 @@ router.use(authenticate);
 router.use("/:clientId/family-members", clientFamilyMemberRoutes);
 
 router.get("/", requirePermission("client.view"), ClientController.listClients);
+router.post("/export", requirePermission("client.view"), ClientController.exportClients);
 router.get("/:id", requirePermission("client.view"), ClientController.getClient);
 router.post("/", requirePermission("client.create"), ClientController.createClient);
 router.patch("/:id", requirePermission("client.edit"), ClientController.updateClient);

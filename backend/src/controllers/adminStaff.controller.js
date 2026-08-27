@@ -35,7 +35,8 @@ class AdminStaffController {
    */
   static async createStaff(req, res, next) {
     try {
-      const staff = await AdminStaffService.createStaff(req.body);
+      const context = { userId: req.user?.id, ipAddress: req.ip || req.headers["x-forwarded-for"] };
+      const staff = await AdminStaffService.createStaff(req.body, context);
       return sendSuccess(res, 201, "Staff user created successfully", { staff });
     } catch (error) {
       next(error);
@@ -47,7 +48,8 @@ class AdminStaffController {
    */
   static async updateStaff(req, res, next) {
     try {
-      const staff = await AdminStaffService.updateStaff(req.params.id, req.body);
+      const context = { userId: req.user?.id, ipAddress: req.ip || req.headers["x-forwarded-for"] };
+      const staff = await AdminStaffService.updateStaff(req.params.id, req.body, context);
       return sendSuccess(res, 200, "Staff user updated successfully", { staff });
     } catch (error) {
       next(error);
@@ -59,7 +61,8 @@ class AdminStaffController {
    */
   static async updateStaffStatus(req, res, next) {
     try {
-      const staff = await AdminStaffService.updateStaffStatus(req.params.id, req.body.status);
+      const context = { userId: req.user?.id, ipAddress: req.ip || req.headers["x-forwarded-for"] };
+      const staff = await AdminStaffService.updateStaffStatus(req.params.id, req.body.status, context);
       return sendSuccess(res, 200, "Staff user status updated successfully", { staff });
     } catch (error) {
       next(error);
@@ -71,7 +74,8 @@ class AdminStaffController {
    */
   static async deleteStaff(req, res, next) {
     try {
-      const result = await AdminStaffService.deleteStaff(req.params.id, req.user.id);
+      const context = { userId: req.user?.id, ipAddress: req.ip || req.headers["x-forwarded-for"] };
+      const result = await AdminStaffService.deleteStaff(req.params.id, req.user.id, context);
       return sendSuccess(res, 200, result.message);
     } catch (error) {
       next(error);
