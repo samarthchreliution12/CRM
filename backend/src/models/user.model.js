@@ -169,7 +169,7 @@ class UserModel {
   /**
    * Update user profile fields (name, email, mobile).
    */
-  static async updateProfile(id, { name, email, mobile }) {
+  static async updateProfile(id, { name, email, mobile, role_id }) {
     const updates = [];
     const values = [];
     let paramIndex = 1;
@@ -187,6 +187,14 @@ class UserModel {
     if (mobile !== undefined) {
       updates.push(`mobile = $${paramIndex++}`);
       values.push(mobile ? mobile.trim() : null);
+    }
+
+    if (role_id !== undefined && role_id !== null) {
+      const parsedRoleId = parseInt(role_id, 10);
+      if (!isNaN(parsedRoleId)) {
+        updates.push(`role_id = $${paramIndex++}`);
+        values.push(parsedRoleId);
+      }
     }
 
     updates.push(`updated_at = CURRENT_TIMESTAMP`);

@@ -26,7 +26,7 @@ class AdminStaffService {
   /**
    * Create a new Staff user account.
    */
-  static async createStaff({ name, email, mobile, password }) {
+  static async createStaff({ name, email, mobile, password, role_id, roleId }) {
     const trimmedEmail = email.trim().toLowerCase();
 
     // Check email uniqueness
@@ -38,13 +38,9 @@ class AdminStaffService {
       throw error;
     }
 
-    // Lookup Staff role dynamically from roles table
+    // Lookup Staff role dynamically from roles table if role_id not specified
     const staffRole = await RoleModel.findByName("Staff");
-    if (!staffRole) {
-      const error = new Error("Staff role configuration is missing in system database");
-      error.statusCode = 500;
-      throw error;
-    }
+    const targetRoleId = role_id || roleId || (staffRole ? staffRole.id : 2);
 
     // Hash password with bcrypt
     const password_hash = await bcrypt.hash(password, 10);
@@ -56,7 +52,7 @@ class AdminStaffService {
       email: trimmedEmail,
       password_hash,
       mobile: cleanMobile,
-      role_id: staffRole.id,
+      role_id: Number(targetRoleId),
       status: "active",
     });
 
@@ -67,7 +63,7 @@ class AdminStaffService {
   /**
    * Update Staff user profile fields.
    */
-  static async updateStaff(id, { name, email, mobile }) {
+  static async updateStaff(id, { name, email, mobile, role_id, roleId }) {
     const targetStaff = await UserModel.findStaffById(id);
     if (!targetStaff) {
       const error = new Error("Staff user not found");
@@ -88,11 +84,13 @@ class AdminStaffService {
     }
 
     const cleanMobile = mobile !== undefined ? (mobile ? mobile.trim().replace(/[\s\-()]/g, "") : null) : undefined;
+    const targetRoleId = role_id !== undefined ? role_id : roleId;
 
     await UserModel.updateProfile(id, {
       name: name ? name.trim() : undefined,
       email: email ? email.trim().toLowerCase() : undefined,
       mobile: cleanMobile,
+      role_id: targetRoleId,
     });
 
     const updatedStaff = await UserModel.findStaffById(id);

@@ -1,8 +1,14 @@
 import React from "react";
-import { UserCheck, Users, CheckSquare, FileText, MessageSquare, Shield, Loader2 } from "lucide-react";
+import { UserCheck, Users, FileText, LayoutDashboard, Shield, Loader2 } from "lucide-react";
 import "./PermissionMatrix.css";
 
 export const MODULES_CONFIG = [
+  {
+    name: "Dashboard",
+    prefix: "dashboard",
+    icon: LayoutDashboard,
+    description: "System overview, KPIs & analytics",
+  },
   {
     name: "Client",
     prefix: "client",
@@ -20,12 +26,6 @@ export const MODULES_CONFIG = [
     prefix: "document",
     icon: FileText,
     description: "File vault & document attachments",
-  },
-  {
-    name: "Communication",
-    prefix: "communication",
-    icon: MessageSquare,
-    description: "Client messages & log entries",
   },
 ];
 

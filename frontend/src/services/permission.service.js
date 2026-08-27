@@ -23,23 +23,44 @@ const handleResponse = async (response) => {
 
 class PermissionService {
   /**
-   * Fetch all active system roles.
-   * GET /api/admin/roles
+   * Fetch all active system roles and custom groups.
+   * GET /api/admin/roles and GET /api/roles/groups
    */
   static async getRoles(token) {
-    const response = await fetch(`${API_BASE_URL}/admin/roles`, {
+    const sysResponse = await fetch(`${API_BASE_URL}/admin/roles`, {
       method: "GET",
       headers: getHeaders(token),
     });
-    const result = await handleResponse(response);
+    const sysResult = await handleResponse(sysResponse);
 
-    const allowedRoles = ["Client", "Staff"];
+    let systemRoles = sysResult.data.roles || [];
+    // Allow Admin, Staff, Client system roles
+    systemRoles = systemRoles.filter((r) => ["Admin", "Staff", "Client"].includes(r.name));
 
-    result.data.roles = result.data.roles.filter((role) =>
-      allowedRoles.includes(role.name)
-    );
+    try {
+      const groupsResponse = await fetch(`${API_BASE_URL}/roles/groups`, {
+        method: "GET",
+        headers: getHeaders(token),
+      });
+      const groupsResult = await handleResponse(groupsResponse);
+      const customGroups = groupsResult.data?.groups || [];
 
-    return result;
+      // Combine system roles and custom groups
+      const allRoles = [...systemRoles, ...customGroups];
+      return {
+        ...sysResult,
+        data: {
+          roles: allRoles,
+        },
+      };
+    } catch (e) {
+      return {
+        ...sysResult,
+        data: {
+          roles: systemRoles,
+        },
+      };
+    }
   }
 
   /**

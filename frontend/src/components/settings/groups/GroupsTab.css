@@ -1,0 +1,7 @@
+/* Groups Tab Styles */
+
+.groups-tab-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}

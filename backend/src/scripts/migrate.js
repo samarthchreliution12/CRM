@@ -145,6 +145,64 @@ async function runMigrations() {
       CREATE INDEX IF NOT EXISTS idx_doc_audit_doc ON document_audit_logs(document_id);
     `);
 
+    // Migration step 6: Ensure internal communication tables and indexes exist
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS internal_conversations (
+        id SERIAL PRIMARY KEY,
+        type VARCHAR(20) NOT NULL,
+        name VARCHAR(150),
+        created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS internal_conversation_members (
+        id SERIAL PRIMARY KEY,
+        conversation_id INTEGER NOT NULL REFERENCES internal_conversations(id) ON DELETE CASCADE,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        joined_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        left_at TIMESTAMP WITH TIME ZONE,
+        last_read_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        CONSTRAINT unique_conversation_member UNIQUE (conversation_id, user_id)
+      );
+
+      ALTER TABLE internal_conversation_members ADD COLUMN IF NOT EXISTS last_read_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL;
+
+      CREATE TABLE IF NOT EXISTS internal_messages (
+        id SERIAL PRIMARY KEY,
+        conversation_id INTEGER NOT NULL REFERENCES internal_conversations(id) ON DELETE CASCADE,
+        sender_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        message TEXT NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        deleted_at TIMESTAMP WITH TIME ZONE,
+        read_at TIMESTAMP WITH TIME ZONE
+      );
+
+      ALTER TABLE internal_messages ADD COLUMN IF NOT EXISTS read_at TIMESTAMP WITH TIME ZONE;
+
+      CREATE INDEX IF NOT EXISTS idx_internal_conv_type ON internal_conversations(type);
+      CREATE INDEX IF NOT EXISTS idx_internal_conv_members_user ON internal_conversation_members(user_id);
+      CREATE INDEX IF NOT EXISTS idx_internal_conv_members_conv ON internal_conversation_members(conversation_id);
+      CREATE INDEX IF NOT EXISTS idx_internal_messages_conv ON internal_messages(conversation_id);
+      CREATE INDEX IF NOT EXISTS idx_internal_messages_sender ON internal_messages(sender_id);
+      CREATE INDEX IF NOT EXISTS idx_internal_messages_read_at ON internal_messages(read_at);
+    `);
+
+    // Migration step 7: Clean up communication & calendar permissions and ensure dashboard permission exists
+    await pool.query(`
+      DELETE FROM permissions WHERE module IN ('communication', 'calendar') OR permission_key LIKE 'communication.%' OR permission_key LIKE 'calendar.%';
+
+      INSERT INTO permissions (permission_key, description, module, action)
+      VALUES 
+        ('dashboard.view', 'View dashboard statistics and analytics', 'dashboard', 'view')
+      ON CONFLICT (permission_key) DO UPDATE SET 
+        description = EXCLUDED.description, 
+        module = EXCLUDED.module, 
+        action = EXCLUDED.action, 
+        updated_at = CURRENT_TIMESTAMP;
+    `);
+
     console.log("Database migrations completed successfully.");
   } catch (error) {
     console.error("Migration error:", error);

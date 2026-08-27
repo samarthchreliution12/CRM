@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, AlertCircle, Eye, EyeOff } from "lucide-react";
+import GroupService from "../../../../services/group.service";
 import "./StaffFormModal.css";
 
 const StaffFormModal = ({ isOpen, onClose, onSubmit, initialData = null, isSubmitting = false }) => {
@@ -9,13 +10,36 @@ const StaffFormModal = ({ isOpen, onClose, onSubmit, initialData = null, isSubmi
     name: "",
     email: "",
     mobile: "",
+    role_id: 2,
     password: "",
     confirmPassword: "",
   });
 
+  const [customGroups, setCustomGroups] = useState([]);
   const [fieldErrors, setFieldErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchGroups = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await GroupService.getGroups(token);
+        if (isMounted && res && res.data && res.data.groups) {
+          setCustomGroups(res.data.groups);
+        }
+      } catch (e) {
+        // Ignore group fetch error
+      }
+    };
+    if (isOpen) {
+      fetchGroups();
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     if (initialData) {
@@ -23,6 +47,7 @@ const StaffFormModal = ({ isOpen, onClose, onSubmit, initialData = null, isSubmi
         name: initialData.name || "",
         email: initialData.email || "",
         mobile: initialData.mobile || "",
+        role_id: initialData.role?.id || initialData.role_id || 2,
         password: "",
         confirmPassword: "",
       });
@@ -31,6 +56,7 @@ const StaffFormModal = ({ isOpen, onClose, onSubmit, initialData = null, isSubmi
         name: "",
         email: "",
         mobile: "",
+        role_id: 2,
         password: "",
         confirmPassword: "",
       });
@@ -100,12 +126,14 @@ const StaffFormModal = ({ isOpen, onClose, onSubmit, initialData = null, isSubmi
         name: formData.name.trim(),
         email: formData.email.trim(),
         mobile: formData.mobile ? formData.mobile.trim().replace(/[\s\-()]/g, "") : null,
+        role_id: Number(formData.role_id),
       });
     } else {
       onSubmit({
         name: formData.name.trim(),
         email: formData.email.trim(),
         mobile: formData.mobile ? formData.mobile.trim().replace(/[\s\-()]/g, "") : null,
+        role_id: Number(formData.role_id),
         password: formData.password,
       });
     }
@@ -180,18 +208,30 @@ const StaffFormModal = ({ isOpen, onClose, onSubmit, initialData = null, isSubmi
               )}
             </div>
 
-            {/* Role Display (Read-Only) */}
+            {/* Role / Group Selection */}
             <div className="modal-form-group">
-              <label className="modal-form-label">Assigned Role</label>
-              <input
-                type="text"
-                value="Staff"
-                disabled
+              <label className="modal-form-label">Role / Group</label>
+              <select
+                name="role_id"
+                value={formData.role_id || 2}
+                onChange={handleChange}
                 className="modal-form-input"
-              />
-              <span style={{ fontSize: "0.75rem", color: "#64748b" }}>
-                Staff role is automatically assigned by the backend.
-              </span>
+                disabled={isSubmitting}
+              >
+                <optgroup label="System Roles">
+                  <option value={2}>Staff</option>
+                  <option value={1}>Admin</option>
+                </optgroup>
+                {customGroups.length > 0 && (
+                  <optgroup label="Custom Groups">
+                    {customGroups.map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+              </select>
             </div>
 
             {/* Password Fields (Add Mode Only) */}

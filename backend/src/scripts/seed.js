@@ -28,6 +28,9 @@ const CLIENT_SERVICES = [
 ];
 
 const PERMISSIONS = [
+  // Dashboard Module
+  { permission_key: "dashboard.view", module: "dashboard", action: "view", description: "View dashboard statistics and analytics" },
+
   // Client Module
   { permission_key: "client.view", module: "client", action: "view", description: "View client records" },
   { permission_key: "client.create", module: "client", action: "create", description: "Create new client records" },
@@ -66,22 +69,17 @@ const PERMISSIONS = [
   { permission_key: "document.update", module: "document", action: "update", description: "Replace document records" },
   { permission_key: "document.verify", module: "document", action: "verify", description: "Approve or reject document records" },
   { permission_key: "document.delete", module: "document", action: "delete", description: "Delete document records" },
-
-  // Communication Module
-  { permission_key: "communication.view", module: "communication", action: "view", description: "View communication logs" },
-  { permission_key: "communication.create", module: "communication", action: "create", description: "Create communication logs" },
-  { permission_key: "communication.edit", module: "communication", action: "edit", description: "Update communication logs" },
-  { permission_key: "communication.delete", module: "communication", action: "delete", description: "Delete communication logs" },
 ];
 
 const ROLE_PERMISSION_MAP = {
   Admin: PERMISSIONS.map((p) => p.permission_key),
   Staff: [
+    "dashboard.view",
     "client.view", "client.create", "client.edit",
     "client_type.view", "client_service.view",
     "lead.view", "lead.create", "lead.edit",
     "task.view", "task.create", "task.edit",
-    "document.view", "document.create", "document.edit", "document.update", "document.verify", "communication.view"
+    "document.view", "document.create", "document.edit", "document.update", "document.verify"
   ],
   Client: [
     "client.view"
@@ -95,7 +93,10 @@ async function seedDatabase() {
     await client.query("BEGIN");
 
     const allowedRoleNames = ROLES.map((r) => r.name);
-    await client.query("DELETE FROM roles WHERE name NOT IN ($1, $2, $3)", allowedRoleNames);
+    await client.query(
+      "DELETE FROM roles WHERE name NOT IN ($1, $2, $3) AND id NOT IN (SELECT DISTINCT role_id FROM users WHERE role_id IS NOT NULL)",
+      allowedRoleNames
+    );
 
     // 1. Seed Roles
     const roleMap = {};
@@ -129,6 +130,9 @@ async function seedDatabase() {
         [cs.name, cs.description, cs.status]
       );
     }
+
+    // Remove old communication permissions
+    await client.query("DELETE FROM permissions WHERE module = 'communication' OR permission_key LIKE 'communication.%'");
 
     // 4. Seed Permissions
     const permMap = {};

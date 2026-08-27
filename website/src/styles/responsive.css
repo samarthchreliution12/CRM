@@ -1,0 +1,58 @@
+/* Desktop (1440px+) */
+@media (min-width: 1440px) {
+  .website-container {
+    max-width: var(--container-width);
+  }
+}
+
+/* Laptop (1200px) */
+@media (max-width: 1200px) {
+  .website-container {
+    padding-left: var(--spacing-lg);
+    padding-right: var(--spacing-lg);
+  }
+  
+  h1 {
+    font-size: 2.25rem;
+  }
+  
+  h2 {
+    font-size: 1.875rem;
+  }
+}
+
+/* Tablet (768px) */
+@media (max-width: 768px) {
+  :root {
+    --header-height: 70px;
+  }
+
+  .website-container {
+    padding-left: var(--spacing-md);
+    padding-right: var(--spacing-md);
+  }
+
+  h1 {
+    font-size: 1.875rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  .hide-on-mobile {
+    display: none !important;
+  }
+}
+
+/* Mobile (390px) */
+@media (max-width: 390px) {
+  .website-container {
+    padding-left: var(--spacing-sm);
+    padding-right: var(--spacing-sm);
+  }
+  
+  h1 {
+    font-size: 1.6rem;
+  }
+}

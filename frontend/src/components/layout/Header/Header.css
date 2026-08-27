@@ -202,6 +202,30 @@
   color: #d97706;
 }
 
+.notif-item-icon-wrapper.direct {
+  background-color: #eff6ff;
+  color: #2563eb;
+}
+
+.notif-item-icon-wrapper.channel {
+  background-color: #f0fdf4;
+  color: #16a34a;
+}
+
+.notif-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.notif-item-time {
+  font-size: 0.6875rem;
+  color: #94a3b8;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
 .notif-item-content {
   display: flex;
   flex-direction: column;

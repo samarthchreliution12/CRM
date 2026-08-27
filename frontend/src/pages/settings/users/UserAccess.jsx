@@ -6,8 +6,9 @@ import StaffTable from "../../../components/settings/staff/StaffTable/StaffTable
 import StaffFormModal from "../../../components/settings/staff/StaffFormModal/StaffFormModal";
 import StaffDetailModal from "../../../components/settings/staff/StaffDetailModal/StaffDetailModal";
 import StaffConfirmModal from "../../../components/settings/staff/StaffConfirmModal/StaffConfirmModal";
+import GroupsTab from "../../../components/settings/groups/GroupsTab";
 import Permissions from "./permissions/Permissions";
-import { Plus, Search, Users as UsersIcon, KeyRound, AlertCircle, CheckCircle2, RefreshCw } from "lucide-react";
+import { Plus, Search, Users as UsersIcon, FolderGit2, KeyRound, AlertCircle, CheckCircle2, RefreshCw } from "lucide-react";
 import "./UserAccess.css";
 
 const UserAccess = () => {
@@ -185,7 +186,7 @@ const UserAccess = () => {
   return (
     <AppLayout title="User & Access">
       <div className="user-access-container">
-        {/* Main Navigation Tabs: Users | Permissions */}
+        {/* Main Navigation Tabs: Users | Groups | Permissions */}
         <div className="main-navigation-tabs">
           <button
             type="button"
@@ -194,6 +195,15 @@ const UserAccess = () => {
           >
             <UsersIcon size={18} />
             <span>Users</span>
+          </button>
+
+          <button
+            type="button"
+            className={`nav-tab-button ${activeTab === "groups" ? "active" : ""}`}
+            onClick={() => setActiveTab("groups")}
+          >
+            <FolderGit2 size={18} />
+            <span>Groups</span>
           </button>
 
           <button
@@ -336,6 +346,9 @@ const UserAccess = () => {
               isSubmitting={isActionSubmitting}
             />
           </>
+        ) : activeTab === "groups" ? (
+          /* Groups Management View */
+          <GroupsTab />
         ) : (
           /* Permissions Management View */
           <div className="user-access-card">

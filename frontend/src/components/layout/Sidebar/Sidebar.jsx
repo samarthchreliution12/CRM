@@ -2,7 +2,6 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
-  Calendar,
   Users,
   UserCheck,
   FileText,
@@ -21,7 +20,6 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const navItems = [
     { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
-    { name: "Calendar", path: "/calendar", icon: Calendar },
     { name: "Leads", path: "/leads", icon: Users },
     { name: "Clients", path: "/clients", icon: UserCheck },
     { name: "Documents", path: "/documents", icon: FileText },

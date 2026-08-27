@@ -17,6 +17,8 @@ const clientServiceRoutes = require("./routes/clientService.routes");
 const whatsappRoutes = require("./routes/whatsapp.routes");
 const documentRoutes = require("./routes/document.routes");
 const adminDocumentRoutes = require("./routes/adminDocument.routes");
+const communicationRoutes = require("./routes/communication.routes");
+const groupRoutes = require("./routes/group.routes");
 const errorHandler = require("./middleware/error.middleware");
 
 const app = express();
@@ -57,6 +59,10 @@ app.get("/api/health", (req, res) => {
 // Authentication Routes
 app.use("/api/auth", authRoutes);
 
+// Group Management Routes
+app.use("/api/roles/groups", groupRoutes);
+app.use("/api/admin/roles/groups", groupRoutes);
+
 // Admin Management Routes
 app.use("/api/admin/staff", adminStaffRoutes);
 app.use("/api/admin/permissions", permissionRoutes);
@@ -73,6 +79,9 @@ app.use("/api/clients/:clientId/documents", documentRoutes);
 
 // WhatsApp Module Routes
 app.use("/api/whatsapp", whatsappRoutes);
+
+// Internal Communication Routes
+app.use("/api/communication", communicationRoutes);
 
 // Centralized Error Handling Middleware
 app.use(errorHandler);

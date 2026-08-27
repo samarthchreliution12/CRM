@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../../components/layout/AppLayout/AppLayout";
 import ClientService from "../../services/client.service";
@@ -13,6 +13,9 @@ import {
   Loader2,
   Eye,
   EyeOff,
+  ChevronDown,
+  Download,
+  Upload,
 } from "lucide-react";
 import "./Clients.css";
 
@@ -59,6 +62,11 @@ const Clients = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Import / Export Dropdown & Selection State
+  const [isImpExpOpen, setIsImpExpOpen] = useState(false);
+  const [selectedClientIds, setSelectedClientIds] = useState([]);
+  const dropdownRef = useRef(null);
+
   // Reveal Contact State (Row/Client scoped state: { [clientId]: boolean })
   const [revealedClients, setRevealedClients] = useState({});
 
@@ -76,6 +84,17 @@ const Clients = () => {
 
   // Client Types dropdown options from DB
   const [clientTypes, setClientTypes] = useState([]);
+
+  // Click Outside listener to close Import / Export dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsImpExpOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Fetch Client Types for filter dropdown
   useEffect(() => {
@@ -179,6 +198,46 @@ const Clients = () => {
     }));
   };
 
+  // Table Checkbox Selection handlers
+  const isAllSelected =
+    clients.length > 0 && clients.every((c) => selectedClientIds.includes(c.id));
+
+  const handleSelectAll = (e) => {
+    const checked = e.target.checked;
+    if (checked) {
+      const pageIds = clients.map((c) => c.id);
+      setSelectedClientIds((prev) => Array.from(new Set([...prev, ...pageIds])));
+    } else {
+      const pageIds = clients.map((c) => c.id);
+      setSelectedClientIds((prev) => prev.filter((id) => !pageIds.includes(id)));
+    }
+  };
+
+  const handleToggleSelect = (e, clientId) => {
+    e.stopPropagation();
+    setSelectedClientIds((prev) =>
+      prev.includes(clientId)
+        ? prev.filter((id) => id !== clientId)
+        : [...prev, clientId]
+    );
+  };
+
+  // Import / Export UI Handlers
+  const handleImportClick = () => {
+    setIsImpExpOpen(false);
+    alert("Import Clients feature is ready in UI. Backend API integration coming soon.");
+  };
+
+  const handleExportClick = () => {
+    setIsImpExpOpen(false);
+    const count = selectedClientIds.length;
+    if (count > 0) {
+      alert(`Export Selected (${count} client${count > 1 ? "s" : ""}) feature is ready in UI. Backend API integration coming soon.`);
+    } else {
+      alert("Export Clients feature is ready in UI. Backend API integration coming soon.");
+    }
+  };
+
   // Calculate summary statistics
   const totalCount = pagination.total;
   const activeCount = clients.filter((c) => c.status === "active").length;
@@ -190,7 +249,7 @@ const Clients = () => {
   return (
     <AppLayout title="Clients">
       <div className="clients-container">
-        {/* Page Header */}
+        {/* Top Header Actions Section */}
         <div className="clients-page-header">
           <div className="clients-page-title-group">
             <h2 className="clients-page-title">Clients Directory</h2>
@@ -198,14 +257,56 @@ const Clients = () => {
               Manage your client relationships and household groups.
             </p>
           </div>
-          <button
-            type="button"
-            className="btn-add-client"
-            onClick={() => navigate("/clients/add")}
-          >
-            <Plus size={16} />
-            <span>Add Client</span>
-          </button>
+
+          <div className="clients-header-actions">
+            <button
+              type="button"
+              className="btn-add-client"
+              onClick={() => navigate("/clients/add")}
+            >
+              <Plus size={16} />
+              <span>Add Client</span>
+            </button>
+
+            {/* Import / Export Dropdown */}
+            <div className="import-export-dropdown-wrapper" ref={dropdownRef}>
+              <button
+                type="button"
+                className={`btn-import-export ${isImpExpOpen ? "active" : ""}`}
+                onClick={() => setIsImpExpOpen((prev) => !prev)}
+                aria-haspopup="true"
+                aria-expanded={isImpExpOpen}
+              >
+                <span>Import / Export</span>
+                <ChevronDown size={14} className={`dropdown-chevron ${isImpExpOpen ? "open" : ""}`} />
+              </button>
+
+              {isImpExpOpen && (
+                <div className="import-export-menu">
+                  <button
+                    type="button"
+                    className="dropdown-menu-item"
+                    onClick={handleImportClick}
+                  >
+                    <Upload size={14} className="menu-icon import-icon" />
+                    <span>Import Clients</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="dropdown-menu-item"
+                    onClick={handleExportClick}
+                  >
+                    <Download size={14} className="menu-icon export-icon" />
+                    <span>
+                      {selectedClientIds.length > 0
+                        ? `Export Selected (${selectedClientIds.length})`
+                        : "Export Clients"}
+                    </span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Global Error Banner */}
@@ -304,6 +405,16 @@ const Clients = () => {
             <table className="clients-table">
               <thead>
                 <tr>
+                  <th style={{ width: "40px", textAlign: "center" }}>
+                    <input
+                      type="checkbox"
+                      className="client-select-checkbox"
+                      checked={isAllSelected}
+                      onChange={handleSelectAll}
+                      title="Select all clients on this page"
+                      aria-label="Select all clients on this page"
+                    />
+                  </th>
                   <th>CLIENT</th>
                   <th>UCC / CLIENT ID</th>
                   <th>TYPE</th>
@@ -314,7 +425,7 @@ const Clients = () => {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan="5" className="empty-state-cell">
+                    <td colSpan="6" className="empty-state-cell">
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
                         <Loader2 size={18} className="animate-spin" />
                         <span>Loading clients from database...</span>
@@ -323,7 +434,7 @@ const Clients = () => {
                   </tr>
                 ) : clients.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="empty-state-cell">
+                    <td colSpan="6" className="empty-state-cell">
                       {search || statusFilter !== "all" || typeFilter !== "all"
                         ? "No clients match your search or filters."
                         : "No clients found."}
@@ -332,13 +443,27 @@ const Clients = () => {
                 ) : (
                   clients.map((client) => {
                     const isRevealed = Boolean(revealedClients[client.id]);
+                    const isSelected = selectedClientIds.includes(client.id);
 
                     return (
                       <tr
                         key={client.id}
+                        className={isSelected ? "row-selected" : ""}
                         style={{ cursor: "pointer" }}
                         onClick={() => navigate(`/clients/${client.id}`)}
                       >
+                        <td
+                          style={{ width: "40px", textAlign: "center" }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <input
+                            type="checkbox"
+                            className="client-select-checkbox"
+                            checked={isSelected}
+                            onChange={(e) => handleToggleSelect(e, client.id)}
+                            aria-label={`Select ${client.name}`}
+                          />
+                        </td>
                         <td>
                           <div className="client-info-cell">
                             <div className="client-avatar">

@@ -1,4 +1,4 @@
--- CRM Database Schema - Authentication, Authorization, Client Types, Client Services, Client Module, WhatsApp & Secure Documents
+-- CRM Database Schema - Authentication, Authorization, Client Types, Client Services, Client Module, WhatsApp, Secure Documents & Internal Communication
 
 -- 1. Roles Table
 CREATE TABLE IF NOT EXISTS roles (
@@ -169,6 +169,41 @@ CREATE TABLE IF NOT EXISTS document_audit_logs (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
+-- 13. Internal Communication Tables
+CREATE TABLE IF NOT EXISTS internal_conversations (
+  id SERIAL PRIMARY KEY,
+  type VARCHAR(20) NOT NULL,
+  name VARCHAR(150),
+  created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS internal_conversation_members (
+  id SERIAL PRIMARY KEY,
+  conversation_id INTEGER NOT NULL REFERENCES internal_conversations(id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  joined_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  left_at TIMESTAMP WITH TIME ZONE,
+  last_read_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  CONSTRAINT unique_conversation_member UNIQUE (conversation_id, user_id)
+);
+
+ALTER TABLE internal_conversation_members ADD COLUMN IF NOT EXISTS last_read_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL;
+
+CREATE TABLE IF NOT EXISTS internal_messages (
+  id SERIAL PRIMARY KEY,
+  conversation_id INTEGER NOT NULL REFERENCES internal_conversations(id) ON DELETE CASCADE,
+  sender_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  message TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  deleted_at TIMESTAMP WITH TIME ZONE,
+  read_at TIMESTAMP WITH TIME ZONE
+);
+
+ALTER TABLE internal_messages ADD COLUMN IF NOT EXISTS read_at TIMESTAMP WITH TIME ZONE;
+
 -- Indexes for Query Performance
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_role_id ON users(role_id);
@@ -208,3 +243,11 @@ CREATE INDEX IF NOT EXISTS idx_client_docs_type ON client_documents(document_typ
 CREATE INDEX IF NOT EXISTS idx_client_docs_status ON client_documents(status);
 CREATE INDEX IF NOT EXISTS idx_doc_audit_client ON document_audit_logs(client_id);
 CREATE INDEX IF NOT EXISTS idx_doc_audit_doc ON document_audit_logs(document_id);
+
+-- Internal Communication Indexes
+CREATE INDEX IF NOT EXISTS idx_internal_conv_type ON internal_conversations(type);
+CREATE INDEX IF NOT EXISTS idx_internal_conv_members_user ON internal_conversation_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_internal_conv_members_conv ON internal_conversation_members(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_internal_messages_conv ON internal_messages(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_internal_messages_sender ON internal_messages(sender_id);
+CREATE INDEX IF NOT EXISTS idx_internal_messages_read_at ON internal_messages(read_at);
