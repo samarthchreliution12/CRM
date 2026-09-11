@@ -84,9 +84,41 @@ function App() {
             }
           />
 
-          {/* Public Authentication Routes */}
+          {/* Public Authentication & CRM Login Routes */}
           <Route
             path="/login"
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/crm"
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/crm/login"
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/admin/login"
+            element={
+              <PublicRoute>
+                <Login />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/client/login"
             element={
               <PublicRoute>
                 <Login />
