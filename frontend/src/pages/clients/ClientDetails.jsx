@@ -89,6 +89,14 @@ const ClientDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { token, user } = useAuth();
+
+  const handleBackToClients = () => {
+    if (window.history.length > 1 && window.history.state && window.history.state.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate("/clients", { replace: true });
+    }
+  };
   const permissions = user?.permissions || [];
 
   const canCreateDoc = permissions.includes("document.create") || user?.role?.name === "Admin";
@@ -296,7 +304,7 @@ const ClientDetails = () => {
     return (
       <AppLayout title="Client Details">
         <div className="client-details-container">
-          <button type="button" className="btn-back-link" onClick={() => navigate("/clients")}>
+          <button type="button" className="btn-back-link" onClick={handleBackToClients}>
             <ArrowLeft size={16} />
             <span>Back to Clients</span>
           </button>
@@ -318,7 +326,7 @@ const ClientDetails = () => {
         {/* Top Header Card */}
         <div className="client-details-header-card">
           <div className="client-details-top-nav">
-            <button type="button" className="btn-back-link" onClick={() => navigate("/clients")}>
+            <button type="button" className="btn-back-link" onClick={handleBackToClients}>
               <ArrowLeft size={16} />
               <span>Back to Clients</span>
             </button>

@@ -139,6 +139,14 @@ const AddClient = () => {
     };
   }, [id, isEditMode, token]);
 
+  const handleCancelOrBack = () => {
+    if (window.history.length > 1 && window.history.state && window.history.state.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate(isEditMode ? `/clients/${id}` : "/clients", { replace: true });
+    }
+  };
+
   // Handle Input Changes & WhatsApp Synchronization
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -321,13 +329,13 @@ const AddClient = () => {
         await ClientService.updateClient(id, payload, token);
         setSuccessMessage("Client updated successfully.");
         setTimeout(() => {
-          navigate(`/clients/${id}`);
+          navigate(`/clients/${id}`, { replace: true });
         }, 1000);
       } else {
         await ClientService.createClient(payload, token);
         setSuccessMessage("Client created successfully.");
         setTimeout(() => {
-          navigate("/clients");
+          navigate("/clients", { replace: true });
         }, 1000);
       }
     } catch (err) {
@@ -376,7 +384,7 @@ const AddClient = () => {
           <button
             type="button"
             className="btn-back-link"
-            onClick={() => navigate(isEditMode ? `/clients/${id}` : "/clients")}
+            onClick={handleCancelOrBack}
           >
             <ArrowLeft size={16} />
             <span>{isEditMode ? "Back to Client Details" : "Back to Clients"}</span>
@@ -687,7 +695,7 @@ const AddClient = () => {
             <button
               type="button"
               className="btn-cancel"
-              onClick={() => navigate(isEditMode ? `/clients/${id}` : "/clients")}
+              onClick={handleCancelOrBack}
               disabled={isSubmitting}
             >
               Cancel
