@@ -22,7 +22,7 @@ export const AboutSection = () => {
         {/* Company Overview & Experience */}
         <div style={{ maxWidth: '900px', margin: '0 auto var(--spacing-xxl)', lineHeight: 1.8 }}>
           <p style={{ fontSize: '1.1rem', marginBottom: 'var(--spacing-md)' }}>
-            Established with a vision to make professional financial advisory accessible and trustworthy, <strong>Parshwa Consultancy</strong> brings over 15 years of industry expertise to individual investors, High Net Worth Individuals (HNIs), and corporate families across India.
+            Established with a vision to make professional financial advisory accessible and trustworthy, <strong>Parshwa Consultancy</strong> brings over 35 years of industry expertise to individual investors, High Net Worth Individuals (HNIs), and corporate families across India.
           </p>
           <p style={{ fontSize: '1.05rem', color: 'var(--color-secondary)' }}>
             We specialize in two core pillars: strategic wealth creation through customized mutual fund portfolios and comprehensive investment recovery services to reclaim dormant, lost, or unclaimed shares from the IEPF (Investor Education and Protection Fund).

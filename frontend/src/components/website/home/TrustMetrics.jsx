@@ -31,29 +31,29 @@ export const TrustMetrics = () => {
 
   const metrics = [
     {
-      label: 'Years of Experience',
-      targetNum: 15,
+      label: 'YEARS OF EXPERIENCE',
+      targetNum: 35,
       format: (val) => `${Math.floor(val)}+`,
     },
     {
-      label: 'Satisfied Clients',
-      targetNum: 5000,
-      format: (val) => `${Math.floor(val).toLocaleString()}+`,
+      label: 'HAPPY CLIENTS',
+      targetNum: 10,
+      format: (val) => `${Math.floor(val)}K+`,
     },
     {
-      label: 'Assets Under Advisory',
-      targetNum: 500,
-      format: (val) => `₹${Math.floor(val)}+ Cr`,
+      label: 'AMC PARTNERS',
+      targetNum: 35,
+      format: (val) => `${Math.floor(val)}+`,
     },
     {
-      label: 'Investment Recovery Success',
-      targetNum: 98,
-      format: (val) => `${Math.floor(val)}%`,
+      label: 'SKILLED EXPERTS',
+      targetNum: 10,
+      format: (val) => `${Math.floor(val)}+`,
     },
   ];
 
   return (
-    <section ref={sectionRef} className="website-section website-section-dark">
+    <section ref={sectionRef} className="website-section website-metrics-section">
       <Container>
         <div className="website-metrics-grid">
           {metrics.map((item, idx) => {
@@ -76,35 +76,74 @@ export const TrustMetrics = () => {
       </Container>
 
       <style>{`
+        .website-metrics-section {
+          background-color: var(--color-light, #F7F7F5);
+          padding: 2.5rem 0;
+          border-top: 1px solid var(--color-border, #E2E2DF);
+          border-bottom: 1px solid var(--color-border, #E2E2DF);
+        }
+
         .website-metrics-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: var(--spacing-xl);
-          text-align: center;
+          grid-template-columns: repeat(4, 1fr);
+          align-items: center;
         }
 
         .website-metric-card {
-          padding: var(--spacing-md);
-          border-radius: var(--radius-md);
-          transition: transform 0.3s ease, background-color 0.3s ease;
+          padding: 1rem 1.5rem;
+          text-align: center;
+          position: relative;
         }
 
-        .website-metric-card:hover {
-          transform: translateY(-4px);
+        .website-metric-card:not(:last-child)::after {
+          content: '';
+          position: absolute;
+          right: 0;
+          top: 15%;
+          height: 70%;
+          width: 1px;
+          background-color: var(--color-primary-light, #C4726C);
+          opacity: 0.6;
         }
 
         .website-metric-value {
-          font-size: 2.5rem;
-          color: var(--color-accent);
-          margin-bottom: 4px;
+          font-size: 2.25rem;
+          color: var(--color-dark, #0F172A);
+          margin-bottom: 0.35rem;
           font-weight: 800;
           letter-spacing: -0.02em;
+          line-height: 1.1;
         }
 
         .website-metric-label {
-          color: var(--color-border);
+          color: var(--color-primary, #9E241D);
           margin: 0;
-          font-size: 0.95rem;
+          font-size: 0.85rem;
+          font-weight: 700;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+        }
+
+        @media (max-width: 768px) {
+          .website-metrics-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem 0;
+          }
+
+          .website-metric-card:nth-child(2)::after {
+            display: none;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .website-metrics-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+          }
+
+          .website-metric-card::after {
+            display: none !important;
+          }
         }
       `}</style>
     </section>
