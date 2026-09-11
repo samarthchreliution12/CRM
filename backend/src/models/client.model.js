@@ -65,7 +65,7 @@ class ClientModel {
     return serviceIdsToValidate;
   }
 
-  static async findAll({ search = "", status = "", client_type_id = "", page = 1, limit = 10 }) {
+  static async findAll({ search = "", status = "", client_type_id = "", service_id = "", page = 1, limit = 10 }) {
     const offset = (page - 1) * limit;
     const params = [];
     const conditions = [];
@@ -92,6 +92,14 @@ class ClientModel {
     if (client_type_id && parseInt(client_type_id, 10)) {
       params.push(parseInt(client_type_id, 10));
       conditions.push(`c.client_type_id = $${params.length}`);
+    }
+
+    if (service_id && (parseInt(service_id, 10) || (typeof service_id === "string" && service_id.trim() !== "all"))) {
+      const sId = parseInt(service_id, 10);
+      if (!isNaN(sId) && sId > 0) {
+        params.push(sId);
+        conditions.push(`EXISTS (SELECT 1 FROM client_service_assignments csa_filter WHERE csa_filter.client_id = c.id AND csa_filter.service_id = $${params.length})`);
+      }
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
@@ -465,7 +473,7 @@ class ClientModel {
         return [];
       }
     } else if (filters && typeof filters === "object") {
-      const { search, status, client_type, client_type_id } = filters;
+      const { search, status, client_type, client_type_id, service_id } = filters;
 
       if (search && typeof search === "string" && search.trim()) {
         params.push(`%${search.trim()}%`);
@@ -496,6 +504,14 @@ class ClientModel {
           conditions.push(`LOWER(ct.name) = $${params.length}`);
         }
       }
+
+      if (service_id && (parseInt(service_id, 10) || (typeof service_id === "string" && service_id.trim() !== "all"))) {
+        const sId = parseInt(service_id, 10);
+        if (!isNaN(sId) && sId > 0) {
+          params.push(sId);
+          conditions.push(`EXISTS (SELECT 1 FROM client_service_assignments csa_filter WHERE csa_filter.client_id = c.id AND csa_filter.service_id = $${params.length})`);
+        }
+      }
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
@@ -524,6 +540,78 @@ class ClientModel {
 
     const result = await pool.query(query, params);
     return result.rows;
+  }
+
+  /**
+   * Get set of all existing UCC numbers in uppercase.
+   */
+  static async getAllUccNumbers() {
+    const res = await pool.query(`SELECT UPPER(ucc_no) as ucc_no FROM clients`);
+    return new Set(res.rows.map((r) => r.ucc_no));
+  }
+
+  /**
+   * Import batch of valid clients with service assignments in a single DB transaction.
+   */
+  static async importBatch(validClients = []) {
+    if (!validClients || validClients.length === 0) {
+      return { imported_count: 0, client_ids: [] };
+    }
+
+    const client = await pool.connect();
+    const importedIds = [];
+
+    try {
+      await client.query("BEGIN");
+
+      for (const item of validClients) {
+        const query = `
+          INSERT INTO clients (
+            ucc_no, name, business_name, mobile_no, whatsapp_no, email, pan, dob, gender, occupation,
+            client_type_id, status, services
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb)
+          RETURNING id
+        `;
+
+        const values = [
+          item.ucc_no.trim().toUpperCase(),
+          item.name.trim(),
+          item.business_name ? item.business_name.trim() : null,
+          item.mobile_no ? item.mobile_no.trim() : null,
+          item.whatsapp_no ? item.whatsapp_no.trim() : null,
+          item.email ? item.email.trim().toLowerCase() : null,
+          item.pan ? item.pan.trim().toUpperCase() : null,
+          item.dob || null,
+          item.gender ? item.gender.trim() : null,
+          item.occupation ? item.occupation.trim() : null,
+          item.client_type_id,
+          item.status ? item.status.trim().toLowerCase() : "active",
+          JSON.stringify([]),
+        ];
+
+        const res = await client.query(query, values);
+        const newId = res.rows[0].id;
+        importedIds.push(newId);
+
+        // Assign services if any
+        if (Array.isArray(item.service_ids) && item.service_ids.length > 0) {
+          for (const serviceId of item.service_ids) {
+            await client.query(
+              `INSERT INTO client_service_assignments (client_id, service_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+              [newId, serviceId]
+            );
+          }
+        }
+      }
+
+      await client.query("COMMIT");
+      return { imported_count: importedIds.length, client_ids: importedIds };
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
   }
 }
 

@@ -110,8 +110,8 @@ const LeadConvertModal = ({ show, lead, onClose, onSuccess, clientTypes = [], to
   const todayISO = new Date().toISOString().split("T")[0];
 
   return (
-    <div className="modal-backdrop" onClick={converting ? undefined : onClose}>
-      <div className="modal-container" style={{ maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
+    <div className="modal-backdrop">
+      <div className="modal-container" style={{ maxWidth: "520px" }}>
         {/* Modal Header */}
         <div className="modal-header">
           <div className="flex-center-gap" style={{ gap: "0.5rem" }}>

@@ -175,51 +175,114 @@ const AddClient = () => {
     });
   };
 
-  // Client-Side Form Validation
+  // Validation helper functions
+  const getMaxAllowedDob = () => {
+    const today = new Date();
+    const maxDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+    return maxDate.toISOString().split("T")[0];
+  };
+
+  const isAtLeast18YearsOld = (dobString) => {
+    if (!dobString) return false;
+    const dob = new Date(dobString);
+    if (isNaN(dob.getTime())) return false;
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const m = today.getMonth() - dob.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+    return age >= 18;
+  };
+
+  const isValidEmail = (emailStr) => {
+    if (!emailStr || typeof emailStr !== "string") return false;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    return emailRegex.test(emailStr.trim());
+  };
+
+  const isValidPhoneNumber = (phoneStr) => {
+    if (!phoneStr || typeof phoneStr !== "string") return false;
+    const clean = phoneStr.trim().replace(/[\s\-()]/g, "");
+    return /^[0-9]{10,15}$/.test(clean);
+  };
+
+  // Single field validation for blur and submit
+  const validateSingleField = (fieldName, fieldValue, currentData = formData) => {
+    const val = (fieldValue !== undefined && fieldValue !== null) ? fieldValue.toString().trim() : "";
+
+    switch (fieldName) {
+      case "ucc_no":
+        if (!val) return "UCC number is required";
+        return "";
+      case "name":
+        if (!val) return "Client Name is required";
+        return "";
+      case "mobile_no":
+        if (!val) return "Mobile Number is required";
+        if (!isValidPhoneNumber(val)) return "Please enter a valid mobile number.";
+        return "";
+      case "whatsapp_no":
+        if (!val) return "WhatsApp Number is required";
+        if (!isValidPhoneNumber(val)) return "Please enter a valid WhatsApp number.";
+        return "";
+      case "email":
+        if (!val) return "Email address is required";
+        if (!isValidEmail(val)) return "Please enter a valid email address.";
+        return "";
+      case "pan":
+        if (!val) return "PAN number is required";
+        if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/i.test(val)) return "Invalid PAN format (e.g. ABCDE1234F)";
+        return "";
+      case "dob":
+        if (!val) return "Date of Birth is required";
+        const dobDate = new Date(val);
+        if (isNaN(dobDate.getTime())) return "Invalid Date of Birth format";
+        if (dobDate > new Date()) return "Date of Birth cannot be in the future";
+        if (!isAtLeast18YearsOld(val)) return "Client must be at least 18 years old.";
+        return "";
+      case "gender":
+        if (!val) return "Gender is required";
+        return "";
+      case "client_type_id":
+        if (!val) return "Client Type is required";
+        return "";
+      case "status":
+        if (!val) return "Status is required";
+        return "";
+      default:
+        return "";
+    }
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    const errMessage = validateSingleField(name, value, formData);
+    setErrors((prev) => ({ ...prev, [name]: errMessage }));
+  };
+
+  // Client-Side Form Validation for all fields on Submit
   const validateForm = () => {
     const newErrors = {};
+    const fieldNames = [
+      "ucc_no",
+      "name",
+      "mobile_no",
+      "whatsapp_no",
+      "email",
+      "pan",
+      "dob",
+      "gender",
+      "client_type_id",
+      "status",
+    ];
 
-    if (!formData.ucc_no || !formData.ucc_no.trim()) {
-      newErrors.ucc_no = "UCC number is required";
-    }
-
-    if (!formData.name || !formData.name.trim()) {
-      newErrors.name = "Client Name is required";
-    }
-
-    if (!formData.mobile_no || !formData.mobile_no.trim()) {
-      newErrors.mobile_no = "Mobile Number is required";
-    } else {
-      const cleanMobile = formData.mobile_no.trim().replace(/[\s\-()]/g, "");
-      if (!/^[0-9]{10,15}$/.test(cleanMobile)) {
-        newErrors.mobile_no = "Invalid Mobile Number (must be 10-15 digits)";
+    fieldNames.forEach((fName) => {
+      const err = validateSingleField(fName, formData[fName], formData);
+      if (err) {
+        newErrors[fName] = err;
       }
-    }
-
-    if (formData.whatsapp_no && formData.whatsapp_no.trim()) {
-      const cleanWhatsApp = formData.whatsapp_no.trim().replace(/[\s\-()]/g, "");
-      if (!/^[0-9]{10,15}$/.test(cleanWhatsApp)) {
-        newErrors.whatsapp_no = "Invalid WhatsApp Number (must be 10-15 digits)";
-      }
-    }
-
-    if (!formData.client_type_id) {
-      newErrors.client_type_id = "Client Type is required";
-    }
-
-    if (formData.email && formData.email.trim()) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.email.trim())) {
-        newErrors.email = "Invalid email address format";
-      }
-    }
-
-    if (formData.pan && formData.pan.trim()) {
-      const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/i;
-      if (!panRegex.test(formData.pan.trim())) {
-        newErrors.pan = "Invalid PAN format (e.g. ABCDE1234F)";
-      }
-    }
+    });
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -361,6 +424,7 @@ const AddClient = () => {
                   placeholder="Enter UCC number (e.g. UCC001)"
                   value={formData.ucc_no}
                   onChange={handleChange}
+                  onBlur={handleBlur}
                   className={`form-input ${errors.ucc_no ? "is-invalid" : ""}`}
                 />
                 {errors.ucc_no && <span className="error-text">{errors.ucc_no}</span>}
@@ -377,6 +441,7 @@ const AddClient = () => {
                   placeholder="Enter full name"
                   value={formData.name}
                   onChange={handleChange}
+                  onBlur={handleBlur}
                   className={`form-input ${errors.name ? "is-invalid" : ""}`}
                 />
                 {errors.name && <span className="error-text">{errors.name}</span>}
@@ -391,6 +456,7 @@ const AddClient = () => {
                   placeholder="Enter business / company name"
                   value={formData.business_name}
                   onChange={handleChange}
+                  onBlur={handleBlur}
                   className="form-input"
                 />
               </div>
@@ -406,6 +472,7 @@ const AddClient = () => {
                   placeholder="Enter 10-digit mobile number"
                   value={formData.mobile_no}
                   onChange={handleChange}
+                  onBlur={handleBlur}
                   className={`form-input ${errors.mobile_no ? "is-invalid" : ""}`}
                 />
                 <label className="checkbox-inline-wrapper">
@@ -423,13 +490,16 @@ const AddClient = () => {
 
               {/* WhatsApp Number */}
               <div className="form-group">
-                <label className="form-label">WhatsApp Number</label>
+                <label className="form-label">
+                  WhatsApp Number <span className="required-star">*</span>
+                </label>
                 <input
                   type="text"
                   name="whatsapp_no"
-                  placeholder="Enter WhatsApp number"
+                  placeholder="Enter 10-digit WhatsApp number"
                   value={formData.whatsapp_no}
                   onChange={handleChange}
+                  onBlur={handleBlur}
                   readOnly={formData.same_as_whatsapp}
                   className={`form-input ${errors.whatsapp_no ? "is-invalid" : ""}`}
                 />
@@ -440,13 +510,16 @@ const AddClient = () => {
 
               {/* Email */}
               <div className="form-group">
-                <label className="form-label">Email</label>
+                <label className="form-label">
+                  Email <span className="required-star">*</span>
+                </label>
                 <input
                   type="email"
                   name="email"
                   placeholder="client@example.com"
                   value={formData.email}
                   onChange={handleChange}
+                  onBlur={handleBlur}
                   className={`form-input ${errors.email ? "is-invalid" : ""}`}
                 />
                 {errors.email && <span className="error-text">{errors.email}</span>}
@@ -454,13 +527,16 @@ const AddClient = () => {
 
               {/* PAN */}
               <div className="form-group">
-                <label className="form-label">PAN</label>
+                <label className="form-label">
+                  PAN <span className="required-star">*</span>
+                </label>
                 <input
                   type="text"
                   name="pan"
                   placeholder="ABCDE1234F"
                   value={formData.pan}
                   onChange={handleChange}
+                  onBlur={handleBlur}
                   className={`form-input ${errors.pan ? "is-invalid" : ""}`}
                 />
                 {errors.pan && <span className="error-text">{errors.pan}</span>}
@@ -468,30 +544,39 @@ const AddClient = () => {
 
               {/* Date of Birth */}
               <div className="form-group">
-                <label className="form-label">Date of Birth</label>
+                <label className="form-label">
+                  Date of Birth <span className="required-star">*</span>
+                </label>
                 <input
                   type="date"
                   name="dob"
+                  max={getMaxAllowedDob()}
                   value={formData.dob}
                   onChange={handleChange}
-                  className="form-input"
+                  onBlur={handleBlur}
+                  className={`form-input ${errors.dob ? "is-invalid" : ""}`}
                 />
+                {errors.dob && <span className="error-text">{errors.dob}</span>}
               </div>
 
               {/* Gender */}
               <div className="form-group">
-                <label className="form-label">Gender</label>
+                <label className="form-label">
+                  Gender <span className="required-star">*</span>
+                </label>
                 <select
                   name="gender"
                   value={formData.gender}
                   onChange={handleChange}
-                  className="form-select"
+                  onBlur={handleBlur}
+                  className={`form-select ${errors.gender ? "is-invalid" : ""}`}
                 >
                   <option value="">Select Gender</option>
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
                   <option value="Other">Other</option>
                 </select>
+                {errors.gender && <span className="error-text">{errors.gender}</span>}
               </div>
 
               {/* Occupation */}
@@ -503,6 +588,7 @@ const AddClient = () => {
                   placeholder="Business, Salaried, Doctor, etc."
                   value={formData.occupation}
                   onChange={handleChange}
+                  onBlur={handleBlur}
                   className="form-input"
                 />
               </div>
@@ -529,6 +615,7 @@ const AddClient = () => {
                     name="client_type_id"
                     value={formData.client_type_id}
                     onChange={handleChange}
+                    onBlur={handleBlur}
                     className={`form-select ${errors.client_type_id ? "is-invalid" : ""}`}
                   >
                     <option value="">Select Client Type</option>
@@ -546,16 +633,20 @@ const AddClient = () => {
 
               {/* Status */}
               <div className="form-group">
-                <label className="form-label">Status</label>
+                <label className="form-label">
+                  Status <span className="required-star">*</span>
+                </label>
                 <select
                   name="status"
                   value={formData.status}
                   onChange={handleChange}
-                  className="form-select"
+                  onBlur={handleBlur}
+                  className={`form-select ${errors.status ? "is-invalid" : ""}`}
                 >
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
                 </select>
+                {errors.status && <span className="error-text">{errors.status}</span>}
               </div>
             </div>
           </div>

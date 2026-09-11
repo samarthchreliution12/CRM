@@ -52,8 +52,8 @@
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  background-color: #eff6ff;
-  color: #1d4ed8;
+  background-color: var(--primary-lighter, #FAF3F2);
+  color: var(--primary, #9E241D);
   display: flex;
   align-items: center;
   justify-content: center;

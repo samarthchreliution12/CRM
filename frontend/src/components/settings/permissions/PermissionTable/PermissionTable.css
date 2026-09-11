@@ -45,13 +45,13 @@
 }
 
 .module-badge {
-  background-color: #eff6ff;
-  color: #1d4ed8;
+  background-color: var(--primary-lighter, #FAF3F2);
+  color: var(--primary, #9E241D);
   padding: 0.25rem 0.65rem;
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 600;
-  border: 1px solid #bfdbfe;
+  border: 1px solid var(--primary-light, #F5E9E7);
   display: inline-block;
 }
 

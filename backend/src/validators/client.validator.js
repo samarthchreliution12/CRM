@@ -1,44 +1,66 @@
+function isAtLeast18YearsOld(dobInput) {
+  if (!dobInput) return false;
+  const dob = new Date(dobInput);
+  if (isNaN(dob.getTime())) return false;
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+    age--;
+  }
+  return age >= 18;
+}
+
+function isValidEmail(email) {
+  if (!email || typeof email !== "string") return false;
+  const trimmed = email.trim();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  return emailRegex.test(trimmed);
+}
+
+function isValidPhoneNumber(phone) {
+  if (!phone || typeof phone !== "string") return false;
+  const clean = phone.trim().replace(/[\s\-()]/g, "");
+  return /^[0-9]{10,15}$/.test(clean);
+}
+
 function validateCreateClientInput(data) {
   const errors = [];
 
-  if (!data.name || !data.name.trim()) {
+  // 1. Client Name (Mandatory)
+  if (!data.name || !data.name.toString().trim()) {
     errors.push({ field: "name", message: "Client name is required" });
   }
 
-  if (!data.ucc_no || !data.ucc_no.trim()) {
+  // 2. UCC Number (Mandatory)
+  if (!data.ucc_no || !data.ucc_no.toString().trim()) {
     errors.push({ field: "ucc_no", message: "UCC number is required" });
   }
 
-  if (!data.client_type_id || !Number.isInteger(Number(data.client_type_id)) || Number(data.client_type_id) <= 0) {
-    errors.push({ field: "client_type_id", message: "Valid client_type_id is required" });
+  // 3. Mobile Number (Mandatory)
+  if (!data.mobile_no || !data.mobile_no.toString().trim()) {
+    errors.push({ field: "mobile_no", message: "Mobile number is required" });
+  } else if (!isValidPhoneNumber(data.mobile_no.toString())) {
+    errors.push({ field: "mobile_no", message: "Please enter a valid mobile number." });
   }
 
-  if (data.email && data.email.trim()) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(data.email.trim())) {
-      errors.push({ field: "email", message: "Invalid email format" });
-    }
+  // 4. WhatsApp Number (Mandatory)
+  if (!data.whatsapp_no || !data.whatsapp_no.toString().trim()) {
+    errors.push({ field: "whatsapp_no", message: "WhatsApp number is required" });
+  } else if (!isValidPhoneNumber(data.whatsapp_no.toString())) {
+    errors.push({ field: "whatsapp_no", message: "Please enter a valid WhatsApp number." });
   }
 
-  if (data.mobile_no && data.mobile_no.trim()) {
-    const mobileClean = data.mobile_no.trim().replace(/[\s\-()]/g, "");
-    const mobileRegex = /^[0-9]{10,15}$/;
-    if (!mobileRegex.test(mobileClean)) {
-      errors.push({ field: "mobile_no", message: "Invalid mobile number format" });
-    }
+  // 5. Email Address (Mandatory)
+  if (!data.email || !data.email.toString().trim()) {
+    errors.push({ field: "email", message: "Email address is required" });
+  } else if (!isValidEmail(data.email.toString())) {
+    errors.push({ field: "email", message: "Please enter a valid email address." });
   }
 
-  if (data.whatsapp_no && data.whatsapp_no.trim()) {
-    const whatsappClean = data.whatsapp_no.trim().replace(/[\s\-()]/g, "");
-    const mobileRegex = /^[0-9]{10,15}$/;
-    if (!mobileRegex.test(whatsappClean)) {
-      errors.push({ field: "whatsapp_no", message: "Invalid WhatsApp number format" });
-    }
-  }
-
-  // PAN is MANDATORY for Client creation
+  // 6. PAN Number (Mandatory)
   if (!data.pan || !data.pan.toString().trim()) {
-    errors.push({ field: "pan", message: "PAN number is required to create a client" });
+    errors.push({ field: "pan", message: "PAN number is required" });
   } else {
     const panClean = data.pan.toString().trim().toUpperCase();
     const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
@@ -47,24 +69,41 @@ function validateCreateClientInput(data) {
     }
   }
 
-  // DOB is MANDATORY for Client creation
+  // 7. Date of Birth (Mandatory & 18+ years old)
   if (!data.dob || !data.dob.toString().trim()) {
-    errors.push({ field: "dob", message: "Date of birth (dob) is required to create a client" });
+    errors.push({ field: "dob", message: "Date of birth is required" });
   } else {
     const dobDate = new Date(data.dob);
     if (isNaN(dobDate.getTime())) {
       errors.push({ field: "dob", message: "Invalid date of birth format" });
-    } else {
-      const today = new Date();
-      if (dobDate > today) {
-        errors.push({ field: "dob", message: "Date of birth cannot be in the future" });
-      }
+    } else if (dobDate > new Date()) {
+      errors.push({ field: "dob", message: "Date of birth cannot be in the future" });
+    } else if (!isAtLeast18YearsOld(data.dob)) {
+      errors.push({ field: "dob", message: "Client must be at least 18 years old." });
     }
   }
 
-  if (data.status && data.status.trim()) {
+  // 8. Gender (Mandatory)
+  if (!data.gender || !data.gender.toString().trim()) {
+    errors.push({ field: "gender", message: "Gender is required" });
+  } else {
+    const validGenders = ["male", "female", "other"];
+    if (!validGenders.includes(data.gender.toString().trim().toLowerCase())) {
+      errors.push({ field: "gender", message: "Gender must be Male, Female, or Other" });
+    }
+  }
+
+  // 9. Client Type ID (Mandatory)
+  if (!data.client_type_id || !Number.isInteger(Number(data.client_type_id)) || Number(data.client_type_id) <= 0) {
+    errors.push({ field: "client_type_id", message: "Client type is required" });
+  }
+
+  // 10. Status (Mandatory)
+  if (!data.status || !data.status.toString().trim()) {
+    errors.push({ field: "status", message: "Status is required" });
+  } else {
     const validStatuses = ["active", "inactive"];
-    if (!validStatuses.includes(data.status.trim().toLowerCase())) {
+    if (!validStatuses.includes(data.status.toString().trim().toLowerCase())) {
       errors.push({ field: "status", message: "Status must be 'active' or 'inactive'" });
     }
   }
@@ -78,11 +117,11 @@ function validateCreateClientInput(data) {
 function validateUpdateClientInput(data) {
   const errors = [];
 
-  if (data.name !== undefined && !data.name.trim()) {
+  if (data.name !== undefined && !data.name.toString().trim()) {
     errors.push({ field: "name", message: "Client name cannot be empty" });
   }
 
-  if (data.ucc_no !== undefined && !data.ucc_no.trim()) {
+  if (data.ucc_no !== undefined && !data.ucc_no.toString().trim()) {
     errors.push({ field: "ucc_no", message: "UCC number cannot be empty" });
   }
 
@@ -92,40 +131,71 @@ function validateUpdateClientInput(data) {
     }
   }
 
-  if (data.email !== undefined && data.email && data.email.trim()) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(data.email.trim())) {
-      errors.push({ field: "email", message: "Invalid email format" });
+  if (data.email !== undefined) {
+    if (!data.email || !data.email.toString().trim()) {
+      errors.push({ field: "email", message: "Email address cannot be empty" });
+    } else if (!isValidEmail(data.email.toString())) {
+      errors.push({ field: "email", message: "Please enter a valid email address." });
     }
   }
 
-  if (data.mobile_no !== undefined && data.mobile_no && data.mobile_no.trim()) {
-    const mobileClean = data.mobile_no.trim().replace(/[\s\-()]/g, "");
-    const mobileRegex = /^[0-9]{10,15}$/;
-    if (!mobileRegex.test(mobileClean)) {
-      errors.push({ field: "mobile_no", message: "Invalid mobile number format" });
+  if (data.mobile_no !== undefined) {
+    if (!data.mobile_no || !data.mobile_no.toString().trim()) {
+      errors.push({ field: "mobile_no", message: "Mobile number cannot be empty" });
+    } else if (!isValidPhoneNumber(data.mobile_no.toString())) {
+      errors.push({ field: "mobile_no", message: "Please enter a valid mobile number." });
     }
   }
 
-  if (data.whatsapp_no !== undefined && data.whatsapp_no && data.whatsapp_no.trim()) {
-    const whatsappClean = data.whatsapp_no.trim().replace(/[\s\-()]/g, "");
-    const mobileRegex = /^[0-9]{10,15}$/;
-    if (!mobileRegex.test(whatsappClean)) {
-      errors.push({ field: "whatsapp_no", message: "Invalid WhatsApp number format" });
+  if (data.whatsapp_no !== undefined) {
+    if (!data.whatsapp_no || !data.whatsapp_no.toString().trim()) {
+      errors.push({ field: "whatsapp_no", message: "WhatsApp number cannot be empty" });
+    } else if (!isValidPhoneNumber(data.whatsapp_no.toString())) {
+      errors.push({ field: "whatsapp_no", message: "Please enter a valid WhatsApp number." });
     }
   }
 
-  if (data.pan !== undefined && data.pan && data.pan.trim()) {
-    const panClean = data.pan.trim().toUpperCase();
-    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
-    if (!panRegex.test(panClean)) {
-      errors.push({ field: "pan", message: "Invalid PAN number format (e.g. ABCDE1234F)" });
+  if (data.pan !== undefined) {
+    if (!data.pan || !data.pan.toString().trim()) {
+      errors.push({ field: "pan", message: "PAN number cannot be empty" });
+    } else {
+      const panClean = data.pan.toString().trim().toUpperCase();
+      const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+      if (!panRegex.test(panClean)) {
+        errors.push({ field: "pan", message: "Invalid PAN number format (e.g. ABCDE1234F)" });
+      }
     }
   }
 
-  if (data.status !== undefined && data.status.trim()) {
+  if (data.dob !== undefined) {
+    if (!data.dob || !data.dob.toString().trim()) {
+      errors.push({ field: "dob", message: "Date of birth cannot be empty" });
+    } else {
+      const dobDate = new Date(data.dob);
+      if (isNaN(dobDate.getTime())) {
+        errors.push({ field: "dob", message: "Invalid date of birth format" });
+      } else if (dobDate > new Date()) {
+        errors.push({ field: "dob", message: "Date of birth cannot be in the future" });
+      } else if (!isAtLeast18YearsOld(data.dob)) {
+        errors.push({ field: "dob", message: "Client must be at least 18 years old." });
+      }
+    }
+  }
+
+  if (data.gender !== undefined) {
+    if (!data.gender || !data.gender.toString().trim()) {
+      errors.push({ field: "gender", message: "Gender cannot be empty" });
+    } else {
+      const validGenders = ["male", "female", "other"];
+      if (!validGenders.includes(data.gender.toString().trim().toLowerCase())) {
+        errors.push({ field: "gender", message: "Gender must be Male, Female, or Other" });
+      }
+    }
+  }
+
+  if (data.status !== undefined && data.status.toString().trim()) {
     const validStatuses = ["active", "inactive"];
-    if (!validStatuses.includes(data.status.trim().toLowerCase())) {
+    if (!validStatuses.includes(data.status.toString().trim().toLowerCase())) {
       errors.push({ field: "status", message: "Status must be 'active' or 'inactive'" });
     }
   }
@@ -138,11 +208,11 @@ function validateUpdateClientInput(data) {
 
 function validateStatusInput(data) {
   const errors = [];
-  if (!data || !data.status || !data.status.trim()) {
+  if (!data || !data.status || !data.status.toString().trim()) {
     errors.push({ field: "status", message: "Status is required" });
   } else {
     const validStatuses = ["active", "inactive"];
-    if (!validStatuses.includes(data.status.trim().toLowerCase())) {
+    if (!validStatuses.includes(data.status.toString().trim().toLowerCase())) {
       errors.push({ field: "status", message: "Status must be 'active' or 'inactive'" });
     }
   }
@@ -154,6 +224,9 @@ function validateStatusInput(data) {
 }
 
 module.exports = {
+  isAtLeast18YearsOld,
+  isValidEmail,
+  isValidPhoneNumber,
   validateCreateClientInput,
   validateUpdateClientInput,
   validateStatusInput,

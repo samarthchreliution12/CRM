@@ -3,8 +3,11 @@ import { Container } from '../common/Container';
 import { SectionHeading } from '../common/SectionHeading';
 import { Button } from '../common/Button';
 import { partnerLogos } from '../../data/partners';
+import { useScrollReveal } from '../../hooks/useScrollReveal';
 
 export const InvestmentRecovery = () => {
+  const [sectionRef, isRevealed] = useScrollReveal({ threshold: 0.15 });
+
   const trustPoints = [
     'Client-Centric Approach',
     'Transparent Guidance',
@@ -12,17 +15,20 @@ export const InvestmentRecovery = () => {
   ];
 
   return (
-    <section className="website-section website-section-light trusted-partners-section">
+    <section ref={sectionRef} className="website-section website-section-light trusted-partners-section">
       <Container>
-        {/* Section Heading */}
-        <SectionHeading
-          badge="TRUSTED PARTNERS"
-          title="Trusted Partnerships. Stronger Financial Solutions."
-          center={true}
-        />
+        <div className={`scroll-reveal ${isRevealed ? 'revealed' : ''}`}>
+          <SectionHeading
+            badge="TRUSTED PARTNERS"
+            title="Trusted Partnerships. Stronger Financial Solutions."
+            center={true}
+          />
+        </div>
 
-        {/* Section Description */}
-        <div style={{ maxWidth: '820px', margin: '0 auto var(--spacing-xxl)', textAlign: 'center' }}>
+        <div
+          className={`scroll-reveal ${isRevealed ? 'revealed' : ''}`}
+          style={{ maxWidth: '820px', margin: '0 auto var(--spacing-xxl)', textAlign: 'center', transitionDelay: '0.12s' }}
+        >
           <p style={{ fontSize: '1.1rem', lineHeight: 1.7, color: 'var(--color-secondary)', marginBottom: 'var(--spacing-md)' }}>
             At Parshwa Consultancy, we believe the right financial decisions are supported by trusted relationships. We work with established financial institutions and industry partners to help connect our clients with a broader range of investment and financial solutions.
           </p>
@@ -31,10 +37,13 @@ export const InvestmentRecovery = () => {
           </p>
         </div>
 
-        {/* Partner Logo Grid */}
         <div className="partner-logo-grid">
-          {partnerLogos.map((partner) => (
-            <div key={partner.id} className="partner-card">
+          {partnerLogos.map((partner, index) => (
+            <div
+              key={partner.id}
+              className={`partner-card scroll-reveal-scale ${isRevealed ? 'revealed' : ''}`}
+              style={{ transitionDelay: `${0.18 + index * 0.06}s` }}
+            >
               {partner.logo ? (
                 <img
                   src={partner.logo}
@@ -42,7 +51,6 @@ export const InvestmentRecovery = () => {
                   className="partner-img"
                 />
               ) : (
-                /* Neutral Professional Placeholder Logo Block */
                 <div className="partner-placeholder-emblem">
                   <div className="partner-placeholder-bar" />
                   <div className="partner-placeholder-circle" />
@@ -53,17 +61,17 @@ export const InvestmentRecovery = () => {
           ))}
         </div>
 
-        {/* Trust Indicators & CTA Button Footer */}
         <div
+          className={`scroll-reveal ${isRevealed ? 'revealed' : ''}`}
           style={{
             marginTop: 'var(--spacing-xxl)',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             gap: 'var(--spacing-lg)',
+            transitionDelay: '0.45s',
           }}
         >
-          {/* 3 SVG Trust Indicators */}
           <div className="partner-trust-points">
             {trustPoints.map((point, index) => (
               <div key={index} className="trust-point-item">
@@ -84,8 +92,7 @@ export const InvestmentRecovery = () => {
             ))}
           </div>
 
-          {/* CTA Button */}
-          <Button to="/contact" variant="primary" size="lg">
+          <Button to="/contact" variant="primary" size="lg" className="website-btn">
             Talk to Our Team →
           </Button>
         </div>
@@ -109,18 +116,24 @@ export const InvestmentRecovery = () => {
           justify-content: center;
           padding: var(--spacing-sm);
           box-shadow: var(--shadow-sm);
-          transition: all var(--transition-fast);
+          transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
         }
 
         .partner-card:hover {
           border-color: var(--color-primary);
-          box-shadow: var(--shadow-md);
+          box-shadow: 0 8px 20px rgba(139, 35, 29, 0.15);
+          transform: translateY(-4px) scale(1.04);
         }
 
         .partner-img {
           max-width: 100%;
           max-height: 100%;
           object-fit: contain;
+          transition: transform 0.3s ease;
+        }
+
+        .partner-card:hover .partner-img {
+          transform: scale(1.05);
         }
 
         .partner-placeholder-emblem {

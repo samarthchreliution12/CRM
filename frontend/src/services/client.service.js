@@ -184,11 +184,12 @@ class ClientService {
   /**
    * Fetch paginated Clients list with optional search and filters.
    */
-  static async getClients({ search = "", status = "", client_type_id = "", page = 1, limit = 10 } = {}, token) {
+  static async getClients({ search = "", status = "", client_type_id = "", service_id = "", page = 1, limit = 10 } = {}, token) {
     const params = new URLSearchParams();
     if (search) params.append("search", search.trim());
     if (status && status !== "all") params.append("status", status.trim());
-    if (client_type_id) params.append("client_type_id", client_type_id);
+    if (client_type_id && client_type_id !== "all") params.append("client_type_id", client_type_id);
+    if (service_id && service_id !== "all") params.append("service_id", service_id);
     if (page) params.append("page", page);
     if (limit) params.append("limit", limit);
 
@@ -465,6 +466,72 @@ class ClientService {
       },
       token
     );
+  }
+
+  /**
+   * Validate Client CSV file before import.
+   */
+  static async validateImportClients(file, token) {
+    const url = `${API_BASE_URL}/clients/import/validate`;
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const headers = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      const error = new Error(data.message || "Failed to validate CSV file.");
+      error.statusCode = response.status;
+      error.details = data.data || data.details || null;
+      throw error;
+    }
+    return data;
+  }
+
+  /**
+   * Import validated Client CSV file.
+   */
+  static async importClients(file, token) {
+    const url = `${API_BASE_URL}/clients/import`;
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const headers = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      const error = new Error(data.message || "Failed to import clients.");
+      error.statusCode = response.status;
+      error.details = data.data || data.details || null;
+      throw error;
+    }
+    return data;
+  }
+
+  /**
+   * Quick Client Search by Name, PAN, or Mobile
+   */
+  static async searchClients(query, token = null) {
+    const encoded = encodeURIComponent(query || "");
+    return this.request(`/clients/search?q=${encoded}`, { method: "GET" }, token);
   }
 }
 

@@ -171,7 +171,7 @@ const Signup = () => {
           type="tel"
           value={formData.mobile}
           onChange={handleChange}
-          placeholder="9876543210 (10 digits)"
+          placeholder="9876543210"
           error={fieldErrors.mobile}
           disabled={isSubmitting}
           required

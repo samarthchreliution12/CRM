@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../../components/layout/AppLayout/AppLayout";
 import ClientService from "../../services/client.service";
+import ClientImportModal from "./ClientImportModal";
 import useAuth from "../../hooks/useAuth";
 import {
   Plus,
@@ -90,9 +91,11 @@ const Clients = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [serviceFilter, setServiceFilter] = useState("all");
 
-  // Client Types dropdown options from DB
+  // Client Types & Services dropdown options from DB
   const [clientTypes, setClientTypes] = useState([]);
+  const [clientServices, setClientServices] = useState([]);
 
   // Click Outside listener to close Import / Export dropdown
   useEffect(() => {
@@ -125,6 +128,26 @@ const Clients = () => {
     };
   }, [token]);
 
+  // Fetch Client Services for filter dropdown
+  useEffect(() => {
+    let isMounted = true;
+    const fetchServices = async () => {
+      try {
+        const res = await ClientService.getClientServices(token);
+        if (isMounted && res && res.data && res.data.client_services) {
+          setClientServices(res.data.client_services);
+        }
+      } catch (err) {
+        // Non-blocking for services dropdown
+      }
+    };
+
+    fetchServices();
+    return () => {
+      isMounted = false;
+    };
+  }, [token]);
+
   // Fetch Clients from Database via API
   const fetchClients = useCallback(async () => {
     try {
@@ -137,6 +160,7 @@ const Clients = () => {
         search: search.trim(),
         status: statusFilter !== "all" ? statusFilter : "",
         client_type_id: typeFilter !== "all" ? typeFilter : "",
+        service_id: serviceFilter !== "all" ? serviceFilter : "",
       };
 
       const res = await ClientService.getClients(params, token);
@@ -161,7 +185,7 @@ const Clients = () => {
     } finally {
       setLoading(false);
     }
-  }, [token, pagination.page, pagination.limit, search, statusFilter, typeFilter]);
+  }, [token, pagination.page, pagination.limit, search, statusFilter, typeFilter, serviceFilter]);
 
   useEffect(() => {
     fetchClients();
@@ -182,6 +206,21 @@ const Clients = () => {
   // Client Type filter handler with page reset
   const handleTypeChange = (e) => {
     setTypeFilter(e.target.value);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
+  // Service filter handler with page reset
+  const handleServiceChange = (e) => {
+    setServiceFilter(e.target.value);
+    setPagination((prev) => ({ ...prev, page: 1 }));
+  };
+
+  // Clear/Reset all filters handler
+  const handleResetFilters = () => {
+    setSearch("");
+    setStatusFilter("all");
+    setTypeFilter("all");
+    setServiceFilter("all");
     setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
@@ -231,10 +270,12 @@ const Clients = () => {
     );
   };
 
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
   // Import / Export UI Handlers
   const handleImportClick = () => {
     setIsImpExpOpen(false);
-    alert("Import Data feature is coming soon.");
+    setIsImportModalOpen(true);
   };
 
   const handleOpenExportModal = () => {
@@ -269,6 +310,7 @@ const Clients = () => {
           search: search.trim(),
           status: statusFilter !== "all" ? statusFilter : "",
           client_type_id: typeFilter !== "all" ? typeFilter : "",
+          service_id: serviceFilter !== "all" ? serviceFilter : "",
         };
       }
 
@@ -448,6 +490,20 @@ const Clients = () => {
               ))}
             </select>
 
+            {/* Dynamic Service Filter */}
+            <select
+              className="clients-filter-select"
+              value={serviceFilter}
+              onChange={handleServiceChange}
+            >
+              <option value="all">All Services</option>
+              {clientServices.map((srv) => (
+                <option key={srv.id} value={srv.id}>
+                  {srv.name}
+                </option>
+              ))}
+            </select>
+
             {/* Status Filter */}
             <select
               className="clients-filter-select"
@@ -458,6 +514,18 @@ const Clients = () => {
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>
+
+            {(search || statusFilter !== "all" || typeFilter !== "all" || serviceFilter !== "all") && (
+              <button
+                type="button"
+                className="btn-filter-icon"
+                title="Reset All Filters"
+                onClick={handleResetFilters}
+                style={{ backgroundColor: "#f3f4f6", color: "#ef4444" }}
+              >
+                <X size={16} />
+              </button>
+            )}
 
             <button
               type="button"
@@ -543,7 +611,7 @@ const Clients = () => {
                             <div className="client-details-text">
                               <span className="client-name">{client.name}</span>
                               {client.business_name && (
-                                <span className="client-pan" style={{ color: "#3b82f6", fontWeight: 600 }}>
+                                <span className="client-business">
                                   {client.business_name}
                                 </span>
                               )}
@@ -600,10 +668,10 @@ const Clients = () => {
                         </td>
                         <td>
                           <span
-                            className={`status-pill ${client.status ? client.status.toLowerCase() : "active"}`}
+                            className={`status-badge ${client.status ? client.status.toLowerCase() : "active"}`}
                           >
                             <span className="status-dot">
-                              {client.status === "active" ? "●" : "○"}
+                              {client.status === "inactive" ? "○" : "●"}
                             </span>
                             <span style={{ textTransform: "capitalize" }}>
                               {client.status || "active"}
@@ -785,6 +853,18 @@ const Clients = () => {
           </div>
         </div>
       )}
+
+      {/* Client Import Modal */}
+      <ClientImportModal
+        show={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onSuccess={(msg) => {
+          setSuccessMessage(msg);
+          setTimeout(() => setSuccessMessage(""), 5000);
+          fetchClients();
+        }}
+        token={token}
+      />
     </AppLayout>
   );
 };

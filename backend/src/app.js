@@ -20,6 +20,7 @@ const adminDocumentRoutes = require("./routes/adminDocument.routes");
 const communicationRoutes = require("./routes/communication.routes");
 const groupRoutes = require("./routes/group.routes");
 const adminAuditLogRoutes = require("./routes/adminAuditLog.routes");
+const dashboardRoutes = require("./routes/dashboard.routes");
 const errorHandler = require("./middleware/error.middleware");
 
 const app = express();
@@ -88,6 +89,9 @@ app.use("/api/leads", leadRoutes);
 
 // Internal Communication Routes
 app.use("/api/communication", communicationRoutes);
+
+// Dashboard Routes
+app.use("/api/dashboard", dashboardRoutes);
 
 // Centralized Error Handling Middleware
 app.use(errorHandler);

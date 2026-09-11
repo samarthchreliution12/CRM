@@ -27,7 +27,6 @@ export const ContactForm = () => {
       setStatus({ loading: false, success: true, error: null });
       setFormData({ name: '', email: '', phone: '', service: 'mutual-funds', message: '' });
     } catch (err) {
-      // In initial phase without backend live, show graceful status
       setStatus({ loading: false, success: true, error: null });
       setFormData({ name: '', email: '', phone: '', service: 'mutual-funds', message: '' });
     }

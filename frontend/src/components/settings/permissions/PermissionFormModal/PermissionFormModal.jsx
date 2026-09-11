@@ -80,8 +80,8 @@ const PermissionFormModal = ({ isOpen, onClose, onSubmit, initialData = null, is
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-content-card" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-backdrop">
+      <div className="modal-content-card">
         <div className="modal-header">
           <h3 className="modal-title">{isEditMode ? "Edit Permission" : "Add New Permission"}</h3>
           <button type="button" className="modal-close-btn" onClick={onClose} disabled={isSubmitting}>

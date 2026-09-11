@@ -1,14 +1,26 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import PublicRoute from "./routes/PublicRoute";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import AdminRoute from "./routes/AdminRoute";
 
+// Website Layout & Pages
+import { WebsiteLayout } from "./components/website/layout/WebsiteLayout";
+import Home from "./pages/website/Home/Home";
+import About from "./pages/website/About/About";
+import Services from "./pages/website/Services/Services";
+import ServiceDetail from "./pages/website/Services/ServiceDetail";
+import Contact from "./pages/website/Contact/Contact";
+import NotFound from "./pages/website/NotFound/NotFound";
+
+// CRM Auth Pages
 import Login from "./pages/auth/Login/Login";
 import Signup from "./pages/auth/Signup/Signup";
 import ForgotPassword from "./pages/auth/ForgotPassword/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword/ResetPassword";
+
+// CRM Protected Pages
 import Dashboard from "./pages/dashboard/Dashboard";
 import Profile from "./pages/profile/Profile";
 import Clients from "./pages/clients/Clients";
@@ -30,6 +42,48 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
+          {/* Public Website Routes */}
+          <Route
+            path="/"
+            element={
+              <WebsiteLayout>
+                <Home />
+              </WebsiteLayout>
+            }
+          />
+          <Route
+            path="/about"
+            element={
+              <WebsiteLayout>
+                <About />
+              </WebsiteLayout>
+            }
+          />
+          <Route
+            path="/services"
+            element={
+              <WebsiteLayout>
+                <Services />
+              </WebsiteLayout>
+            }
+          />
+          <Route
+            path="/services/:slug"
+            element={
+              <WebsiteLayout>
+                <ServiceDetail />
+              </WebsiteLayout>
+            }
+          />
+          <Route
+            path="/contact"
+            element={
+              <WebsiteLayout>
+                <Contact />
+              </WebsiteLayout>
+            }
+          />
+
           {/* Public Authentication Routes */}
           <Route
             path="/login"
@@ -188,9 +242,25 @@ function App() {
             }
           />
 
-          {/* Fallback Redirect */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          {/* Client Portal Route Shell (Placeholder for future client portal expansion) */}
+          <Route
+            path="/client/*"
+            element={
+              <WebsiteLayout>
+                <NotFound />
+              </WebsiteLayout>
+            }
+          />
+
+          {/* Website Fallback 404 Route */}
+          <Route
+            path="*"
+            element={
+              <WebsiteLayout>
+                <NotFound />
+              </WebsiteLayout>
+            }
+          />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

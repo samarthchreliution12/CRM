@@ -140,8 +140,8 @@ const StaffFormModal = ({ isOpen, onClose, onSubmit, initialData = null, isSubmi
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-content-card" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-backdrop">
+      <div className="modal-content-card">
         <div className="modal-header">
           <h3 className="modal-title">{isEditMode ? "Edit Staff User" : "Add New Staff User"}</h3>
           <button type="button" className="modal-close-btn" onClick={onClose} disabled={isSubmitting}>

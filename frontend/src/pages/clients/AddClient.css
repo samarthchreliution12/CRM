@@ -115,8 +115,8 @@
 
 .form-input:focus,
 .form-select:focus {
-  border-color: #0f172a;
-  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.05);
+  border-color: #9E241E;
+  box-shadow: 0 0 0 3px rgba(158, 36, 30, 0.15);
 }
 
 .form-input.is-invalid,
@@ -149,7 +149,7 @@
 .checkbox-inline-input {
   width: 16px;
   height: 16px;
-  accent-color: #0f172a;
+  accent-color: #9E241E;
   cursor: pointer;
 }
 
@@ -189,8 +189,8 @@
 }
 
 .service-checkbox-item.selected {
-  border-color: #0f172a;
-  background-color: #f1f5f9;
+  border-color: #9E241E;
+  background-color: #fdf2f2;
 }
 
 .service-checkbox-label {
@@ -235,7 +235,7 @@
   font-size: 0.875rem;
   font-weight: 600;
   color: #ffffff;
-  background-color: #0f172a;
+  background-color: #9E241E;
   border: none;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -243,7 +243,7 @@
 }
 
 .btn-save-client:hover:not(:disabled) {
-  background-color: #1e293b;
+  background-color: #7D1B17;
 }
 
 .btn-save-client:disabled {

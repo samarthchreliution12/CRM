@@ -162,8 +162,8 @@ const DocumentUploadModal = ({
   };
 
   return (
-    <div className="doc-modal-backdrop" onClick={onClose}>
-      <div className="doc-modal-container" onClick={(e) => e.stopPropagation()}>
+    <div className="doc-modal-backdrop">
+      <div className="doc-modal-container">
         <div className="doc-modal-header">
           <h3 className="doc-modal-title">{isReplace ? "Replace Document" : "Upload Document"}</h3>
           <button type="button" className="btn-close-modal" onClick={onClose} disabled={isUploading}>

@@ -41,7 +41,7 @@ export const Footer = () => {
             <ul style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {NAV_LINKS.map((item) => (
                 <li key={item.path}>
-                  <Link to={item.path} style={{ color: '#C0C8CE', fontSize: '0.9375rem' }}>
+                  <Link to={item.path} className="footer-link-item" style={{ color: '#C0C8CE', fontSize: '0.9375rem' }}>
                     {item.label}
                   </Link>
                 </li>

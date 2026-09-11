@@ -20,7 +20,7 @@ export const MobileMenu = ({ isOpen, onClose }) => {
         padding: 'var(--spacing-lg)',
         display: 'flex',
         flexDirection: 'column',
-        justify: 'space-between',
+        justifyContent: 'space-between',
         boxShadow: 'var(--shadow-lg)',
       }}
     >
@@ -46,9 +46,15 @@ export const MobileMenu = ({ isOpen, onClose }) => {
         ))}
       </ul>
 
-      <div style={{ marginTop: 'auto', paddingTop: 'var(--spacing-xl)' }}>
-        <Button to="/contact" variant="primary" size="lg" onClick={onClose} style={{ width: '100%' }}>
-          Book a Consultation
+      <div style={{ marginTop: 'auto', paddingTop: 'var(--spacing-xl)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <Button to="/contact" variant="outline" size="md" onClick={onClose} style={{ width: '100%', justifyContent: 'center' }}>
+          Login Mutual Fund
+        </Button>
+        <Button to="/services/ipo" variant="outline" size="md" onClick={onClose} style={{ width: '100%', justifyContent: 'center' }}>
+          Apply For IPO
+        </Button>
+        <Button to="/contact" variant="primary" size="md" onClick={onClose} style={{ width: '100%', justifyContent: 'center' }}>
+          Login
         </Button>
       </div>
     </div>

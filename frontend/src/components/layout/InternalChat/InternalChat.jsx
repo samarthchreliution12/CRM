@@ -266,8 +266,8 @@ const InternalChat = () => {
                       </div>
                     )}
 
-                    {/* Staff Members Available for Chat */}
-                    <div className="chat-section">
+                    {/* In internal chat box showing default available staff members */}
+                    {/* <div className="chat-section">
                       <span className="chat-section-label">Start Chat with Staff</span>
                       {staffUsers
                         .filter((st) => !searchQuery || st.name.toLowerCase().includes(searchQuery.toLowerCase()) || st.email.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -286,7 +286,7 @@ const InternalChat = () => {
                             </div>
                           </div>
                         ))}
-                    </div>
+                    </div> */}
                   </div>
                 )}
               </div>

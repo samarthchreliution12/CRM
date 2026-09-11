@@ -96,8 +96,8 @@
   width: 64px;
   height: 64px;
   border-radius: 50%;
-  background-color: #e2e8f0;
-  color: #0f172a;
+  background-color: #9E241E;
+  color: #ffffff;
   font-size: 1.5rem;
   font-weight: 800;
   display: flex;
@@ -155,8 +155,8 @@
 }
 
 .badge-tag.type {
-  background-color: #e0f2fe;
-  color: #0369a1;
+  background-color: #fdf2f2;
+  color: #9E241E;
 }
 
 .badge-tag.role {
@@ -220,7 +220,7 @@
 }
 
 .btn-eye-toggle:hover {
-  color: #0f172a;
+  color: #1F2427;
   background-color: #e2e8f0;
 }
 
@@ -257,8 +257,8 @@
 }
 
 .tab-button.active {
-  color: #0f172a;
-  border-bottom-color: #0f172a;
+  color: #9E241E;
+  border-bottom-color: #9E241E;
 }
 
 /* Tab Body Content */
@@ -320,7 +320,7 @@
   font-size: 0.8rem;
   font-weight: 600;
   color: #ffffff;
-  background-color: #0f172a;
+  background-color: #9E241E;
   border: none;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -328,7 +328,7 @@
 }
 
 .btn-add-member-sm:hover {
-  background-color: #1e293b;
+  background-color: #7D1B17;
 }
 
 /* Two-Column Information Key-Value Grid */

@@ -9,7 +9,7 @@ export const Header = () => {
 
   return (
     <header
-      className="website-header"
+      className="website-header header-animate-in"
       style={{
         position: 'fixed',
         top: 0,

@@ -2,6 +2,7 @@ import React from 'react';
 import { Container } from '../common/Container';
 import { SectionHeading } from '../common/SectionHeading';
 import { Button } from '../common/Button';
+import { useScrollReveal } from '../../hooks/useScrollReveal';
 
 const clientCategories = [
   {
@@ -83,21 +84,29 @@ const clientCategories = [
 ];
 
 export const WhoWeServe = () => {
+  const [sectionRef, isRevealed] = useScrollReveal({ threshold: 0.15 });
+
   return (
-    <section className="website-section website-section-light who-we-serve-section">
+    <section ref={sectionRef} className="website-section website-section-light who-we-serve-section">
       <Container>
         {/* Section Heading */}
-        <SectionHeading
-          badge="WHO WE SERVE"
-          title="Financial Solutions for Every Type of Investor"
-          subtitle="At Parshwa Consultancy, we serve a diverse range of clients with different financial goals, investment needs, and financial structures. Our approach is focused on understanding each client's requirements and helping them explore suitable financial and investment solutions."
-          center={true}
-        />
+        <div className={`scroll-reveal ${isRevealed ? 'revealed' : ''}`}>
+          <SectionHeading
+            badge="WHO WE SERVE"
+            title="Financial Solutions for Every Type of Investor"
+            subtitle="At Parshwa Consultancy, we serve a diverse range of clients with different financial goals, investment needs, and financial structures. Our approach is focused on understanding each client's requirements and helping them explore suitable financial and investment solutions."
+            center={true}
+          />
+        </div>
 
         {/* 6 Client Categories Grid */}
         <div className="client-categories-grid">
-          {clientCategories.map((client) => (
-            <div key={client.id} className="client-category-card">
+          {clientCategories.map((client, index) => (
+            <div
+              key={client.id}
+              className={`client-category-card scroll-reveal ${isRevealed ? 'revealed' : ''}`}
+              style={{ transitionDelay: `${0.1 + index * 0.08}s` }}
+            >
               <div className="client-icon-wrapper">
                 {client.icon}
               </div>
@@ -108,12 +117,15 @@ export const WhoWeServe = () => {
         </div>
 
         {/* Bottom CTA Banner */}
-        <div className="client-cta-box">
+        <div
+          className={`client-cta-box scroll-reveal ${isRevealed ? 'revealed' : ''}`}
+          style={{ transitionDelay: '0.5s' }}
+        >
           <h3 className="client-cta-heading">Not Sure Which Solution Is Right for You?</h3>
           <p className="client-cta-text">
             Speak with our team to discuss your financial needs and explore the services that may be suitable for you.
           </p>
-          <Button to="/contact" variant="primary" size="md">
+          <Button to="/contact" variant="primary" size="md" className="website-btn">
             Talk to Our Team →
           </Button>
         </div>
@@ -135,13 +147,13 @@ export const WhoWeServe = () => {
           box-shadow: var(--shadow-sm);
           display: flex;
           flex-direction: column;
-          transition: all var(--transition-normal);
+          transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
         }
 
         .client-category-card:hover {
-          transform: translateY(-4px);
+          transform: translateY(-6px);
           border-color: var(--color-primary);
-          box-shadow: var(--shadow-md);
+          box-shadow: 0 12px 28px rgba(139, 35, 29, 0.12);
         }
 
         .client-icon-wrapper {
@@ -154,12 +166,13 @@ export const WhoWeServe = () => {
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: all var(--transition-fast);
+          transition: transform 0.3s ease, background-color 0.3s ease, color 0.3s ease;
         }
 
         .client-category-card:hover .client-icon-wrapper {
           background-color: var(--color-primary);
           color: var(--color-white);
+          transform: scale(1.08);
         }
 
         .client-category-title {

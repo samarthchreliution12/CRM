@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Container } from '../common/Container';
 import { SectionHeading } from '../common/SectionHeading';
+import { useScrollReveal } from '../../hooks/useScrollReveal';
 
 const testimonialsData = [
   {
@@ -50,6 +51,7 @@ const testimonialsData = [
 ];
 
 export const Testimonials = () => {
+  const [sectionRef, isRevealed] = useScrollReveal({ threshold: 0.15 });
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const touchStartX = useRef(0);
@@ -69,7 +71,6 @@ export const Testimonials = () => {
     setCurrentIndex(index);
   };
 
-  // Auto-play timer with pause on hover/touch
   useEffect(() => {
     if (isPaused) return;
 
@@ -80,7 +81,6 @@ export const Testimonials = () => {
     return () => clearInterval(interval);
   }, [isPaused, nextSlide]);
 
-  // Touch Swipe Handlers for mobile device support
   const handleTouchStart = (e) => {
     setIsPaused(true);
     touchStartX.current = e.targetTouches[0].clientX;
@@ -101,7 +101,6 @@ export const Testimonials = () => {
         prevSlide();
       }
     }
-    // Reset touch coordinates and resume auto-play
     touchStartX.current = 0;
     touchEndX.current = 0;
     setIsPaused(false);
@@ -110,17 +109,19 @@ export const Testimonials = () => {
   const current = testimonialsData[currentIndex];
 
   return (
-    <section className="website-section website-section-light testimonials-section">
+    <section ref={sectionRef} className="website-section website-section-light testimonials-section">
       <Container>
-        <SectionHeading
-          badge="Client Voice"
-          title="What Our Clients Say"
-          subtitle="Real stories of financial growth, portfolio management, and successful investment recovery."
-          center={true}
-        />
+        <div className={`scroll-reveal ${isRevealed ? 'revealed' : ''}`}>
+          <SectionHeading
+            badge="Client Voice"
+            title="What Our Clients Say"
+            subtitle="Real stories of financial growth, portfolio management, and successful investment recovery."
+            center={true}
+          />
+        </div>
 
         <div
-          className="testimonials-carousel-container"
+          className={`testimonials-carousel-container scroll-reveal ${isRevealed ? 'revealed' : ''}`}
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
           onTouchStart={handleTouchStart}
@@ -131,9 +132,9 @@ export const Testimonials = () => {
             maxWidth: '820px',
             margin: '0 auto',
             padding: '0 48px',
+            transitionDelay: '0.15s',
           }}
         >
-          {/* Active Testimonial Card */}
           <div
             key={current.id}
             className="testimonial-card fade-in"
@@ -146,7 +147,6 @@ export const Testimonials = () => {
               position: 'relative',
             }}
           >
-            {/* Header: Rating Stars & Verified Badge */}
             <div
               style={{
                 display: 'flex',
@@ -157,12 +157,10 @@ export const Testimonials = () => {
                 gap: '8px',
               }}
             >
-              {/* Star Rating */}
               <div style={{ color: '#FFB800', fontSize: '1.25rem', letterSpacing: '2px' }}>
                 {'★'.repeat(current.rating)}
               </div>
 
-              {/* Verified Client Badge */}
               {current.verified && (
                 <span
                   style={{
@@ -183,7 +181,6 @@ export const Testimonials = () => {
               )}
             </div>
 
-            {/* Client Quote */}
             <blockquote
               style={{
                 fontSize: '1.15rem',
@@ -197,9 +194,7 @@ export const Testimonials = () => {
               "{current.quote}"
             </blockquote>
 
-            {/* Client Info & Avatar */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              {/* Avatar Circle */}
               <div
                 style={{
                   width: '52px',
@@ -219,7 +214,6 @@ export const Testimonials = () => {
                 {current.initials}
               </div>
 
-              {/* Client Details */}
               <div>
                 <h4 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--color-dark)' }}>
                   {current.name}
@@ -231,7 +225,6 @@ export const Testimonials = () => {
             </div>
           </div>
 
-          {/* Navigation Arrows */}
           <button
             type="button"
             onClick={prevSlide}
@@ -253,16 +246,18 @@ export const Testimonials = () => {
               justifyContent: 'center',
               fontSize: '1.25rem',
               cursor: 'pointer',
-              transition: 'all var(--transition-fast)',
+              transition: 'all 0.25s ease',
               zIndex: 10,
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = 'var(--color-primary)';
               e.currentTarget.style.color = '#FFFFFF';
+              e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = 'var(--color-white)';
               e.currentTarget.style.color = 'var(--color-dark)';
+              e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
             }}
           >
             ‹
@@ -289,22 +284,23 @@ export const Testimonials = () => {
               justifyContent: 'center',
               fontSize: '1.25rem',
               cursor: 'pointer',
-              transition: 'all var(--transition-fast)',
+              transition: 'all 0.25s ease',
               zIndex: 10,
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = 'var(--color-primary)';
               e.currentTarget.style.color = '#FFFFFF';
+              e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = 'var(--color-white)';
               e.currentTarget.style.color = 'var(--color-dark)';
+              e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
             }}
           >
             ›
           </button>
 
-          {/* Indicator Dots */}
           <div
             style={{
               display: 'flex',
@@ -322,13 +318,13 @@ export const Testimonials = () => {
                   onClick={() => goToSlide(idx)}
                   aria-label={`Go to slide ${idx + 1}`}
                   style={{
-                    width: isActive ? '24px' : '10px',
+                    width: isActive ? '28px' : '10px',
                     height: '10px',
                     borderRadius: 'var(--radius-full)',
                     backgroundColor: isActive ? 'var(--color-primary)' : 'var(--color-border)',
                     border: 'none',
                     cursor: 'pointer',
-                    transition: 'all var(--transition-normal)',
+                    transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                     padding: 0,
                   }}
                 />

@@ -24,8 +24,8 @@ export const Navbar = ({ onMobileToggle }) => {
 
       {/* Desktop Navigation Links */}
       <ul className="website-nav-links hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-        {NAV_LINKS.map((item) => (
-          <li key={item.path}>
+        {NAV_LINKS.map((item, index) => (
+          <li key={item.path} className="nav-link-stagger" style={{ animationDelay: `${0.1 + index * 0.08}s` }}>
             <NavLink
               to={item.path}
               className={({ isActive }) =>
@@ -45,10 +45,16 @@ export const Navbar = ({ onMobileToggle }) => {
         ))}
       </ul>
 
-      {/* Desktop Right CTA */}
-      <div className="website-nav-cta hide-on-mobile">
-        <Button to="/contact" variant="primary" size="md">
-          Book a Consultation
+      {/* Desktop Right Action Buttons */}
+      <div className="website-nav-cta hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <Button to="/contact" variant="outline" size="sm" className="website-btn" style={{ whiteSpace: 'nowrap', fontSize: '0.85rem' }}>
+          Login Mutual Fund
+        </Button>
+        <Button to="/services/ipo" variant="outline" size="sm" className="website-btn" style={{ whiteSpace: 'nowrap', fontSize: '0.85rem' }}>
+          Apply For IPO
+        </Button>
+        <Button to="/contact" variant="primary" size="sm" className="website-btn" style={{ whiteSpace: 'nowrap', fontSize: '0.85rem' }}>
+          Login
         </Button>
       </div>
 
@@ -69,7 +75,18 @@ export const Navbar = ({ onMobileToggle }) => {
       </button>
 
       <style>{`
-        @media (max-width: 768px) {
+        @media (max-width: 992px) {
+          .website-nav-links {
+            gap: 16px !important;
+          }
+          .website-nav-cta {
+            gap: 8px !important;
+          }
+        }
+        @media (max-width: 860px) {
+          .hide-on-mobile {
+            display: none !important;
+          }
           .website-mobile-toggle {
             display: block !important;
           }

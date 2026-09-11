@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import LeadService from "../../services/lead.service";
+import useAuth from "../../hooks/useAuth";
 import { X, AlertCircle, Loader2, User, Building, Phone, Mail, Calendar, Tag, Briefcase } from "lucide-react";
 
 const SOURCE_OPTIONS = ["Website", "Referral", "Walk-in", "Call", "WhatsApp", "Other"];
@@ -19,6 +20,8 @@ const LeadFormModal = ({
   staffUsers = [],
   token,
 }) => {
+  const { user } = useAuth();
+
   const [formData, setFormData] = useState({
     name: "",
     mobile_no: "",
@@ -38,6 +41,18 @@ const LeadFormModal = ({
   const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const formatDateTimeLocal = (dateStr) => {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return "";
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const hours = String(d.getHours()).padStart(2, "0");
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
   useEffect(() => {
     if (editingLead) {
       setFormData({
@@ -49,11 +64,9 @@ const LeadFormModal = ({
         client_type_id: editingLead.client_type_id || editingLead.client_type?.id || "",
         source: editingLead.source || "Website",
         service_id: editingLead.service_id || editingLead.service?.id || "",
-        assigned_to: editingLead.assigned_to || editingLead.assigned_staff?.id || "",
+        assigned_to: editingLead.assigned_to || editingLead.assigned_staff?.id || user?.id || "",
         priority: editingLead.priority || "medium",
-        next_follow_up_at: editingLead.next_follow_up_at
-          ? new Date(editingLead.next_follow_up_at).toISOString().slice(0, 16)
-          : "",
+        next_follow_up_at: formatDateTimeLocal(editingLead.next_follow_up_at),
         notes: editingLead.notes || "",
       });
     } else {
@@ -66,7 +79,7 @@ const LeadFormModal = ({
         client_type_id: clientTypes[0] ? clientTypes[0].id : "",
         source: "Website",
         service_id: services[0] ? services[0].id : "",
-        assigned_to: "",
+        assigned_to: user?.id || (staffUsers[0] ? staffUsers[0].id : ""),
         priority: "medium",
         next_follow_up_at: "",
         notes: "",
@@ -74,9 +87,21 @@ const LeadFormModal = ({
     }
     setFieldErrors({});
     setFormError("");
-  }, [editingLead, show, clientTypes, services]);
+  }, [editingLead, show, clientTypes, services, user, staffUsers]);
 
   if (!show) return null;
+
+  const getMinDateTime = () => {
+    const now = new Date();
+
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -127,6 +152,15 @@ const LeadFormModal = ({
       errs.service_id = "Interested Service is required";
     }
 
+    if (formData.next_follow_up_at) {
+      const selectedDate = new Date(formData.next_follow_up_at);
+      if (isNaN(selectedDate.getTime())) {
+        errs.next_follow_up_at = "Invalid follow-up date and time format";
+      } else if (selectedDate < new Date()) {
+        errs.next_follow_up_at = "Follow-up date and time cannot be in the past";
+      }
+    }
+
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -174,8 +208,8 @@ const LeadFormModal = ({
   };
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="lead-form-modal-card" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-backdrop">
+      <div className="lead-form-modal-card">
         {/* Header */}
         <div className="lead-modal-header">
           <h3 className="lead-modal-title">
@@ -207,7 +241,7 @@ const LeadFormModal = ({
                   <input
                     type="text"
                     className={`form-input ${fieldErrors.name ? "input-error" : ""}`}
-                    placeholder="e.g. Rahul Patel"
+                    placeholder="e.g. Full Name"
                     value={formData.name}
                     onChange={(e) => handleChange("name", e.target.value)}
                   />
@@ -240,7 +274,7 @@ const LeadFormModal = ({
                   <input
                     type="email"
                     className={`form-input ${fieldErrors.email ? "input-error" : ""}`}
-                    placeholder="e.g. rahul@example.com"
+                    placeholder="e.g. example@gmail.com"
                     value={formData.email}
                     onChange={(e) => handleChange("email", e.target.value)}
                   />
@@ -386,11 +420,17 @@ const LeadFormModal = ({
                   <Calendar size={16} className="input-icon" />
                   <input
                     type="datetime-local"
-                    className="form-input"
+                    className={`form-input ${fieldErrors.next_follow_up_at ? "input-error" : ""}`}
                     value={formData.next_follow_up_at}
-                    onChange={(e) => handleChange("next_follow_up_at", e.target.value)}
+                    min={getMinDateTime()}
+                    onChange={(e) =>
+                      handleChange("next_follow_up_at", e.target.value)
+                    }
                   />
                 </div>
+                {fieldErrors.next_follow_up_at && (
+                  <span className="field-error-text">{fieldErrors.next_follow_up_at}</span>
+                )}
               </div>
 
               {/* Notes */}

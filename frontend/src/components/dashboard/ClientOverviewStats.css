@@ -1,0 +1,122 @@
+/* Client Overview Statistics Grid Component Styling */
+
+.client-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .client-overview-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 540px) {
+  .client-overview-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.overview-stat-card {
+  background-color: var(--surface, #FFFFFF);
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--border, #E2E2DF);
+  box-shadow: var(--shadow-card, 0 4px 12px rgba(0, 0, 0, 0.03));
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.overview-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+}
+
+.stat-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.stat-card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background-color: var(--primary-lighter, #FAF3F2);
+  color: var(--primary, #9E241D);
+  border: 1px solid var(--primary-light, #F5E9E7);
+}
+
+.stat-card-icon.active,
+.stat-card-icon.inactive,
+.stat-card-icon.demat,
+.stat-card-icon.mutual-fund {
+  background-color: var(--primary-lighter, #FAF3F2);
+  color: var(--primary, #9E241D);
+  border: 1px solid var(--primary-light, #F5E9E7);
+}
+
+.stat-card-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary, #596067);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.stat-card-count {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--text-primary, #25282A);
+  margin: 0.25rem 0 0.15rem 0;
+  line-height: 1.2;
+}
+
+.stat-card-subtitle {
+  font-size: 0.785rem;
+  color: var(--text-muted, #858B90);
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Skeleton Loading State */
+.stat-card-skeleton {
+  animation: statPulse 1.5s infinite ease-in-out;
+}
+
+@keyframes statPulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+.skeleton-box {
+  background-color: #E2E2DF;
+  border-radius: 6px;
+}
+
+/* Error State Banner */
+.overview-error-banner {
+  background-color: var(--danger-light, #F9E9E8);
+  border: 1px solid #F3C7C5;
+  color: var(--danger, #B52B27);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}

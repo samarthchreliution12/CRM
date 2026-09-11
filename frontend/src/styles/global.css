@@ -46,3 +46,78 @@ input, button, select, textarea {
   background: var(--text-muted);
   border-radius: 3px;
 }
+
+/* Universal Modal Backdrop & Scrollable Container Rules */
+.modal-backdrop,
+.comm-modal-backdrop,
+.doc-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1.5rem 1rem;
+  overflow-y: auto;
+}
+
+.modal-container,
+.modal-content-card,
+.lead-form-modal-card {
+  width: 100%;
+  max-width: 650px;
+  background-color: #ffffff;
+  border-radius: var(--radius-md, 12px);
+  box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.2);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 3rem);
+  margin: auto;
+}
+
+.modal-container form,
+.modal-content-card form,
+.lead-form-modal-card form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.modal-header,
+.lead-modal-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+  background-color: #ffffff;
+}
+
+.modal-body,
+.lead-modal-body {
+  padding: 1.25rem;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.modal-footer,
+.lead-modal-footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.625rem;
+  padding: 0.875rem 1.25rem;
+  background-color: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
