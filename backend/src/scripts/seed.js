@@ -165,17 +165,17 @@ async function seedDatabase() {
       }
     }
 
-    // 6. Optionally seed initial admin account
-    if (process.env.SEED_ADMIN_EMAIL && process.env.SEED_ADMIN_PASSWORD) {
-      const adminRoleId = roleMap["Admin"];
-      const passwordHash = await bcrypt.hash(process.env.SEED_ADMIN_PASSWORD, 10);
-      await client.query(
-        `INSERT INTO users (name, email, password_hash, role_id, status)
-         VALUES ($1, $2, $3, $4, 'active')
-         ON CONFLICT (email) DO NOTHING`,
-        ["System Admin", process.env.SEED_ADMIN_EMAIL, passwordHash, adminRoleId]
-      );
-    }
+    // 6. Seed default admin account
+    const adminRoleId = roleMap["Admin"] || 1;
+    const adminEmail = process.env.SEED_ADMIN_EMAIL || "admin@crm.com";
+    const adminPassword = process.env.SEED_ADMIN_PASSWORD || "password123";
+    const passwordHash = await bcrypt.hash(adminPassword, 10);
+    await client.query(
+      `INSERT INTO users (name, email, password_hash, role_id, status)
+       VALUES ($1, $2, $3, $4, 'active')
+       ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash, status = 'active'`,
+      ["System Admin", adminEmail, passwordHash, adminRoleId]
+    );
 
     await client.query("COMMIT");
     console.log("Database seeding completed successfully.");
