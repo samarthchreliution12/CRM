@@ -1,7 +1,7 @@
 import React from 'react';
 import { Container } from '../common/Container';
 import { Button } from '../common/Button';
-import heroImg2 from '../../../assets/website/images/hero_img_4.png';
+// import heroImg2 from '../../../assets/website/images/screen.png';
 
 export const Hero = () => {
   return (
@@ -40,7 +40,7 @@ export const Hero = () => {
           </div>
 
           {/* Right Column: Hero Image Card */}
-          <div className="website-hero-image-col hero-fade-item stagger-4">
+          {/* <div className="website-hero-image-col hero-fade-item stagger-4">
             <div className="website-hero-image-card">
               <img
                 src={heroImg2}
@@ -49,7 +49,7 @@ export const Hero = () => {
               />
               <div className="website-hero-card-overlay" />
             </div>
-          </div>
+          </div> */}
         </div>
       </Container>
 
