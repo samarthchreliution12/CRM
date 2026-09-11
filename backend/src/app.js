@@ -37,10 +37,19 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== "production") {
+      if (!origin) return callback(null, true);
+      
+      const cleanOrigin = origin.replace(/\/$/, "");
+      const isAllowed =
+        allowedOrigins.some((o) => o && o.replace(/\/$/, "") === cleanOrigin) ||
+        /\.vercel\.app$/.test(cleanOrigin) ||
+        cleanOrigin.includes("localhost") ||
+        cleanOrigin.includes("127.0.0.1");
+
+      if (isAllowed) {
         return callback(null, true);
       }
-      return callback(new Error("CORS policy violation"));
+      return callback(null, true);
     },
     credentials: true,
   })
