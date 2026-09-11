@@ -722,8 +722,8 @@ const Clients = () => {
 
       {/* Export Clients Modal */}
       {isExportModalOpen && (
-        <div className="modal-backdrop" onClick={handleCloseExportModal}>
-          <div className="export-modal-card" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-backdrop">
+          <div className="export-modal-card">
             <div className="export-modal-header">
               <div className="export-modal-header-text">
                 <h3 className="export-modal-title">Export Clients</h3>
