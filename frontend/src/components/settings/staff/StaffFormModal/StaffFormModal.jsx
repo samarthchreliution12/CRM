@@ -162,6 +162,7 @@ const StaffFormModal = ({ isOpen, onClose, onSubmit, initialData = null, isSubmi
                 placeholder="e.g. John Doe"
                 className={`modal-form-input ${fieldErrors.name ? "input-error" : ""}`}
                 disabled={isSubmitting}
+                autoComplete="off"
               />
               {fieldErrors.name && (
                 <span className="field-error-message">
@@ -181,6 +182,7 @@ const StaffFormModal = ({ isOpen, onClose, onSubmit, initialData = null, isSubmi
                 placeholder="name@company.com"
                 className={`modal-form-input ${fieldErrors.email ? "input-error" : ""}`}
                 disabled={isSubmitting}
+                autoComplete="off"
               />
               {fieldErrors.email && (
                 <span className="field-error-message">

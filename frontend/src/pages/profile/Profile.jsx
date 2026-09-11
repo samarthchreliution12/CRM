@@ -346,7 +346,7 @@ const Profile = () => {
           </form>
 
           {/* Granted Permissions Section */}
-          <div style={{ marginTop: "2rem" }}>
+          {/* <div style={{ marginTop: "2rem" }}>
             <h3
               style={{
                 fontSize: "1rem",
@@ -371,7 +371,7 @@ const Profile = () => {
                 <span style={{ fontSize: "0.875rem", color: "#94a3b8" }}>No active permissions assigned.</span>
               )}
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </AppLayout>
