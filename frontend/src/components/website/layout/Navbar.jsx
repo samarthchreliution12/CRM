@@ -47,13 +47,13 @@ export const Navbar = ({ onMobileToggle }) => {
 
       {/* Desktop Right Action Buttons */}
       <div className="website-nav-cta hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <Button to="/contact" variant="outline" size="sm" className="website-btn" style={{ whiteSpace: 'nowrap', fontSize: '0.85rem' }}>
+        <Button to="https://parshwa.investwell.app/app/#/login" variant="outline" size="sm" className="website-btn" style={{ whiteSpace: 'nowrap', fontSize: '0.85rem' }}>
           Login Mutual Fund
         </Button>
         <Button to="https://eipo.parshwaconsultancy.in/User/Login" target="_blank" variant="outline" size="sm" className="website-btn" style={{ whiteSpace: 'nowrap', fontSize: '0.85rem' }}>
           Apply For IPO
         </Button>
-        <Button to="https://parshwa.investwell.app/app/#/login" target="_blank" variant="primary" size="sm" className="website-btn" style={{ whiteSpace: 'nowrap', fontSize: '0.85rem' }}>
+        <Button to="/login" variant="primary" size="sm" className="website-btn" style={{ whiteSpace: 'nowrap', fontSize: '0.85rem' }}>
           Login
         </Button>
       </div>
