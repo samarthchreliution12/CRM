@@ -6,6 +6,14 @@ import heroImg2 from '../../../assets/website/images/hero_img_2.png';
 export const Hero = () => {
   return (
     <section className="website-hero-section">
+      <video
+        className="website-hero-video"
+        autoPlay
+        loop
+        muted
+        playsInline
+        src="/assets/videos/hero-video.mp4"
+      />
       <div className="website-hero-video-overlay" />
 
       <Container style={{ position: 'relative', zIndex: 3, width: '100%' }}>
@@ -49,12 +57,33 @@ export const Hero = () => {
         .website-hero-section {
           position: relative;
           width: 100%;
-          min-height: 620px;
+          min-height: calc(100vh - var(--header-height, 80px));
+          min-height: 650px;
           display: flex;
           align-items: center;
           background-color: #14191C;
           overflow: hidden;
           padding: var(--spacing-xxl) 0;
+        }
+
+        .website-hero-video {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center;
+          z-index: 1;
+          animation: videoSlowZoom 18s ease-in-out infinite alternate;
+        }
+
+        @keyframes videoSlowZoom {
+          0% {
+            transform: scale(1);
+          }
+          100% {
+            transform: scale(1.05);
+          }
         }
 
         .website-hero-video-overlay {
@@ -100,7 +129,7 @@ export const Hero = () => {
           line-height: 1.25;
           margin-top: var(--spacing-xs);
           margin-bottom: var(--spacing-md);
-          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+          text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
         }
 
         .website-hero-description {
@@ -120,20 +149,20 @@ export const Hero = () => {
         .website-hero-btn-primary {
           background-color: var(--color-primary) !important;
           color: #FFFFFF !important;
-          box-shadow: 0 4px 12px rgba(139, 35, 29, 0.4);
+          box-shadow: 0 4px 14px rgba(139, 35, 29, 0.45);
           transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease !important;
         }
 
         .website-hero-btn-primary:hover {
           background-color: var(--color-primary-hover) !important;
           transform: translateY(-3px) scale(1.02);
-          box-shadow: 0 8px 20px rgba(139, 35, 29, 0.5);
+          box-shadow: 0 8px 22px rgba(139, 35, 29, 0.55);
         }
 
         .website-hero-btn-outline {
           border: 1px solid #FFFFFF !important;
           color: #FFFFFF !important;
-          background-color: rgba(20, 25, 28, 0.4) !important;
+          background-color: rgba(20, 25, 28, 0.45) !important;
           backdrop-filter: blur(4px);
           transition: transform 0.25s ease, background-color 0.25s ease, color 0.25s ease !important;
         }
@@ -213,6 +242,7 @@ export const Hero = () => {
         }
 
         @media (prefers-reduced-motion: reduce) {
+          .website-hero-video,
           .website-hero-card-img {
             animation: none;
           }
