@@ -266,27 +266,29 @@ const InternalChat = () => {
                       </div>
                     )}
 
-                    {/* In internal chat box showing default available staff members */}
-                    {/* <div className="chat-section">
-                      <span className="chat-section-label">Start Chat with Staff</span>
-                      {staffUsers
-                        .filter((st) => !searchQuery || st.name.toLowerCase().includes(searchQuery.toLowerCase()) || st.email.toLowerCase().includes(searchQuery.toLowerCase()))
-                        .map((st) => (
-                          <div
-                            key={st.id}
-                            className="chat-widget-item"
-                            onClick={() => handleStartDirectChat(st.id)}
-                          >
-                            <div className="chat-item-avatar staff">
-                              <User size={16} />
+                    {/* Staff Direct Chat Section */}
+                    {staffUsers.length > 0 && (
+                      <div className="chat-section">
+                        <span className="chat-section-label">Start Chat with Staff</span>
+                        {staffUsers
+                          .filter((st) => !searchQuery || st.name.toLowerCase().includes(searchQuery.toLowerCase()) || st.email.toLowerCase().includes(searchQuery.toLowerCase()))
+                          .map((st) => (
+                            <div
+                              key={st.id}
+                              className="chat-widget-item"
+                              onClick={() => handleStartDirectChat(st.id)}
+                            >
+                              <div className="chat-item-avatar staff">
+                                <User size={16} />
+                              </div>
+                              <div className="chat-item-info">
+                                <span className="chat-item-name">{st.name}</span>
+                                <span className="chat-item-preview">{st.role_name} • {st.email}</span>
+                              </div>
                             </div>
-                            <div className="chat-item-info">
-                              <span className="chat-item-name">{st.name}</span>
-                              <span className="chat-item-preview">{st.role_name} • {st.email}</span>
-                            </div>
-                          </div>
-                        ))}
-                    </div> */}
+                          ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

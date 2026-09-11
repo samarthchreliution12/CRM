@@ -2,12 +2,10 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../../../components/layout/AppLayout/AppLayout";
 import AuditLogService from "../../../services/auditLog.service";
-import StaffService from "../../../services/staff.service";
 import useAuth from "../../../hooks/useAuth";
 import AuditLogDetailModal from "./AuditLogDetailModal";
 import {
   ArrowLeft,
-  Search,
   RotateCcw,
   Eye,
   ChevronLeft,
@@ -16,30 +14,6 @@ import {
   Shield,
 } from "lucide-react";
 import "./AuditLogs.css";
-
-const MODULE_OPTIONS = [
-  { value: "all", label: "All Modules" },
-  { value: "CLIENTS", label: "Clients" },
-  { value: "DOCUMENTS", label: "Documents" },
-  { value: "COMMUNICATION", label: "Communication" },
-  { value: "USERS", label: "Users" },
-  { value: "GROUPS", label: "Groups" },
-  { value: "PERMISSIONS", label: "Permissions" },
-  { value: "AUTH", label: "Authentication" },
-];
-
-const ACTION_OPTIONS = [
-  { value: "all", label: "All Actions" },
-  { value: "CREATE", label: "CREATE" },
-  { value: "UPDATE", label: "UPDATE" },
-  { value: "DELETE", label: "DELETE" },
-  { value: "EXPORT", label: "EXPORT" },
-  { value: "UPLOAD", label: "UPLOAD" },
-  { value: "DOWNLOAD", label: "DOWNLOAD" },
-  { value: "APPROVE", label: "APPROVE" },
-  { value: "REJECT", label: "REJECT" },
-  { value: "LOGIN", label: "LOGIN" },
-];
 
 const formatDateTime = (dateStr) => {
   if (!dateStr) return "N/A";
@@ -82,9 +56,6 @@ const AuditLogs = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Users Dropdown Options State
-  const [staffUsers, setStaffUsers] = useState([]);
-
   // Modal State
   const [selectedLog, setSelectedLog] = useState(null);
 
@@ -105,25 +76,6 @@ const AuditLogs = () => {
     start_date: "",
     end_date: "",
   });
-
-  // Fetch Staff users for filter dropdown
-  useEffect(() => {
-    let isMounted = true;
-    const fetchStaffList = async () => {
-      try {
-        const res = await StaffService.getStaffUsers({ limit: 100 }, token);
-        if (isMounted && res && res.data && res.data.staff) {
-          setStaffUsers(res.data.staff);
-        }
-      } catch (err) {
-        // Silently handle list loading failure for filter dropdown
-      }
-    };
-    if (token) fetchStaffList();
-    return () => {
-      isMounted = false;
-    };
-  }, [token]);
 
   // Fetch Audit Logs from Backend API
   const fetchAuditLogs = useCallback(async () => {
@@ -170,18 +122,6 @@ const AuditLogs = () => {
   useEffect(() => {
     fetchAuditLogs();
   }, [fetchAuditLogs]);
-
-  // Filter change handlers
-  const handleSearchChange = (e) => {
-    const value = e.target.value;
-    setFilters((prev) => ({ ...prev, search: value }));
-    setPagination((prev) => ({ ...prev, page: 1 }));
-  };
-
-  const handleFilterChange = (field, value) => {
-    setFilters((prev) => ({ ...prev, [field]: value }));
-    setPagination((prev) => ({ ...prev, page: 1 }));
-  };
 
   const handleClearFilters = () => {
     setFilters({

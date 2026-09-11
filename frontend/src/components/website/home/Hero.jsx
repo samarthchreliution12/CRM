@@ -1,7 +1,7 @@
 import React from 'react';
 import { Container } from '../common/Container';
 import { Button } from '../common/Button';
-import heroImg2 from '../../../assets/website/images/hero_img_2.png';
+import heroImg2 from '../../../assets/website/images/hero_img_4.png';
 
 export const Hero = () => {
   return (
