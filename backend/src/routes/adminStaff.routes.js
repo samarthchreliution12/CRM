@@ -10,23 +10,25 @@ const { authenticate, requireRole } = require("../middleware/auth.middleware");
 
 const router = express.Router();
 
-// Enforce JWT Authentication and Admin Authorization across all Staff Management endpoints
+// Enforce JWT Authentication across all Staff Management endpoints
 router.use(authenticate);
-router.use(requireRole("Admin"));
 
 /**
- * @route   GET /api/admin/staff
+ * @route   GET /api/admin/staff & GET /api/staff
  * @desc    Fetch all Staff users with search, status filtering, and pagination
- * @access  Private (Admin Only)
+ * @access  Private (Authenticated Users)
  */
 router.get("/", AdminStaffController.listStaff);
 
 /**
- * @route   GET /api/admin/staff/:id
+ * @route   GET /api/admin/staff/:id & GET /api/staff/:id
  * @desc    Fetch single Staff user details
- * @access  Private (Admin Only)
+ * @access  Private (Authenticated Users)
  */
 router.get("/:id", validateStaffIdParam, AdminStaffController.getStaffById);
+
+// Require Admin authorization for account management mutation operations (create, update, status toggle, delete)
+router.use(requireRole("Admin"));
 
 /**
  * @route   POST /api/admin/staff

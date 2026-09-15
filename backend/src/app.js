@@ -74,7 +74,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/roles/groups", groupRoutes);
 app.use("/api/admin/roles/groups", groupRoutes);
 
-// Admin Management Routes
+// Staff & Admin Management Routes
+app.use("/api/staff", adminStaffRoutes);
 app.use("/api/admin/staff", adminStaffRoutes);
 app.use("/api/admin/permissions", permissionRoutes);
 app.use("/api/admin/roles", rolePermissionRoutes);

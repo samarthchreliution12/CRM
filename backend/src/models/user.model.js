@@ -70,7 +70,7 @@ class UserModel {
     const limitNum = Math.max(1, Math.min(100, parseInt(limit, 10) || 20));
     const offset = (pageNum - 1) * limitNum;
 
-    const whereConditions = [`r.name = 'Staff'`];
+    const whereConditions = ["r.name IS NOT NULL"];
     const queryParams = [];
     let paramIndex = 1;
 

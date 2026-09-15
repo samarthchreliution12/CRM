@@ -50,7 +50,8 @@ class StaffService {
     if (limit) params.append("limit", limit);
 
     const queryString = params.toString() ? `?${params.toString()}` : "";
-    return this.request(`/admin/staff${queryString}`, { method: "GET" }, token);
+    return this.request(`/staff${queryString}`, { method: "GET" }, token)
+      .catch(() => this.request(`/admin/staff${queryString}`, { method: "GET" }, token));
   }
 
   /**
