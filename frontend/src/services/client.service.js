@@ -421,7 +421,16 @@ class ClientService {
 
     const response = await fetch(url, { headers });
     if (!response.ok) {
-      throw new Error(`Failed to fetch document file (Status: ${response.status})`);
+      let errorMsg = `Failed to fetch document file (Status: ${response.status})`;
+      try {
+        const errorJson = await response.json();
+        if (errorJson && errorJson.message) {
+          errorMsg = errorJson.message;
+        }
+      } catch (e) {
+        // Fallback to text status
+      }
+      throw new Error(errorMsg);
     }
 
     const blob = await response.blob();

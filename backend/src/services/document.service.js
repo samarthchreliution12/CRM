@@ -149,7 +149,37 @@ class DocumentService {
   }
 
   /**
-   * Fetch and decrypt document file content for view/download.
+   * Helper to resolve physical storage path across local/server environments.
+   */
+  static resolveStoragePath(doc) {
+    if (!doc) return null;
+
+    // 1. Direct path check
+    if (doc.storage_path && fs.existsSync(doc.storage_path)) {
+      return doc.storage_path;
+    }
+
+    // 2. Resolve relative to STORAGE_DIR using stored_file_name
+    if (doc.stored_file_name) {
+      const pathByStoredName = path.join(STORAGE_DIR, doc.stored_file_name);
+      if (fs.existsSync(pathByStoredName)) {
+        return pathByStoredName;
+      }
+    }
+
+    // 3. Resolve relative to STORAGE_DIR using basename of storage_path
+    if (doc.storage_path) {
+      const pathByBasename = path.join(STORAGE_DIR, path.basename(doc.storage_path));
+      if (fs.existsSync(pathByBasename)) {
+        return pathByBasename;
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Retrieve and decrypt a single document file.
    */
   static async getDocumentFile({ clientId, documentId, userId, isDownload = false }) {
     const numericClientId = parseInt(clientId, 10);
@@ -188,14 +218,15 @@ class DocumentService {
       throw err;
     }
 
-    if (!fs.existsSync(doc.storage_path)) {
-      const err = new Error("Physical storage file not found.");
+    const actualStoragePath = DocumentService.resolveStoragePath(doc);
+    if (!actualStoragePath) {
+      const err = new Error("Physical storage file not found on server disk. Please re-upload or replace this document.");
       err.statusCode = 404;
       throw err;
     }
 
     // Read encrypted binary file from disk
-    const encryptedData = fs.readFileSync(doc.storage_path);
+    const encryptedData = fs.readFileSync(actualStoragePath);
 
     // Decrypt in memory
     let decryptedBuffer;
@@ -307,7 +338,7 @@ class DocumentService {
       // Write new encrypted file FIRST
       fs.writeFileSync(newStoragePath, encryptionResult.encryptedData);
 
-      oldStoragePath = doc.storage_path;
+      oldStoragePath = DocumentService.resolveStoragePath(doc) || doc.storage_path;
 
       updateData = {
         ...updateData,
@@ -510,9 +541,10 @@ class DocumentService {
     });
 
     // Delete physical encrypted storage file
-    if (fs.existsSync(doc.storage_path)) {
+    const actualStoragePath = DocumentService.resolveStoragePath(doc) || doc.storage_path;
+    if (actualStoragePath && fs.existsSync(actualStoragePath)) {
       try {
-        fs.unlinkSync(doc.storage_path);
+        fs.unlinkSync(actualStoragePath);
       } catch (fsErr) {
         console.error("Failed to delete physical file:", fsErr);
       }
