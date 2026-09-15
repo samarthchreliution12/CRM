@@ -12,24 +12,32 @@
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
-  color: var(--text-secondary);
+  color: #4E565A;
   font-weight: 500;
   user-select: none;
+  transition: color 0.2s ease;
+}
+
+.checkbox-label:hover {
+  color: #25282A;
 }
 
 .checkbox-label input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--primary-color);
+  width: 17px;
+  height: 17px;
+  accent-color: #8B231D;
   cursor: pointer;
+  border-radius: 4px;
 }
 
 .forgot-password-link {
-  color: var(--text-primary);
+  color: #4E565A;
   font-weight: 600;
-  transition: color 0.15s ease;
+  transition: color 0.2s ease;
+  text-decoration: none;
 }
 
 .forgot-password-link:hover {
+  color: #8B231D;
   text-decoration: underline;
 }

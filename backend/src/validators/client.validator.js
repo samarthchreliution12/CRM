@@ -93,9 +93,11 @@ function validateCreateClientInput(data) {
     }
   }
 
-  // 9. Client Type ID (Mandatory)
-  if (!data.client_type_id || !Number.isInteger(Number(data.client_type_id)) || Number(data.client_type_id) <= 0) {
-    errors.push({ field: "client_type_id", message: "Client type is required" });
+  // 9. Client Type ID (Defaults to 1 if not provided)
+  if (!data.client_type_id) {
+    data.client_type_id = 1;
+  } else if (!Number.isInteger(Number(data.client_type_id)) || Number(data.client_type_id) <= 0) {
+    errors.push({ field: "client_type_id", message: "Invalid client type ID" });
   }
 
   // 10. Status (Mandatory)
@@ -105,6 +107,27 @@ function validateCreateClientInput(data) {
     const validStatuses = ["active", "inactive"];
     if (!validStatuses.includes(data.status.toString().trim().toLowerCase())) {
       errors.push({ field: "status", message: "Status must be 'active' or 'inactive'" });
+    }
+  }
+
+  // Handle is_client boolean flag if provided
+  if (typeof data.is_client === "boolean") {
+    data.client_status = data.is_client ? "CLIENT" : "NON_CLIENT";
+  }
+
+  // 11. Client Status (Optional - defaults to CLIENT)
+  if (data.client_status !== undefined && data.client_status !== null && data.client_status.toString().trim()) {
+    const validClientStatuses = ["client", "non_client"];
+    if (!validClientStatuses.includes(data.client_status.toString().trim().toLowerCase())) {
+      errors.push({ field: "client_status", message: "Client status must be 'CLIENT' or 'NON_CLIENT'" });
+    }
+  }
+
+  // 12. Client Category (Optional - BRONZE, SILVER, GOLD, PLATINUM)
+  if (data.client_category !== undefined && data.client_category !== null && data.client_category.toString().trim()) {
+    const validCategories = ["bronze", "silver", "gold", "platinum"];
+    if (!validCategories.includes(data.client_category.toString().trim().toLowerCase())) {
+      errors.push({ field: "client_category", message: "Client category must be 'BRONZE', 'SILVER', 'GOLD', or 'PLATINUM'" });
     }
   }
 
@@ -197,6 +220,25 @@ function validateUpdateClientInput(data) {
     const validStatuses = ["active", "inactive"];
     if (!validStatuses.includes(data.status.toString().trim().toLowerCase())) {
       errors.push({ field: "status", message: "Status must be 'active' or 'inactive'" });
+    }
+  }
+
+  // Handle is_client boolean flag if provided
+  if (typeof data.is_client === "boolean") {
+    data.client_status = data.is_client ? "CLIENT" : "NON_CLIENT";
+  }
+
+  if (data.client_status !== undefined && data.client_status !== null && data.client_status.toString().trim()) {
+    const validClientStatuses = ["client", "non_client"];
+    if (!validClientStatuses.includes(data.client_status.toString().trim().toLowerCase())) {
+      errors.push({ field: "client_status", message: "Client status must be 'CLIENT' or 'NON_CLIENT'" });
+    }
+  }
+
+  if (data.client_category !== undefined && data.client_category !== null && data.client_category.toString().trim()) {
+    const validCategories = ["bronze", "silver", "gold", "platinum"];
+    if (!validCategories.includes(data.client_category.toString().trim().toLowerCase())) {
+      errors.push({ field: "client_category", message: "Client category must be 'BRONZE', 'SILVER', 'GOLD', or 'PLATINUM'" });
     }
   }
 

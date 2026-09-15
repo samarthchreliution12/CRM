@@ -5,7 +5,7 @@ export const ServiceCard = ({ service }) => {
   const detailUrl = `/services/${service.slug}`;
 
   return (
-    <div className="website-service-card">
+    <Link to={detailUrl} className="website-service-card">
       <div className="website-service-icon-wrapper">
         {service.icon}
       </div>
@@ -13,9 +13,9 @@ export const ServiceCard = ({ service }) => {
       <p className="website-service-description">{service.description}</p>
       
       <div className="website-service-footer">
-        <Link to={detailUrl} className="website-service-link">
-          Learn More →
-        </Link>
+        <span className="website-service-link">
+          More →
+        </span>
       </div>
 
       <style>{`
@@ -29,6 +29,8 @@ export const ServiceCard = ({ service }) => {
           flex-direction: column;
           transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
           position: relative;
+          text-decoration: none;
+          cursor: pointer;
         }
 
         .website-service-card:hover {
@@ -88,12 +90,11 @@ export const ServiceCard = ({ service }) => {
 
         .website-service-card:hover .website-service-link {
           transform: translateX(4px);
-        }
-
-        .website-service-link:hover {
           color: var(--color-primary-hover);
         }
       `}</style>
-    </div>
+    </Link>
   );
 };
+
+export default ServiceCard;

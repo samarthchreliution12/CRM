@@ -98,11 +98,23 @@ const ClientDetails = () => {
     }
   };
   const permissions = user?.permissions || [];
+  const isAdmin = user?.role?.name === "Admin" || user?.role === "Admin" || user?.role_name === "Admin";
+  const canEdit = isAdmin || permissions.includes("client.edit") || permissions.includes("client.update");
+  const canDelete = isAdmin || permissions.includes("client.delete");
 
-  const canCreateDoc = permissions.includes("document.create") || user?.role?.name === "Admin";
-  const canUpdateDoc = permissions.includes("document.update") || permissions.includes("document.edit") || user?.role?.name === "Admin";
-  const canVerifyDoc = permissions.includes("document.verify") || user?.role?.name === "Admin";
-  const canDeleteDoc = permissions.includes("document.delete") || user?.role?.name === "Admin";
+  // Floating Toast Notification State
+  const [toastError, setToastError] = useState("");
+  const triggerPermissionToast = (msg) => {
+    setToastError(msg);
+    setTimeout(() => {
+      setToastError("");
+    }, 4000);
+  };
+
+  const canCreateDoc = permissions.includes("document.create") || isAdmin;
+  const canUpdateDoc = permissions.includes("document.update") || permissions.includes("document.edit") || isAdmin;
+  const canVerifyDoc = permissions.includes("document.verify") || isAdmin;
+  const canDeleteDoc = permissions.includes("document.delete") || isAdmin;
 
   // Client Data & Loading State
   const [client, setClient] = useState(null);
@@ -218,13 +230,23 @@ const ClientDetails = () => {
 
   // Handle Client Deletion
   const handleDeleteClient = async () => {
+    if (!canDelete) {
+      setShowDeleteModal(false);
+      triggerPermissionToast("You do not have permission to delete clients.");
+      return;
+    }
     try {
       setIsDeletingClient(true);
       await ClientService.deleteClient(id, token);
       setShowDeleteModal(false);
       navigate("/clients");
     } catch (err) {
-      setError(err.message || "Failed to delete client.");
+      setShowDeleteModal(false);
+      if (err.statusCode === 403 || (err.message && err.message.toLowerCase().includes("permission"))) {
+        triggerPermissionToast("You do not have permission to delete clients.");
+      } else {
+        setError(err.message || "Failed to delete client.");
+      }
     } finally {
       setIsDeletingClient(false);
     }
@@ -322,6 +344,14 @@ const ClientDetails = () => {
 
   return (
     <AppLayout title="Client Details">
+      {/* Permission Denied Floating Toast */}
+      {toastError && (
+        <div className="permission-toast danger-toast">
+          <AlertCircle size={18} />
+          <span>{toastError}</span>
+        </div>
+      )}
+
       <div className="client-details-container">
         {/* Top Header Card */}
         <div className="client-details-header-card">
@@ -334,7 +364,13 @@ const ClientDetails = () => {
               <button
                 type="button"
                 className="btn-edit-client"
-                onClick={() => navigate(`/clients/${id}/edit`)}
+                onClick={() => {
+                  if (!canEdit) {
+                    triggerPermissionToast("You do not have permission to edit clients.");
+                    return;
+                  }
+                  navigate(`/clients/${id}/edit`);
+                }}
               >
                 <Edit2 size={15} />
                 <span>Edit Client</span>
@@ -342,7 +378,13 @@ const ClientDetails = () => {
               <button
                 type="button"
                 className="btn-delete-client"
-                onClick={() => setShowDeleteModal(true)}
+                onClick={() => {
+                  if (!canDelete) {
+                    triggerPermissionToast("You do not have permission to delete clients.");
+                    return;
+                  }
+                  setShowDeleteModal(true);
+                }}
               >
                 <Trash2 size={15} />
                 <span>Delete Client</span>
@@ -370,8 +412,11 @@ const ClientDetails = () => {
                     ? client.client_type
                     : client.client_type_name || "Individual"}
                 </span>
-                {client.category && (
-                  <span className="badge-tag role">{client.category}</span>
+                <span className="badge-tag role">
+                  {client.client_status === "NON_CLIENT" ? "Non-Client" : "Client"}
+                </span>
+                {(client.client_category || client.category) && (
+                  <span className="badge-tag role">{client.client_category || client.category}</span>
                 )}
                 <span className={`badge-tag ${client.status === "active" ? "active" : "inactive"}`}>
                   {client.status === "active" ? "Active" : "Inactive"}

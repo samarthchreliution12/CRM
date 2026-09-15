@@ -49,6 +49,10 @@ class DashboardService {
   static async getOverview(token = null) {
     return this.request("/dashboard/overview", { method: "GET" }, token);
   }
+
+  static async getCrossSelling(token = null) {
+    return this.request("/dashboard/cross-selling", { method: "GET" }, token);
+  }
 }
 
 export default DashboardService;

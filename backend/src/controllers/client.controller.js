@@ -5,12 +5,15 @@ const { sendSuccess, sendError } = require("../utils/response.util");
 class ClientController {
   static async listClients(req, res) {
     try {
-      const { search, status, client_type_id, service_id, page, limit } = req.query;
+      const { search, status, client_status, client_category, client_type_id, service_id, cross_sell, page, limit } = req.query;
       const result = await ClientService.listClients({
         search,
         status,
+        client_status,
+        client_category,
         client_type_id,
         service_id,
+        cross_sell,
         page: parseInt(page, 10) || 1,
         limit: parseInt(limit, 10) || 10,
       });

@@ -85,6 +85,8 @@ CREATE TABLE IF NOT EXISTS clients (
   occupation VARCHAR(100),
   client_type_id INTEGER NOT NULL REFERENCES client_types(id),
   status VARCHAR(20) DEFAULT 'active' NOT NULL,
+  client_status VARCHAR(20) DEFAULT 'CLIENT' NOT NULL CHECK (client_status IN ('CLIENT', 'NON_CLIENT')),
+  client_category VARCHAR(20) NULL CHECK (client_category IS NULL OR client_category IN ('BRONZE', 'SILVER', 'GOLD', 'PLATINUM')),
   services JSONB DEFAULT '[]'::jsonb,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
@@ -95,6 +97,8 @@ ALTER TABLE clients DROP COLUMN IF EXISTS assigned_staff_id;
 ALTER TABLE clients DROP COLUMN IF EXISTS family_head;
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS business_name VARCHAR(150);
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS services JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS client_status VARCHAR(20) DEFAULT 'CLIENT' NOT NULL;
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS client_category VARCHAR(20) NULL;
 
 -- 8. Client Service Assignments Table
 CREATE TABLE IF NOT EXISTS client_service_assignments (
@@ -230,6 +234,8 @@ CREATE INDEX IF NOT EXISTS idx_clients_mobile_no ON clients(mobile_no);
 CREATE INDEX IF NOT EXISTS idx_clients_email ON clients(email);
 CREATE INDEX IF NOT EXISTS idx_clients_client_type_id ON clients(client_type_id);
 CREATE INDEX IF NOT EXISTS idx_clients_status ON clients(status);
+CREATE INDEX IF NOT EXISTS idx_clients_client_status ON clients(client_status);
+CREATE INDEX IF NOT EXISTS idx_clients_client_category ON clients(client_category);
 CREATE INDEX IF NOT EXISTS idx_family_members_client_id ON client_family_members(client_id);
 CREATE INDEX IF NOT EXISTS idx_family_members_pan_no ON client_family_members(pan_no);
 CREATE INDEX IF NOT EXISTS idx_family_members_mobile_no ON client_family_members(mobile_no);
@@ -251,3 +257,35 @@ CREATE INDEX IF NOT EXISTS idx_internal_conv_members_conv ON internal_conversati
 CREATE INDEX IF NOT EXISTS idx_internal_messages_conv ON internal_messages(conversation_id);
 CREATE INDEX IF NOT EXISTS idx_internal_messages_sender ON internal_messages(sender_id);
 CREATE INDEX IF NOT EXISTS idx_internal_messages_read_at ON internal_messages(read_at);
+
+-- 14. Tasks Table
+CREATE TABLE IF NOT EXISTS tasks (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  task_type VARCHAR(50) NOT NULL CHECK (task_type IN ('FOLLOW_UP', 'CALL', 'MEETING', 'DOCUMENT', 'REVIEW', 'OTHER')),
+  related_client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL,
+  related_lead_id INTEGER REFERENCES leads(id) ON DELETE SET NULL,
+  assigned_to INTEGER NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+  priority VARCHAR(20) NOT NULL CHECK (priority IN ('LOW', 'MEDIUM', 'HIGH')),
+  status VARCHAR(20) DEFAULT 'PENDING' NOT NULL CHECK (status IN ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED')),
+  due_date DATE NOT NULL,
+  due_time TIME WITHOUT TIME ZONE,
+  reminder VARCHAR(20) DEFAULT 'NONE' NOT NULL CHECK (reminder IN ('NONE', '15_MIN', '30_MIN', '1_HOUR', '1_DAY')),
+  completed_at TIMESTAMP WITH TIME ZONE,
+  created_by INTEGER NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  CONSTRAINT check_task_client_or_lead_exclusive CHECK (related_client_id IS NULL OR related_lead_id IS NULL)
+);
+
+-- Tasks Indexes
+CREATE INDEX IF NOT EXISTS idx_tasks_assigned_to ON tasks(assigned_to);
+CREATE INDEX IF NOT EXISTS idx_tasks_related_client ON tasks(related_client_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_related_lead ON tasks(related_lead_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date);
+CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
+CREATE INDEX IF NOT EXISTS idx_tasks_priority ON tasks(priority);
+CREATE INDEX IF NOT EXISTS idx_tasks_task_type ON tasks(task_type);
+CREATE INDEX IF NOT EXISTS idx_tasks_assigned_status_due ON tasks(assigned_to, status, due_date);
+

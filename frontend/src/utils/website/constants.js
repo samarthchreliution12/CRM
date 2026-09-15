@@ -5,6 +5,19 @@ export const NAV_LINKS = [
   { label: 'Contact Us', path: '/contact' },
 ];
 
+export const SERVICES_NAV_ITEMS = [
+  { label: 'Demat', slug: 'demat', path: '/services/demat' },
+  { label: 'Mutual Fund', slug: 'mutual-fund', path: '/services/mutual-fund' },
+  { label: 'IPO', slug: 'ipo', path: '/services/ipo' },
+  { label: 'SLBM', slug: 'slbm', path: '/services/slbm' },
+  { label: 'Insurance', slug: 'insurance', path: '/services/insurance' },
+  { label: 'Physical Shares', slug: 'physical-shares', path: '/services/physical-shares' },
+  { label: 'IEPF', slug: 'iepf', path: '/services/iepf' },
+  { label: 'Trading', slug: 'trading', path: '/services/trading' },
+  { label: 'PMS', slug: 'pms', path: '/services/pms' },
+  { label: 'AIF', slug: 'aif', path: '/services/aif' },
+];
+
 export const COMPANY_INFO = {
   name: 'Parshwa Consultancy',
   tagline: 'Trusted Partner in Financial Growth & Investment Recovery',

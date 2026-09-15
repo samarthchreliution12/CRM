@@ -39,7 +39,7 @@ async function runClientDBTests() {
     console.log("\n--- 2. Client Types Seed Verification ---");
     const typesRes = await client.query("SELECT * FROM client_types ORDER BY id ASC");
     const typeNames = typesRes.rows.map((r) => r.name);
-    assert(typesRes.rows.length === 5, "5 client types seeded");
+    assert(typesRes.rows.length >= 5, "At least 5 client types seeded");
     assert(typeNames.includes("Individual"), "Client type 'Individual' seeded");
     assert(typeNames.includes("HUF"), "Client type 'HUF' seeded");
     assert(typeNames.includes("Company"), "Client type 'Company' seeded");
@@ -54,17 +54,45 @@ async function runClientDBTests() {
     const newClientRes = await client.query(
       `INSERT INTO clients (
         ucc_no, name, mobile_no, whatsapp_no, email, pan, dob, gender, occupation,
-        client_type_id, status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-      RETURNING id, ucc_no, name`,
+        client_type_id, status, client_category
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      RETURNING id, ucc_no, name, client_status, client_category`,
       [
         "UCC1001", "John Doe Client", "9876543210", "9876543210", "johndoe@client.com",
         "ABCDE1234F", "1990-01-01", "Male", "Business",
-        individualType.id, "active"
+        individualType.id, "active", "GOLD"
       ]
     );
     const dbClient = newClientRes.rows[0];
     assert(dbClient.ucc_no === "UCC1001", "Inserted client with UCC number UCC1001");
+    assert(dbClient.client_status === "CLIENT", "Default client_status is 'CLIENT'");
+    assert(dbClient.client_category === "GOLD", "client_category is set to 'GOLD'");
+
+    // Test client_status CHECK constraint
+    let invalidClientStatusFailed = false;
+    try {
+      await client.query(
+        `INSERT INTO clients (ucc_no, name, client_type_id, client_status)
+         VALUES ('UCC9999', 'Test Invalid Status', $1, 'INVALID_STATUS')`,
+        [individualType.id]
+      );
+    } catch (err) {
+      invalidClientStatusFailed = err.code === "23514"; // check_violation
+    }
+    assert(invalidClientStatusFailed, "Invalid client_status rejected by CHECK constraint (23514)");
+
+    // Test client_category CHECK constraint
+    let invalidClientCategoryFailed = false;
+    try {
+      await client.query(
+        `INSERT INTO clients (ucc_no, name, client_type_id, client_category)
+         VALUES ('UCC9998', 'Test Invalid Category', $1, 'DIAMOND')`,
+        [individualType.id]
+      );
+    } catch (err) {
+      invalidClientCategoryFailed = err.code === "23514"; // check_violation
+    }
+    assert(invalidClientCategoryFailed, "Invalid client_category rejected by CHECK constraint (23514)");
 
     // 4. UCC Uniqueness Constraint Verification
     console.log("\n--- 4. UCC Uniqueness Constraint ---");

@@ -1,0 +1,225 @@
+/* ==========================================================================
+   CROSS-SELLING OPPORTUNITIES COMPONENT STYLES (COMPACT CRM DASHBOARD INSIGHT)
+   ========================================================================== */
+
+/* Main Section Container & Vertical Spacing */
+.cross-selling-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+/* Header with Title, Subtitle, and Top Right Link */
+.cross-selling-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.cross-selling-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.cross-selling-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary, #25282A);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.cross-selling-subtitle {
+  font-size: 0.825rem;
+  color: var(--text-secondary, #596067);
+  margin: 0;
+}
+
+.cross-selling-view-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: var(--primary, #9E241D);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.cross-selling-view-all:hover {
+  color: var(--primary-hover, #861D18);
+  text-decoration: underline;
+}
+
+/* Cards Grid Layout */
+.cross-selling-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+
+/* Compact Dashboard Card */
+.cross-selling-card {
+  background-color: var(--surface, #FFFFFF);
+  border: 1px solid var(--border, #E2E2DF);
+  border-radius: var(--radius-md, 8px);
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cross-selling-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.cross-selling-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.cross-selling-title-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.cross-selling-card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary, #25282A);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.cross-selling-icon {
+  color: var(--primary, #9E241D);
+  flex-shrink: 0;
+}
+
+.cross-selling-card-desc {
+  font-size: 0.775rem;
+  color: var(--text-secondary, #596067);
+  margin: 0;
+}
+
+/* Metric Display Area — Primary Count Focus */
+.cross-selling-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin: 0.2rem 0;
+}
+
+.cross-selling-count {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--text-primary, #25282A);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.cross-selling-label {
+  font-size: 0.725rem;
+  font-weight: 700;
+  color: var(--text-secondary, #596067);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Subtle Inline Text Action Link (Replacing large red button) */
+.cross-selling-action-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: var(--primary, #9E241D);
+  cursor: pointer;
+  width: fit-content;
+  transition: color 0.15s ease;
+}
+
+.cross-selling-action-link:hover {
+  color: var(--primary-hover, #861D18);
+  text-decoration: underline;
+}
+
+.cross-selling-action-link .arrow-icon {
+  transition: transform 0.15s ease;
+}
+
+.cross-selling-action-link:hover .arrow-icon {
+  transform: translateX(3px);
+}
+
+/* Error Banner & Skeleton Loading */
+.cross-selling-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem 1rem;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  border-radius: var(--radius-sm, 6px);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.cross-selling-empty {
+  background-color: #ffffff;
+  border: 1px solid var(--border, #E2E2DF);
+  border-radius: var(--radius-md, 8px);
+  padding: 1.5rem 1rem;
+  text-align: center;
+  color: var(--text-secondary, #596067);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.cross-selling-card-skeleton {
+  pointer-events: none;
+}
+
+.skeleton-pulse {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: skeletonPulse 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes skeletonPulse {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Responsive Media Queries */
+@media (max-width: 768px) {
+  .cross-selling-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -119,6 +119,24 @@ const baseValidClient = {
   assert(getFieldError(res, "dob") === "Client must be at least 18 years old.", "Update with under 18 DOB caught");
 }
 
+// Test 9: Client Status Validation (CLIENT, NON_CLIENT)
+{
+  const validRes = validateCreateClientInput({ ...baseValidClient, client_status: "NON_CLIENT" });
+  assert(validRes.isValid === true, "client_status 'NON_CLIENT' should pass validation");
+
+  const invalidRes = validateCreateClientInput({ ...baseValidClient, client_status: "INVALID_STATUS" });
+  assert(getFieldError(invalidRes, "client_status") === "Client status must be 'CLIENT' or 'NON_CLIENT'", "Invalid client_status should be rejected");
+}
+
+// Test 10: Client Category Validation (BRONZE, SILVER, GOLD, PLATINUM)
+{
+  const validRes = validateCreateClientInput({ ...baseValidClient, client_category: "GOLD" });
+  assert(validRes.isValid === true, "client_category 'GOLD' should pass validation");
+
+  const invalidRes = validateCreateClientInput({ ...baseValidClient, client_category: "DIAMOND" });
+  assert(getFieldError(invalidRes, "client_category") === "Client category must be 'BRONZE', 'SILVER', 'GOLD', or 'PLATINUM'", "Invalid client_category should be rejected");
+}
+
 console.log(`\nTEST SUMMARY: ${passed} Passed, ${failed} Failed`);
 if (failed > 0) {
   process.exit(1);

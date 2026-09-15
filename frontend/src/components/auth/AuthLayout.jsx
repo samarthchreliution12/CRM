@@ -1,17 +1,21 @@
-import React from "react";
+import headerLogo from "../../assets/website/logo/header-logo.png";
 import "./AuthLayout.css";
 
 const AuthLayout = ({ children }) => {
   return (
     <div className="auth-container">
-      {/* Left Dark Branding Section */}
+      {/* Left Light Financial Branding Section */}
       <div className="auth-branding-panel">
+        <div className="ambient-blob ambient-blob-1" />
+        <div className="ambient-blob ambient-blob-2" />
+        <div className="ambient-lines-pattern" />
+
         <div className="auth-logo">
-          {/* <div className="auth-logo-icon">logo</div> */}
-          <span>Company name</span>
+          <img src={headerLogo} alt="Parshwa Consultancy" className="auth-logo-img" />
         </div>
 
         <div className="auth-branding-content">
+          <div className="auth-brand-badge">PARSHWA CONSULTANCY CRM</div>
           <h1 className="auth-headline">
             Manage Your<br />Clients Smarter
           </h1>

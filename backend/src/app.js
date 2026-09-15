@@ -102,6 +102,11 @@ app.use("/api/communication", communicationRoutes);
 // Dashboard Routes
 app.use("/api/dashboard", dashboardRoutes);
 
+// Tasks Module Routes
+const taskRoutes = require("./routes/task.routes");
+app.use("/api/tasks", taskRoutes);
+app.use("/api/task", taskRoutes);
+
 // Centralized Error Handling Middleware
 app.use(errorHandler);
 

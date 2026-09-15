@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import AppLayout from "../../components/layout/AppLayout/AppLayout";
 import ClientService from "../../services/client.service";
 import ClientImportModal from "./ClientImportModal";
 import useAuth from "../../hooks/useAuth";
 import {
-  Plus,
   Search,
   Filter,
   ChevronLeft,
@@ -19,6 +18,11 @@ import {
   Upload,
   X,
   CheckCircle2,
+  MoreVertical,
+  Edit,
+  Trash2,
+  UserCheck,
+  UserX,
 } from "lucide-react";
 import "./Clients.css";
 
@@ -58,7 +62,24 @@ const maskEmail = (email) => {
 
 const Clients = () => {
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const crossSellParam = searchParams.get("cross_sell") || "";
+  const { token, user } = useAuth();
+
+  // Role & Permission Checks
+  const isAdmin = user?.role?.name === "Admin" || user?.role === "Admin" || user?.role_name === "Admin";
+  const userPermissions = Array.isArray(user?.permissions) ? user.permissions : [];
+  const canEdit = isAdmin || userPermissions.includes("client.edit") || userPermissions.includes("client.update");
+  const canDelete = isAdmin || userPermissions.includes("client.delete");
+
+  // Floating Toast Notification State
+  const [toastError, setToastError] = useState("");
+  const triggerPermissionToast = (msg) => {
+    setToastError(msg);
+    setTimeout(() => {
+      setToastError("");
+    }, 4000);
+  };
 
   // Data & State
   const [clients, setClients] = useState([]);
@@ -70,6 +91,11 @@ const Clients = () => {
   const [isImpExpOpen, setIsImpExpOpen] = useState(false);
   const [selectedClientIds, setSelectedClientIds] = useState([]);
   const dropdownRef = useRef(null);
+
+  // Actions Dropdown & Delete Confirmation Modal State
+  const [openActionsMenuId, setOpenActionsMenuId] = useState(null);
+  const [clientToDelete, setClientToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Export Modal State
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -97,11 +123,14 @@ const Clients = () => {
   const [clientTypes, setClientTypes] = useState([]);
   const [clientServices, setClientServices] = useState([]);
 
-  // Click Outside listener to close Import / Export dropdown
+  // Click Outside listener to close Import / Export and Actions dropdowns
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsImpExpOpen(false);
+      }
+      if (!event.target.closest(".actions-dropdown-wrapper")) {
+        setOpenActionsMenuId(null);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -161,6 +190,7 @@ const Clients = () => {
         status: statusFilter !== "all" ? statusFilter : "",
         client_type_id: typeFilter !== "all" ? typeFilter : "",
         service_id: serviceFilter !== "all" ? serviceFilter : "",
+        cross_sell: crossSellParam,
       };
 
       const res = await ClientService.getClients(params, token);
@@ -185,7 +215,7 @@ const Clients = () => {
     } finally {
       setLoading(false);
     }
-  }, [token, pagination.page, pagination.limit, search, statusFilter, typeFilter, serviceFilter]);
+  }, [token, pagination.page, pagination.limit, search, statusFilter, typeFilter, serviceFilter, crossSellParam]);
 
   useEffect(() => {
     fetchClients();
@@ -221,6 +251,10 @@ const Clients = () => {
     setStatusFilter("all");
     setTypeFilter("all");
     setServiceFilter("all");
+    if (crossSellParam) {
+      searchParams.delete("cross_sell");
+      setSearchParams(searchParams);
+    }
     setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
@@ -347,6 +381,63 @@ const Clients = () => {
     }
   };
 
+  // Toggle Client Active / Inactive Status
+  const handleToggleStatus = async (clientItem) => {
+    const newStatus = clientItem.status === "inactive" ? "active" : "inactive";
+    try {
+      await ClientService.updateClientStatus(clientItem.id, newStatus, token);
+      setClients((prev) =>
+        prev.map((c) => (c.id === clientItem.id ? { ...c, status: newStatus } : c))
+      );
+      setSuccessMessage(`Client "${clientItem.name}" status updated to ${newStatus}.`);
+      setTimeout(() => {
+        setSuccessMessage("");
+      }, 4000);
+    } catch (err) {
+      setError(err.message || "Failed to update client status.");
+      setTimeout(() => {
+        setError("");
+      }, 4000);
+    }
+  };
+
+  // Confirm Client Deletion Handler
+  const handleConfirmDeleteClient = async () => {
+    if (!clientToDelete) return;
+    if (!canDelete) {
+      setClientToDelete(null);
+      triggerPermissionToast("You do not have permission to delete clients.");
+      return;
+    }
+    try {
+      setIsDeleting(true);
+      await ClientService.deleteClient(clientToDelete.id, token);
+      setClients((prev) => prev.filter((c) => c.id !== clientToDelete.id));
+      setSelectedClientIds((prev) => prev.filter((id) => id !== clientToDelete.id));
+      setPagination((prev) => ({
+        ...prev,
+        total: Math.max(0, prev.total - 1),
+      }));
+      setSuccessMessage(`Client "${clientToDelete.name}" deleted successfully.`);
+      setTimeout(() => {
+        setSuccessMessage("");
+      }, 4000);
+      setClientToDelete(null);
+    } catch (err) {
+      setClientToDelete(null);
+      if (err.statusCode === 403 || (err.message && err.message.toLowerCase().includes("permission"))) {
+        triggerPermissionToast("You do not have permission to delete clients.");
+      } else {
+        setError(err.message || "Failed to delete client.");
+        setTimeout(() => {
+          setError("");
+        }, 4000);
+      }
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // Calculate summary statistics
   const totalCount = pagination.total;
   const activeCount = clients.filter((c) => c.status === "active").length;
@@ -368,15 +459,6 @@ const Clients = () => {
           </div>
 
           <div className="clients-header-actions">
-            <button
-              type="button"
-              className="btn-add-client"
-              onClick={() => navigate("/clients/add")}
-            >
-              <Plus size={16} />
-              <span>Add Client</span>
-            </button>
-
             {/* Import / Export Dropdown */}
             <div className="import-export-dropdown-wrapper" ref={dropdownRef}>
               <button
@@ -413,6 +495,14 @@ const Clients = () => {
             </div>
           </div>
         </div>
+
+        {/* Permission Denied Floating Toast */}
+        {toastError && (
+          <div className="permission-toast danger-toast">
+            <AlertCircle size={18} />
+            <span>{toastError}</span>
+          </div>
+        )}
 
         {/* Success Banner */}
         {successMessage && (
@@ -461,6 +551,37 @@ const Clients = () => {
             <span className="clients-summary-subtext">Real-time DB records</span>
           </div>
         </div>
+
+        {/* Cross-Selling Active Filter Banner */}
+        {crossSellParam && (
+          <div className="cross-sell-active-banner">
+            <div className="cross-sell-banner-left">
+              <Filter size={16} />
+              <span>
+                Cross-Selling Filter:{" "}
+                <strong>
+                  {crossSellParam === "equity_without_mf"
+                    ? "Equity → Mutual Fund (Clients with Equity but no Mutual Fund)"
+                    : crossSellParam === "mf_without_equity"
+                    ? "Mutual Fund → Equity (Clients with Mutual Fund but no Equity)"
+                    : crossSellParam}
+                </strong>
+              </span>
+            </div>
+            <button
+              type="button"
+              className="btn-clear-cross-sell"
+              onClick={() => {
+                searchParams.delete("cross_sell");
+                setSearchParams(searchParams);
+                setPagination((prev) => ({ ...prev, page: 1 }));
+              }}
+            >
+              <X size={14} />
+              <span>Clear Filter</span>
+            </button>
+          </div>
+        )}
 
         {/* Search & Filter Bar */}
         <div className="clients-controls-bar">
@@ -557,14 +678,17 @@ const Clients = () => {
                   <th>CLIENT</th>
                   <th>UCC / CLIENT ID</th>
                   <th>TYPE</th>
+                  {/* <th>CLIENT STATUS</th> */}
+                  <th>CATEGORY</th>
                   <th>CONTACT</th>
                   <th>STATUS</th>
+                  <th style={{ width: "80px", textAlign: "center" }}>ACTIONS</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan="6" className="empty-state-cell">
+                    <td colSpan="8" className="empty-state-cell">
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}>
                         <Loader2 size={18} className="animate-spin" />
                         <span>Loading clients from database...</span>
@@ -573,14 +697,14 @@ const Clients = () => {
                   </tr>
                 ) : clients.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="empty-state-cell">
+                    <td colSpan="8" className="empty-state-cell">
                       {search || statusFilter !== "all" || typeFilter !== "all"
                         ? "No clients match your search or filters."
                         : "No clients found."}
                     </td>
                   </tr>
                 ) : (
-                  clients.map((client) => {
+                  clients.map((client, index) => {
                     const isRevealed = Boolean(revealedClients[client.id]);
                     const isSelected = selectedClientIds.includes(client.id);
 
@@ -588,8 +712,6 @@ const Clients = () => {
                       <tr
                         key={client.id}
                         className={isSelected ? "row-selected" : ""}
-                        style={{ cursor: "pointer" }}
-                        onClick={() => navigate(`/clients/${client.id}`)}
                       >
                         <td
                           style={{ width: "40px", textAlign: "center" }}
@@ -627,6 +749,20 @@ const Clients = () => {
                             : typeof client.client_type === "string"
                             ? client.client_type
                             : client.client_type_name || "Standard"}
+                        </td>
+                        {/* <td>
+                          <span className={`client-status-badge ${(client.client_status || "CLIENT").toLowerCase()}`}>
+                            {client.client_status === "NON_CLIENT" ? "Non-Client" : "Client"}
+                          </span>
+                        </td> */}
+                        <td>
+                          {client.client_category ? (
+                            <span className={`category-badge cat-${client.client_category.toLowerCase()}`}>
+                              {client.client_category}
+                            </span>
+                          ) : (
+                            <span className="text-muted-dash">-</span>
+                          )}
                         </td>
                         <td>
                           <div className="contact-cell">
@@ -677,6 +813,97 @@ const Clients = () => {
                               {client.status || "active"}
                             </span>
                           </span>
+                        </td>
+                        <td style={{ width: "80px", textAlign: "center", position: "relative" }} onClick={(e) => e.stopPropagation()}>
+                          <div className="actions-dropdown-wrapper">
+                            <button
+                              type="button"
+                              className={`btn-actions-trigger ${openActionsMenuId === client.id ? "active" : ""}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenActionsMenuId((prev) => (prev === client.id ? null : client.id));
+                              }}
+                              aria-haspopup="true"
+                              aria-expanded={openActionsMenuId === client.id}
+                              title="Actions"
+                              aria-label={`Actions for ${client.name}`}
+                            >
+                              <MoreVertical size={16} />
+                            </button>
+
+                            {openActionsMenuId === client.id && (
+                              <div className={`actions-dropdown-menu ${index >= clients.length - 2 && clients.length > 2 ? "drop-up" : ""}`}>
+                                <button
+                                  type="button"
+                                  className="actions-menu-item"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenActionsMenuId(null);
+                                    navigate(`/clients/${client.id}`);
+                                  }}
+                                >
+                                  <Eye size={14} className="menu-action-icon" />
+                                  <span>View</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  className="actions-menu-item"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenActionsMenuId(null);
+                                    if (!canEdit) {
+                                      triggerPermissionToast("You do not have permission to edit clients.");
+                                      return;
+                                    }
+                                    navigate(`/clients/${client.id}/edit`);
+                                  }}
+                                >
+                                  <Edit size={14} className="menu-action-icon" />
+                                  <span>Edit</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  className="actions-menu-item"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenActionsMenuId(null);
+                                    handleToggleStatus(client);
+                                  }}
+                                >
+                                  {client.status === "inactive" ? (
+                                    <>
+                                      <UserCheck size={14} className="menu-action-icon status-active-icon" />
+                                      <span>Activate Client</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <UserX size={14} className="menu-action-icon status-inactive-icon" />
+                                      <span>Deactivate Client</span>
+                                    </>
+                                  )}
+                                </button>
+
+                                <button
+                                  type="button"
+                                  className="actions-menu-item delete-item"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenActionsMenuId(null);
+                                    if (!canDelete) {
+                                      triggerPermissionToast("You do not have permission to delete clients.");
+                                      return;
+                                    }
+                                    setClientToDelete(client);
+                                  }}
+                                >
+                                  <Trash2 size={14} className="menu-action-icon delete-icon" />
+                                  <span>Delete Client</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
@@ -865,6 +1092,59 @@ const Clients = () => {
         }}
         token={token}
       />
+
+      {/* Delete Client Confirmation Modal */}
+      {clientToDelete && (
+        <div className="modal-backdrop">
+          <div className="delete-modal-card">
+            <div className="delete-modal-header">
+              <h3 className="delete-modal-title">Delete Client?</h3>
+              <button
+                type="button"
+                className="btn-export-modal-close"
+                onClick={() => setClientToDelete(null)}
+                disabled={isDeleting}
+                aria-label="Close modal"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="delete-modal-body">
+              <p className="delete-modal-text">
+                Are you sure you want to delete <strong>{clientToDelete.name}</strong>?
+              </p>
+              <p className="delete-modal-warning">This action cannot be undone.</p>
+            </div>
+
+            <div className="delete-modal-footer">
+              <button
+                type="button"
+                className="btn-export-cancel"
+                onClick={() => setClientToDelete(null)}
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-delete-confirm"
+                onClick={handleConfirmDeleteClient}
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <span>Delete Client</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppLayout>
   );
 };

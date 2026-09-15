@@ -65,7 +65,7 @@ class ClientModel {
     return serviceIdsToValidate;
   }
 
-  static async findAll({ search = "", status = "", client_type_id = "", service_id = "", page = 1, limit = 10 }) {
+  static async findAll({ search = "", status = "", client_status = "", client_category = "", client_type_id = "", service_id = "", cross_sell = "", page = 1, limit = 10 }) {
     const offset = (page - 1) * limit;
     const params = [];
     const conditions = [];
@@ -89,6 +89,16 @@ class ClientModel {
       conditions.push(`c.status = $${params.length}`);
     }
 
+    if (client_status && client_status.trim() && client_status.toLowerCase() !== "all") {
+      params.push(client_status.trim().toUpperCase());
+      conditions.push(`c.client_status = $${params.length}`);
+    }
+
+    if (client_category && client_category.trim() && client_category.toLowerCase() !== "all") {
+      params.push(client_category.trim().toUpperCase());
+      conditions.push(`c.client_category = $${params.length}`);
+    }
+
     if (client_type_id && parseInt(client_type_id, 10)) {
       params.push(parseInt(client_type_id, 10));
       conditions.push(`c.client_type_id = $${params.length}`);
@@ -99,6 +109,37 @@ class ClientModel {
       if (!isNaN(sId) && sId > 0) {
         params.push(sId);
         conditions.push(`EXISTS (SELECT 1 FROM client_service_assignments csa_filter WHERE csa_filter.client_id = c.id AND csa_filter.service_id = $${params.length})`);
+      }
+    }
+
+    if (cross_sell && typeof cross_sell === "string") {
+      const mode = cross_sell.trim().toLowerCase();
+      if (mode === "equity_without_mf") {
+        conditions.push(`EXISTS (
+          SELECT 1 FROM client_service_assignments csa_eq
+          JOIN client_services cs_eq ON cs_eq.id = csa_eq.service_id
+          WHERE csa_eq.client_id = c.id
+            AND (LOWER(cs_eq.name) LIKE '%equity%' OR LOWER(cs_eq.name) LIKE '%trading%' OR LOWER(cs_eq.name) LIKE '%demat%')
+        )`);
+        conditions.push(`NOT EXISTS (
+          SELECT 1 FROM client_service_assignments csa_mf
+          JOIN client_services cs_mf ON cs_mf.id = csa_mf.service_id
+          WHERE csa_mf.client_id = c.id
+            AND (LOWER(cs_mf.name) LIKE '%mutual fund%' OR LOWER(cs_mf.name) LIKE '%mf%')
+        )`);
+      } else if (mode === "mf_without_equity") {
+        conditions.push(`EXISTS (
+          SELECT 1 FROM client_service_assignments csa_mf
+          JOIN client_services cs_mf ON cs_mf.id = csa_mf.service_id
+          WHERE csa_mf.client_id = c.id
+            AND (LOWER(cs_mf.name) LIKE '%mutual fund%' OR LOWER(cs_mf.name) LIKE '%mf%')
+        )`);
+        conditions.push(`NOT EXISTS (
+          SELECT 1 FROM client_service_assignments csa_eq
+          JOIN client_services cs_eq ON cs_eq.id = csa_eq.service_id
+          WHERE csa_eq.client_id = c.id
+            AND (LOWER(cs_eq.name) LIKE '%equity%' OR LOWER(cs_eq.name) LIKE '%trading%' OR LOWER(cs_eq.name) LIKE '%demat%')
+        )`);
       }
     }
 
@@ -113,7 +154,7 @@ class ClientModel {
       SELECT
         c.id, c.ucc_no, c.name, c.business_name, c.mobile_no, c.whatsapp_no, c.email, c.pan, c.dob, c.gender, c.occupation,
         c.client_type_id, ct.name AS client_type_name,
-        c.status,
+        c.status, c.client_status, c.client_category,
         c.created_at, c.updated_at,
         COALESCE(
           JSON_AGG(
@@ -151,6 +192,9 @@ class ClientModel {
         name: row.client_type_name,
       },
       status: row.status,
+      client_status: row.client_status,
+      is_client: row.client_status !== "NON_CLIENT",
+      client_category: row.client_category,
       services: Array.isArray(row.services) ? row.services : [],
       created_at: row.created_at,
       updated_at: row.updated_at,
@@ -172,7 +216,7 @@ class ClientModel {
       SELECT
         c.id, c.ucc_no, c.name, c.business_name, c.mobile_no, c.whatsapp_no, c.email, c.pan, c.dob, c.gender, c.occupation,
         c.client_type_id, ct.name AS client_type_name, ct.description AS client_type_desc,
-        c.status,
+        c.status, c.client_status, c.client_category,
         c.created_at, c.updated_at,
         COALESCE(
           JSON_AGG(
@@ -219,6 +263,9 @@ class ClientModel {
         description: row.client_type_desc,
       },
       status: row.status,
+      client_status: row.client_status,
+      is_client: row.client_status !== "NON_CLIENT",
+      client_category: row.client_category,
       services: Array.isArray(row.services) ? row.services : [],
       family_members: familyResult.rows,
       created_at: row.created_at,
@@ -243,13 +290,27 @@ class ClientModel {
     dob,
     gender,
     occupation,
-    client_type_id,
+    client_type_id = 1,
     status = "active",
+    client_status,
+    is_client,
+    client_category = null,
     service_ids = [],
     services = [],
   }) {
     const combinedServices = [...(Array.isArray(service_ids) ? service_ids : []), ...(Array.isArray(services) ? services : [])];
     const validServiceIds = await this.resolveAndValidateServices(combinedServices);
+
+    let effectiveClientStatus = "CLIENT";
+    if (typeof is_client === "boolean") {
+      effectiveClientStatus = is_client ? "CLIENT" : "NON_CLIENT";
+    } else if (client_status && client_status.toString().trim()) {
+      effectiveClientStatus = client_status.toString().trim().toUpperCase();
+    }
+
+    const normClientStatus = effectiveClientStatus;
+    const normClientCategory = client_category && client_category.toString().trim() ? client_category.toString().trim().toUpperCase() : null;
+    const effectiveClientTypeId = client_type_id ? parseInt(client_type_id, 10) : 1;
 
     const client = await pool.connect();
     try {
@@ -258,10 +319,10 @@ class ClientModel {
       const query = `
         INSERT INTO clients (
           ucc_no, name, business_name, mobile_no, whatsapp_no, email, pan, dob, gender, occupation,
-          client_type_id, status, services
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb)
+          client_type_id, status, client_status, client_category, services
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15::jsonb)
         RETURNING id, ucc_no, name, business_name, mobile_no, whatsapp_no, email, pan, dob, gender, occupation,
-                  client_type_id, status, created_at, updated_at
+                  client_type_id, status, client_status, client_category, created_at, updated_at
       `;
       const values = [
         ucc_no.trim().toUpperCase(),
@@ -274,8 +335,10 @@ class ClientModel {
         dob || null,
         gender ? gender.trim() : null,
         occupation ? occupation.trim() : null,
-        client_type_id,
+        effectiveClientTypeId,
         status ? status.trim().toLowerCase() : "active",
+        normClientStatus,
+        normClientCategory,
         JSON.stringify([]),
       ];
 
@@ -317,6 +380,9 @@ class ClientModel {
       occupation,
       client_type_id,
       status,
+      client_status,
+      is_client,
+      client_category,
       service_ids,
       services,
     }
@@ -381,6 +447,17 @@ class ClientModel {
     if (status !== undefined) {
       fields.push(`status = $${idx++}`);
       values.push(status.trim().toLowerCase());
+    }
+    if (is_client !== undefined) {
+      fields.push(`client_status = $${idx++}`);
+      values.push(is_client ? "CLIENT" : "NON_CLIENT");
+    } else if (client_status !== undefined) {
+      fields.push(`client_status = $${idx++}`);
+      values.push(client_status && client_status.toString().trim() ? client_status.toString().trim().toUpperCase() : "CLIENT");
+    }
+    if (client_category !== undefined) {
+      fields.push(`client_category = $${idx++}`);
+      values.push(client_category && client_category.toString().trim() ? client_category.toString().trim().toUpperCase() : null);
     }
 
     fields.push(`updated_at = CURRENT_TIMESTAMP`);
@@ -473,7 +550,7 @@ class ClientModel {
         return [];
       }
     } else if (filters && typeof filters === "object") {
-      const { search, status, client_type, client_type_id, service_id } = filters;
+      const { search, status, client_status, client_category, client_type, client_type_id, service_id } = filters;
 
       if (search && typeof search === "string" && search.trim()) {
         params.push(`%${search.trim()}%`);
@@ -492,6 +569,16 @@ class ClientModel {
       if (status && typeof status === "string" && status.trim() && status.toLowerCase() !== "all") {
         params.push(status.trim().toLowerCase());
         conditions.push(`c.status = $${params.length}`);
+      }
+
+      if (client_status && typeof client_status === "string" && client_status.trim() && client_status.toLowerCase() !== "all") {
+        params.push(client_status.trim().toUpperCase());
+        conditions.push(`c.client_status = $${params.length}`);
+      }
+
+      if (client_category && typeof client_category === "string" && client_category.trim() && client_category.toLowerCase() !== "all") {
+        params.push(client_category.trim().toUpperCase());
+        conditions.push(`c.client_category = $${params.length}`);
       }
 
       const typeVal = client_type_id || client_type;
@@ -531,6 +618,8 @@ class ClientModel {
         c.gender,
         c.occupation,
         c.status,
+        c.client_status,
+        c.client_category,
         c.created_at
       FROM clients c
       INNER JOIN client_types ct ON ct.id = c.client_type_id
@@ -568,8 +657,8 @@ class ClientModel {
         const query = `
           INSERT INTO clients (
             ucc_no, name, business_name, mobile_no, whatsapp_no, email, pan, dob, gender, occupation,
-            client_type_id, status, services
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb)
+            client_type_id, status, client_status, client_category, services
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15::jsonb)
           RETURNING id
         `;
 
@@ -586,6 +675,8 @@ class ClientModel {
           item.occupation ? item.occupation.trim() : null,
           item.client_type_id,
           item.status ? item.status.trim().toLowerCase() : "active",
+          item.client_status && item.client_status.toString().trim() ? item.client_status.toString().trim().toUpperCase() : "CLIENT",
+          item.client_category && item.client_category.toString().trim() ? item.client_category.toString().trim().toUpperCase() : null,
           JSON.stringify([]),
         ];
 

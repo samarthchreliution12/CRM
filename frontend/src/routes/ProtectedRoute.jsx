@@ -2,8 +2,8 @@ import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 
-const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+const ProtectedRoute = ({ children, requiredPermission }) => {
+  const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -27,6 +27,20 @@ const ProtectedRoute = ({ children }) => {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Direct URL Protection via Permission Check
+  if (requiredPermission) {
+    const isAdmin = user?.role?.name === "Admin";
+    const permissions = user?.permissions || [];
+
+    const hasPermission = Array.isArray(requiredPermission)
+      ? requiredPermission.some((p) => permissions.includes(p))
+      : permissions.includes(requiredPermission);
+
+    if (!isAdmin && !hasPermission) {
+      return <Navigate to="/dashboard" replace />;
+    }
   }
 
   return children;

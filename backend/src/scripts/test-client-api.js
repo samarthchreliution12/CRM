@@ -127,6 +127,9 @@ async function runClientAPITests() {
     );
     const restrictedStaffUser = restrictedStaffRes.rows[0];
 
+    // Delete leftover test clients from previous runs
+    await pool.query("DELETE FROM clients WHERE ucc_no LIKE 'APIUCC%'");
+
     // Login users to get JWT tokens
     const adminToken = require("jsonwebtoken").sign(
       { id: adminUser.id, role_id: adminRole.id, role_name: adminRole.name },
@@ -233,8 +236,13 @@ async function runClientAPITests() {
     const tempClientRes = await makeRequest("POST", "/api/clients", {
       ucc_no: "APIUCC004",
       name: "Temp Client For Delete",
-      pan: "ABCDE1234F",
+      mobile_no: "9876543204",
+      whatsapp_no: "9876543204",
+      email: "tempdel1@example.com",
+      pan: "APIUC1234F",
       dob: "1990-05-15",
+      gender: "Male",
+      status: "active",
       client_type_id: individualType.id,
     }, adminToken);
     assert(tempClientRes.statusCode === 201 && tempClientRes.body.success, "Temp client created for delete");
@@ -247,8 +255,13 @@ async function runClientAPITests() {
     const tempClientRes2 = await makeRequest("POST", "/api/clients", {
       ucc_no: "APIUCC005",
       name: "Temp Client For Staff Delete",
-      pan: "ABCDE5678G",
+      mobile_no: "9876543205",
+      whatsapp_no: "9876543205",
+      email: "tempdel2@example.com",
+      pan: "APIUC5678G",
       dob: "1988-10-20",
+      gender: "Male",
+      status: "active",
       client_type_id: individualType.id,
     }, adminToken);
     assert(tempClientRes2.statusCode === 201 && tempClientRes2.body.success, "Temp client created for staff delete");
@@ -276,8 +289,13 @@ async function runClientAPITests() {
     const dupUccRes = await makeRequest("POST", "/api/clients", {
       ucc_no: "APIUCC001",
       name: "Duplicate UCC Client",
+      mobile_no: "9876543201",
+      whatsapp_no: "9876543201",
+      email: "dup@example.com",
       pan: "ABCDE9999Z",
       dob: "1991-01-01",
+      gender: "Male",
+      status: "active",
       client_type_id: individualType.id,
     }, adminToken);
     assert(dupUccRes.statusCode === 409, "Duplicate UCC number rejected (409 Conflict)");

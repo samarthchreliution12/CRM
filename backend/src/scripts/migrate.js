@@ -1,6 +1,6 @@
-require("dotenv").config();
-const fs = require("fs");
 const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, "../../.env") });
+const fs = require("fs");
 const pool = require("../config/database");
 
 async function runMigrations() {
@@ -279,6 +279,59 @@ async function runMigrations() {
       FROM roles r
       CROSS JOIN permissions p
       WHERE r.name IN ('Admin', 'Staff') AND p.module = 'lead'
+      ON CONFLICT DO NOTHING;
+    `);
+
+    // Migration step 10: Ensure tasks table, indexes, and task permissions exist
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS tasks (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        task_type VARCHAR(50) NOT NULL CHECK (task_type IN ('FOLLOW_UP', 'CALL', 'MEETING', 'DOCUMENT', 'REVIEW', 'OTHER')),
+        related_client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL,
+        related_lead_id INTEGER REFERENCES leads(id) ON DELETE SET NULL,
+        assigned_to INTEGER NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+        priority VARCHAR(20) NOT NULL CHECK (priority IN ('LOW', 'MEDIUM', 'HIGH')),
+        status VARCHAR(20) DEFAULT 'PENDING' NOT NULL CHECK (status IN ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED')),
+        due_date DATE NOT NULL,
+        due_time TIME WITHOUT TIME ZONE,
+        reminder VARCHAR(20) DEFAULT 'NONE' NOT NULL CHECK (reminder IN ('NONE', '15_MIN', '30_MIN', '1_HOUR', '1_DAY')),
+        completed_at TIMESTAMP WITH TIME ZONE,
+        created_by INTEGER NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        CONSTRAINT check_task_client_or_lead_exclusive CHECK (related_client_id IS NULL OR related_lead_id IS NULL)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_tasks_assigned_to ON tasks(assigned_to);
+      CREATE INDEX IF NOT EXISTS idx_tasks_related_client ON tasks(related_client_id);
+      CREATE INDEX IF NOT EXISTS idx_tasks_related_lead ON tasks(related_lead_id);
+      CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date);
+      CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
+      CREATE INDEX IF NOT EXISTS idx_tasks_priority ON tasks(priority);
+      CREATE INDEX IF NOT EXISTS idx_tasks_task_type ON tasks(task_type);
+      CREATE INDEX IF NOT EXISTS idx_tasks_assigned_status_due ON tasks(assigned_to, status, due_date);
+
+      INSERT INTO permissions (permission_key, description, module, action)
+      VALUES 
+        ('task.read', 'View task records', 'task', 'read'),
+        ('task.view', 'View task records', 'task', 'view'),
+        ('task.create', 'Create task records', 'task', 'create'),
+        ('task.update', 'Update task records', 'task', 'update'),
+        ('task.edit', 'Update task records', 'task', 'edit'),
+        ('task.delete', 'Delete task records', 'task', 'delete')
+      ON CONFLICT (permission_key) DO UPDATE SET 
+        description = EXCLUDED.description, 
+        module = EXCLUDED.module, 
+        action = EXCLUDED.action, 
+        updated_at = CURRENT_TIMESTAMP;
+
+      INSERT INTO role_permissions (role_id, permission_id)
+      SELECT r.id, p.id
+      FROM roles r
+      CROSS JOIN permissions p
+      WHERE r.name IN ('Admin', 'Staff') AND p.module = 'task'
       ON CONFLICT DO NOTHING;
     `);
 

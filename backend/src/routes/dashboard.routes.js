@@ -17,4 +17,10 @@ router.get(
   DashboardController.getOverview
 );
 
+router.get(
+  "/cross-selling",
+  requirePermission("client.view"),
+  DashboardController.getCrossSelling
+);
+
 module.exports = router;

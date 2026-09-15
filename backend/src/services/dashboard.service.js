@@ -157,6 +157,72 @@ class DashboardService {
       mutual_fund_clients_count,
     };
   }
+
+  /**
+   * Get cross-selling statistics:
+   * 1. equityWithoutMutualFund: Clients having Equity/Trading/Demat but no Mutual Fund
+   * 2. mutualFundWithoutEquity: Clients having Mutual Fund but no Equity/Trading/Demat
+   */
+  static async getCrossSellingStats() {
+    // 1. Equity -> Mutual Fund Count
+    const opp1Res = await pool.query(`
+      SELECT COUNT(DISTINCT c.id) AS count
+      FROM clients c
+      WHERE c.status = 'active' AND c.client_status = 'CLIENT'
+        AND (
+          EXISTS (
+            SELECT 1 FROM client_service_assignments csa
+            JOIN client_services cs ON cs.id = csa.service_id
+            WHERE csa.client_id = c.id
+              AND (LOWER(cs.name) LIKE '%equity%' OR LOWER(cs.name) LIKE '%trading%' OR LOWER(cs.name) LIKE '%demat%')
+          )
+          OR (c.services IS NOT NULL AND (c.services::text ILIKE '%equity%' OR c.services::text ILIKE '%trading%' OR c.services::text ILIKE '%demat%'))
+        )
+        AND NOT (
+          EXISTS (
+            SELECT 1 FROM client_service_assignments csa
+            JOIN client_services cs ON cs.id = csa.service_id
+            WHERE csa.client_id = c.id
+              AND (LOWER(cs.name) LIKE '%mutual fund%' OR LOWER(cs.name) LIKE '%mf%')
+          )
+          OR (c.services IS NOT NULL AND (c.services::text ILIKE '%mutual fund%' OR c.services::text ILIKE '%mf%'))
+        )
+    `);
+
+    // 2. Mutual Fund -> Equity Count
+    const opp2Res = await pool.query(`
+      SELECT COUNT(DISTINCT c.id) AS count
+      FROM clients c
+      WHERE c.status = 'active' AND c.client_status = 'CLIENT'
+        AND (
+          EXISTS (
+            SELECT 1 FROM client_service_assignments csa
+            JOIN client_services cs ON cs.id = csa.service_id
+            WHERE csa.client_id = c.id
+              AND (LOWER(cs.name) LIKE '%mutual fund%' OR LOWER(cs.name) LIKE '%mf%')
+          )
+          OR (c.services IS NOT NULL AND (c.services::text ILIKE '%mutual fund%' OR c.services::text ILIKE '%mf%'))
+        )
+        AND NOT (
+          EXISTS (
+            SELECT 1 FROM client_service_assignments csa
+            JOIN client_services cs ON cs.id = csa.service_id
+            WHERE csa.client_id = c.id
+              AND (LOWER(cs.name) LIKE '%equity%' OR LOWER(cs.name) LIKE '%trading%' OR LOWER(cs.name) LIKE '%demat%')
+          )
+          OR (c.services IS NOT NULL AND (c.services::text ILIKE '%equity%' OR c.services::text ILIKE '%trading%' OR c.services::text ILIKE '%demat%'))
+        )
+    `);
+
+    return {
+      equityWithoutMutualFund: {
+        count: parseInt(opp1Res.rows[0].count, 10) || 0,
+      },
+      mutualFundWithoutEquity: {
+        count: parseInt(opp2Res.rows[0].count, 10) || 0,
+      },
+    };
+  }
 }
 
 module.exports = DashboardService;

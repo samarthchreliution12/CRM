@@ -25,10 +25,14 @@ import Dashboard from "./pages/dashboard/Dashboard";
 import Profile from "./pages/profile/Profile";
 import Clients from "./pages/clients/Clients";
 import Leads from "./pages/leads/Leads";
+import Tasks from "./pages/tasks/Tasks";
+import Calendar from "./pages/calendar/Calendar";
 import AddClient from "./pages/clients/AddClient";
 import ClientDetails from "./pages/clients/ClientDetails";
 import Documents from "./pages/documents/Documents";
 import Communication from "./pages/communication/Communication";
+import WhatsAppTemplates from "./pages/communication/WhatsAppTemplates";
+import WhatsAppSettings from "./pages/communication/WhatsAppSettings";
 import Settings from "./pages/settings/Settings";
 import UserAccess from "./pages/settings/users/UserAccess";
 import ClientTypes from "./pages/settings/clientConfiguration/ClientTypes";
@@ -168,9 +172,41 @@ function App() {
             }
           />
           <Route
+            path="/tasks"
+            element={
+              <ProtectedRoute requiredPermission={["task.view", "task.read"]}>
+                <Tasks />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tasks/my"
+            element={
+              <ProtectedRoute requiredPermission={["task.view", "task.read"]}>
+                <Tasks isMyTasksMode={true} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tasks/create"
+            element={
+              <ProtectedRoute requiredPermission={["task.create", "task.add"]}>
+                <Tasks autoOpenCreate={true} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/calendar"
+            element={
+              <ProtectedRoute requiredPermission={["task.view", "task.read"]}>
+                <Calendar />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/clients"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredPermission={["client.view", "client.read"]}>
                 <Clients />
               </ProtectedRoute>
             }
@@ -178,7 +214,7 @@ function App() {
           <Route
             path="/clients/add"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredPermission={["client.create", "client.add"]}>
                 <AddClient />
               </ProtectedRoute>
             }
@@ -186,7 +222,7 @@ function App() {
           <Route
             path="/clients/:id"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredPermission={["client.view", "client.read"]}>
                 <ClientDetails />
               </ProtectedRoute>
             }
@@ -194,7 +230,7 @@ function App() {
           <Route
             path="/clients/:id/edit"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredPermission={["client.edit", "client.create"]}>
                 <AddClient />
               </ProtectedRoute>
             }
@@ -202,7 +238,7 @@ function App() {
           <Route
             path="/documents"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredPermission={["document.view", "document.read"]}>
                 <Documents />
               </ProtectedRoute>
             }
@@ -212,6 +248,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <Communication />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/communication/whatsapp-templates"
+            element={
+              <ProtectedRoute>
+                <WhatsAppTemplates />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/communication/whatsapp-settings"
+            element={
+              <ProtectedRoute>
+                <WhatsAppSettings />
               </ProtectedRoute>
             }
           />

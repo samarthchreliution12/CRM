@@ -24,6 +24,15 @@ class DashboardController {
       return sendError(res, error.statusCode || 500, error.message, error.errors);
     }
   }
+
+  static async getCrossSelling(req, res) {
+    try {
+      const crossSellingData = await DashboardService.getCrossSellingStats();
+      return sendSuccess(res, 200, "Cross-selling opportunities retrieved successfully", crossSellingData);
+    } catch (error) {
+      return sendError(res, error.statusCode || 500, error.message, error.errors);
+    }
+  }
 }
 
 module.exports = DashboardController;

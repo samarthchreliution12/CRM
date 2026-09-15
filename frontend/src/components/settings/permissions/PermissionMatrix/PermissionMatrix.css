@@ -1,8 +1,8 @@
 .matrix-wrapper {
   width: 100%;
   overflow-x: auto;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid var(--border-color, #E2E2DF);
   background-color: #ffffff;
 }
 
@@ -14,11 +14,11 @@
 
 .matrix-table th {
   background-color: #f8fafc;
-  color: var(--text-primary);
+  color: var(--text-primary, #25282A);
   font-size: 0.85rem;
   font-weight: 700;
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color, #E2E2DF);
 }
 
 .matrix-table th.col-action {
@@ -27,10 +27,10 @@
 }
 
 .matrix-table td {
-  padding: 1.125rem 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-  font-size: 0.95rem;
-  color: var(--text-primary);
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-color, #E2E2DF);
+  font-size: 0.925rem;
+  color: var(--text-primary, #25282A);
   vertical-align: middle;
 }
 
@@ -42,15 +42,52 @@
   background-color: #f8fafc;
 }
 
+/* Group Header Row */
+.matrix-table tr.matrix-group-header-row td {
+  background-color: #f1f5f9;
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid var(--border-color, #E2E2DF);
+  border-bottom: 1px solid var(--border-color, #E2E2DF);
+}
+
+.group-header-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  color: #1e293b;
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.group-header-icon {
+  color: var(--primary, #9E241D);
+}
+
+/* Submodule Row Tree Styling */
+.matrix-table tr.submodule-row td:first-child {
+  padding-left: 1.5rem;
+}
+
+.submodule-tree-branch {
+  color: #94a3b8;
+  font-weight: 700;
+  font-family: monospace;
+  margin-right: 0.625rem;
+  user-select: none;
+  font-size: 0.95rem;
+}
+
 .module-info-cell {
   display: flex;
   align-items: center;
-  gap: 0.875rem;
+  gap: 0.75rem;
 }
 
 .module-icon-box {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 8px;
   background-color: var(--primary-lighter, #FAF3F2);
   color: var(--primary, #9E241D);
@@ -62,13 +99,13 @@
 
 .module-name-text {
   font-weight: 700;
-  color: var(--text-primary);
-  font-size: 0.975rem;
+  color: var(--text-primary, #25282A);
+  font-size: 0.925rem;
 }
 
 .module-subtext {
   font-size: 0.775rem;
-  color: var(--text-secondary);
+  color: var(--text-secondary, #596067);
 }
 
 .cell-checkbox-wrapper {
@@ -78,15 +115,15 @@
 }
 
 .matrix-checkbox {
-  width: 20px;
-  height: 20px;
-  accent-color: var(--primary-button);
+  width: 19px;
+  height: 19px;
+  accent-color: var(--primary-button, #9E241D);
   cursor: pointer;
   border-radius: 4px;
 }
 
 .matrix-checkbox:focus {
-  outline: 2px solid var(--border-focus);
+  outline: 2px solid var(--border-focus, #9E241D);
 }
 
 .matrix-controls-bar {
@@ -95,7 +132,7 @@
   justify-content: space-between;
   padding-bottom: 1.25rem;
   margin-bottom: 1.25rem;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color, #E2E2DF);
   flex-wrap: wrap;
   gap: 1rem;
 }
@@ -108,10 +145,10 @@
 
 .btn-matrix-action {
   padding: 0.45rem 0.875rem;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm, 6px);
+  border: 1px solid var(--border-color, #E2E2DF);
   background-color: #ffffff;
-  color: var(--text-primary);
+  color: var(--text-primary, #25282A);
   font-size: 0.825rem;
   font-weight: 600;
   cursor: pointer;

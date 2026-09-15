@@ -366,6 +366,8 @@ class ClientService {
       const occupation = (row.occupation || "").toString().trim();
       const clientTypeRaw = (row.client_type || row.client_type_id || row.type || "").toString().trim();
       const statusRaw = (row.status || "active").toString().trim();
+      const clientStatusRaw = (row.client_status || row.classification || "").toString().trim();
+      const clientCategoryRaw = (row.client_category || row.category || "").toString().trim();
       const servicesRaw = (row.services || row.service || "").toString().trim();
 
       const rowErrors = [];
@@ -511,6 +513,28 @@ class ClientService {
         rowErrors.push("Status must be 'active' or 'inactive'");
       }
 
+      // 11. Validate Client Status (CLIENT / NON_CLIENT)
+      let normClientStatus = "CLIENT";
+      if (clientStatusRaw) {
+        const csUpper = clientStatusRaw.toUpperCase();
+        if (["CLIENT", "NON_CLIENT"].includes(csUpper)) {
+          normClientStatus = csUpper;
+        } else {
+          rowErrors.push("Client status must be 'CLIENT' or 'NON_CLIENT'");
+        }
+      }
+
+      // 12. Validate Client Category (BRONZE, SILVER, GOLD, PLATINUM)
+      let normClientCategory = null;
+      if (clientCategoryRaw) {
+        const catUpper = clientCategoryRaw.toUpperCase();
+        if (["BRONZE", "SILVER", "GOLD", "PLATINUM"].includes(catUpper)) {
+          normClientCategory = catUpper;
+        } else {
+          rowErrors.push("Client category must be 'BRONZE', 'SILVER', 'GOLD', or 'PLATINUM'");
+        }
+      }
+
       if (rowErrors.length > 0) {
         if (isDuplicate) {
           duplicateRowsCount++;
@@ -539,6 +563,8 @@ class ClientService {
           occupation,
           client_type_id: clientTypeId,
           status: statusClean || "active",
+          client_status: normClientStatus,
+          client_category: normClientCategory,
           service_ids: serviceIds,
         });
       }

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Search, Bell, HelpCircle, Menu, FileText, BellOff, ArrowRight, MessageSquare, Hash } from "lucide-react";
+import { Search, Bell, HelpCircle, Menu, FileText, BellOff, ArrowRight, MessageSquare, Hash, CheckSquare } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import useAuth from "../../../hooks/useAuth";
 import ClientService from "../../../services/client.service";
 import CommunicationService from "../../../services/communication.service";
+import TaskService from "../../../services/task.service";
 import UserMenu from "../UserMenu/UserMenu";
 import "./Header.css";
 
@@ -45,6 +46,8 @@ const Header = ({ title = "Dashboard", onToggleSidebar }) => {
   const [pendingDocCount, setPendingDocCount] = useState(0);
   const [commUnreadConvs, setCommUnreadConvs] = useState([]);
   const [commUnreadTotal, setCommUnreadTotal] = useState(0);
+  const [taskNotifications, setTaskNotifications] = useState([]);
+  const [taskUnreadCount, setTaskUnreadCount] = useState(0);
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
   const notifRef = useRef(null);
 
@@ -90,17 +93,42 @@ const Header = ({ title = "Dashboard", onToggleSidebar }) => {
     }
   }, [token]);
 
+  // Fetch Pending Assigned Task Notifications from Backend Task API (Dynamic Aggregation)
+  const fetchTaskNotifications = useCallback(async () => {
+    if (!token || !user?.id) {
+      setTaskNotifications([]);
+      setTaskUnreadCount(0);
+      return;
+    }
+    try {
+      const res = await TaskService.getTasks(
+        { assigned_to: user.id, status: "PENDING", limit: 10 },
+        token
+      );
+      if (res && res.data) {
+        const list = res.data.tasks || [];
+        const count = res.data.pagination?.total || list.length;
+        setTaskNotifications(list);
+        setTaskUnreadCount(count);
+      }
+    } catch (e) {
+      // Ignore fetch errors
+    }
+  }, [token, user]);
+
   // Polling & Location Change Refresher
   useEffect(() => {
     fetchPendingDocCount();
     fetchCommNotifications();
+    fetchTaskNotifications();
 
     const interval = setInterval(() => {
       fetchPendingDocCount();
       fetchCommNotifications();
+      fetchTaskNotifications();
     }, 15000);
     return () => clearInterval(interval);
-  }, [fetchPendingDocCount, fetchCommNotifications, location.pathname]);
+  }, [fetchPendingDocCount, fetchCommNotifications, fetchTaskNotifications, location.pathname]);
 
   // Click Outside Listener to Close Notification Dropdown
   useEffect(() => {
@@ -118,6 +146,7 @@ const Header = ({ title = "Dashboard", onToggleSidebar }) => {
     if (!notifDropdownOpen) {
       fetchPendingDocCount();
       fetchCommNotifications();
+      fetchTaskNotifications();
     }
   };
 
@@ -126,7 +155,8 @@ const Header = ({ title = "Dashboard", onToggleSidebar }) => {
     navigate("/documents?status=pending");
   };
 
-  const totalUnreadCount = (canViewDocs ? pendingDocCount : 0) + commUnreadTotal;
+  const totalUnreadCount =
+    (canViewDocs ? pendingDocCount : 0) + commUnreadTotal + taskUnreadCount;
 
   return (
     <header className="header-container">
@@ -215,6 +245,30 @@ const Header = ({ title = "Dashboard", onToggleSidebar }) => {
                         <ArrowRight size={14} className="notif-item-arrow" />
                       </div>
                     )}
+
+                    {/* Dynamic Task Pending Notifications */}
+                    {taskNotifications.map((task) => (
+                      <div
+                        key={`task-notif-${task.id}`}
+                        className="notif-item"
+                        onClick={() => {
+                          setNotifDropdownOpen(false);
+                          navigate(`/tasks?taskId=${task.id}`);
+                        }}
+                      >
+                        <div className="notif-item-icon-wrapper pending">
+                          <CheckSquare size={18} />
+                        </div>
+                        <div className="notif-item-content">
+                          <div className="notif-item-header">
+                            <span className="notif-item-title">Pending Task</span>
+                            <span className="notif-item-time">{formatTimeAgo(task.due_date || task.created_at)}</span>
+                          </div>
+                          <span className="notif-item-desc">{task.title}</span>
+                        </div>
+                        <ArrowRight size={14} className="notif-item-arrow" />
+                      </div>
+                    ))}
 
                     {/* Unread Communication Notifications */}
                     {commUnreadConvs.map((conv) => (

@@ -6,13 +6,29 @@ import "./AppLayout.css";
 
 const AppLayout = ({ children, title = "Dashboard" }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    return localStorage.getItem("crm_sidebar_collapsed") === "true";
+  });
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
   const closeSidebar = () => setSidebarOpen(false);
 
+  const toggleCollapse = () => {
+    setIsCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem("crm_sidebar_collapsed", String(next));
+      return next;
+    });
+  };
+
   return (
-    <div className="app-layout-container">
-      <Sidebar isOpen={sidebarOpen} onClose={closeSidebar} />
+    <div className={`app-layout-container ${isCollapsed ? "sidebar-is-collapsed" : ""}`}>
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={closeSidebar}
+        isCollapsed={isCollapsed}
+        onToggleCollapse={toggleCollapse}
+      />
       
       {/* Mobile backdrop */}
       <div

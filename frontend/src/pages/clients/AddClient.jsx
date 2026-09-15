@@ -3,14 +3,29 @@ import { useNavigate, useParams } from "react-router-dom";
 import AppLayout from "../../components/layout/AppLayout/AppLayout";
 import ClientService from "../../services/client.service";
 import useAuth from "../../hooks/useAuth";
-import { ArrowLeft, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { ArrowLeft, AlertCircle, CheckCircle2, Loader2, Check } from "lucide-react";
 import "./AddClient.css";
 
 const AddClient = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const isEditMode = Boolean(id);
+
+  // Role & Permission Checks
+  const isAdmin = user?.role?.name === "Admin" || user?.role === "Admin" || user?.role_name === "Admin";
+  const permissions = Array.isArray(user?.permissions) ? user.permissions : [];
+  const canEdit = isAdmin || permissions.includes("client.edit") || permissions.includes("client.update");
+  const canCreate = isAdmin || permissions.includes("client.create") || permissions.includes("client.add") || permissions.includes("client_add.create");
+
+  // Floating Toast Notification State
+  const [toastError, setToastError] = useState("");
+  const triggerPermissionToast = (msg) => {
+    setToastError(msg);
+    setTimeout(() => {
+      setToastError("");
+    }, 4000);
+  };
 
   // Form State
   const [formData, setFormData] = useState({
@@ -25,16 +40,15 @@ const AddClient = () => {
     dob: "",
     gender: "",
     occupation: "",
-    client_type_id: "",
+    is_client: true,
     status: "active",
+    client_category: "",
     service_ids: [],
   });
 
   // Dynamic API Options State
-  const [clientTypes, setClientTypes] = useState([]);
   const [availableServices, setAvailableServices] = useState([]);
-  const [loadingConfig, setLoadingConfig] = useState(true);
-  const [configError, setConfigError] = useState("");
+  const [loadingServices, setLoadingServices] = useState(true);
   const [loadingInitial, setLoadingInitial] = useState(isEditMode);
 
   // Form Submission & Validation State
@@ -43,39 +57,26 @@ const AddClient = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch Client Types & Client Services dynamically from real backend APIs
+  // Fetch Client Services dynamically from real backend API
   useEffect(() => {
     let isMounted = true;
-    const fetchConfig = async () => {
+    const fetchServices = async () => {
       try {
-        setLoadingConfig(true);
-        setConfigError("");
-
-        const [typesRes, servicesRes] = await Promise.all([
-          ClientService.getClientTypes(token),
-          ClientService.getClientServices(token),
-        ]);
-
-        if (isMounted) {
-          if (typesRes && typesRes.data && typesRes.data.client_types) {
-            setClientTypes(typesRes.data.client_types);
-          }
-          if (servicesRes && servicesRes.data && servicesRes.data.client_services) {
-            setAvailableServices(servicesRes.data.client_services);
-          }
+        setLoadingServices(true);
+        const servicesRes = await ClientService.getClientServices(token);
+        if (isMounted && servicesRes && servicesRes.data && servicesRes.data.client_services) {
+          setAvailableServices(servicesRes.data.client_services);
         }
       } catch (err) {
-        if (isMounted) {
-          setConfigError(err.message || "Failed to load client types and services from server.");
-        }
+        console.error("Failed to load services:", err);
       } finally {
         if (isMounted) {
-          setLoadingConfig(false);
+          setLoadingServices(false);
         }
       }
     };
 
-    fetchConfig();
+    fetchServices();
     return () => {
       isMounted = false;
     };
@@ -117,8 +118,9 @@ const AddClient = () => {
             dob: dobFormatted,
             gender: c.gender || "",
             occupation: c.occupation || "",
-            client_type_id: c.client_type?.id || c.client_type_id || "",
+            is_client: c.is_client !== undefined ? Boolean(c.is_client) : (c.client_status === "NON_CLIENT" ? false : true),
             status: c.status || "active",
+            client_category: c.client_category || "",
             service_ids: assignedServiceIds,
           });
         }
@@ -252,9 +254,6 @@ const AddClient = () => {
       case "gender":
         if (!val) return "Gender is required";
         return "";
-      case "client_type_id":
-        if (!val) return "Client Type is required";
-        return "";
       case "status":
         if (!val) return "Status is required";
         return "";
@@ -281,7 +280,6 @@ const AddClient = () => {
       "pan",
       "dob",
       "gender",
-      "client_type_id",
       "status",
     ];
 
@@ -308,6 +306,17 @@ const AddClient = () => {
 
     setIsSubmitting(true);
 
+    if (isEditMode && !canEdit) {
+      triggerPermissionToast("You do not have permission to edit clients.");
+      setIsSubmitting(false);
+      return;
+    }
+    if (!isEditMode && !canCreate) {
+      triggerPermissionToast("You do not have permission to create clients.");
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const payload = {
         ucc_no: formData.ucc_no.trim().toUpperCase(),
@@ -320,8 +329,10 @@ const AddClient = () => {
         dob: formData.dob || null,
         gender: formData.gender || null,
         occupation: formData.occupation.trim() || null,
-        client_type_id: parseInt(formData.client_type_id, 10),
+        is_client: formData.is_client,
+        client_status: formData.is_client ? "CLIENT" : "NON_CLIENT",
         status: formData.status || "active",
+        client_category: formData.client_category || null,
         service_ids: formData.service_ids,
       };
 
@@ -345,7 +356,7 @@ const AddClient = () => {
           ucc_no: "This UCC number is already in use.",
         }));
       } else if (err.statusCode === 403) {
-        setServerError(`You do not have permission to ${isEditMode ? "edit" : "create"} clients.`);
+        triggerPermissionToast(`You do not have permission to ${isEditMode ? "edit" : "create"} clients.`);
       } else if (err.errors && Array.isArray(err.errors)) {
         const fieldErrMap = {};
         err.errors.forEach((e) => {
@@ -378,6 +389,14 @@ const AddClient = () => {
 
   return (
     <AppLayout title={isEditMode ? "Edit Client" : "Add Client"}>
+      {/* Permission Denied Floating Toast */}
+      {toastError && (
+        <div className="permission-toast danger-toast">
+          <AlertCircle size={18} />
+          <span>{toastError}</span>
+        </div>
+      )}
+
       <div className="add-client-container">
         {/* Top Header & Back Button */}
         <div className="add-client-header">
@@ -607,36 +626,47 @@ const AddClient = () => {
           <div className="form-section">
             <h3 className="section-title">Client Classification</h3>
             <div className="form-grid-2">
-              {/* Dynamic Client Type Dropdown from API */}
+              {/* Client Status (Compact Single-Choice Control) */}
               <div className="form-group">
                 <label className="form-label">
-                  Client Type <span className="required-star">*</span>
+                  Client Status <span className="required-star">*</span>
                 </label>
-                {loadingConfig ? (
-                  <div className="form-input" style={{ color: "#64748b" }}>
-                    Loading Client Types...
-                  </div>
-                ) : configError ? (
-                  <div className="error-text">{configError}</div>
-                ) : (
-                  <select
-                    name="client_type_id"
-                    value={formData.client_type_id}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    className={`form-select ${errors.client_type_id ? "is-invalid" : ""}`}
+                <div className="segmented-control">
+                  <button
+                    type="button"
+                    className={`segmented-btn ${formData.is_client ? "active" : ""}`}
+                    onClick={() => setFormData((prev) => ({ ...prev, is_client: true }))}
                   >
-                    <option value="">Select Client Type</option>
-                    {clientTypes.map((type) => (
-                      <option key={type.id} value={type.id}>
-                        {type.name}
-                      </option>
-                    ))}
-                  </select>
-                )}
-                {errors.client_type_id && (
-                  <span className="error-text">{errors.client_type_id}</span>
-                )}
+                    {formData.is_client && <Check size={15} className="segmented-check-icon" />}
+                    <span>Client</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`segmented-btn ${!formData.is_client ? "active" : ""}`}
+                    onClick={() => setFormData((prev) => ({ ...prev, is_client: false }))}
+                  >
+                    {!formData.is_client && <Check size={15} className="segmented-check-icon" />}
+                    <span>Non-Client</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Client Category */}
+              <div className="form-group">
+                <label className="form-label">Client Category</label>
+                <select
+                  name="client_category"
+                  value={formData.client_category}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  className="form-select"
+                >
+                  <option value="">Select Category</option>
+                  <option value="BRONZE">BRONZE</option>
+                  <option value="SILVER">SILVER</option>
+                  <option value="GOLD">GOLD</option>
+                  <option value="PLATINUM">PLATINUM</option>
+                </select>
               </div>
 
               {/* Status */}
@@ -662,7 +692,7 @@ const AddClient = () => {
           {/* SECTION 3: SERVICES (DYNAMIC MULTI-SELECT CHECKBOX LIST FROM API) */}
           <div className="form-section">
             <h3 className="section-title">Subscribed Services</h3>
-            {loadingConfig ? (
+            {loadingServices ? (
               <p style={{ color: "#64748b", fontSize: "0.875rem" }}>Loading available services...</p>
             ) : availableServices.length === 0 ? (
               <p style={{ color: "#64748b", fontSize: "0.875rem" }}>No active services available.</p>

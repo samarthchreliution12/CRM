@@ -409,9 +409,9 @@ class LeadModel {
       const insertClientQuery = `
         INSERT INTO clients (
           ucc_no, name, business_name, mobile_no, whatsapp_no, email, pan, dob,
-          client_type_id, status, services
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', '[]'::jsonb)
-        RETURNING id, ucc_no, name, business_name, mobile_no, whatsapp_no, email, pan, dob, client_type_id, status, created_at
+          client_type_id, status, client_status, services
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', 'CLIENT', '[]'::jsonb)
+        RETURNING id, ucc_no, name, business_name, mobile_no, whatsapp_no, email, pan, dob, client_type_id, status, client_status, created_at
       `;
       const clientValues = [
         finalUccNo,
@@ -436,7 +436,7 @@ class LeadModel {
         );
       }
 
-      // 6. Update lead record status to 'converted'
+      // 7. Update lead record status to 'converted'
       const updateLeadQuery = `
         UPDATE leads
         SET status = 'converted',
@@ -450,12 +450,14 @@ class LeadModel {
 
       await client.query("COMMIT");
 
-      // 7. Fetch full updated lead record
+      // 8. Fetch full updated lead record and created client record
+      const ClientModel = require("./client.model");
       const updatedLead = await this.findById(lead.id);
+      const fullClient = await ClientModel.findById(newClient.id);
 
       return {
         lead: updatedLead,
-        client: newClient,
+        client: fullClient,
       };
     } catch (err) {
       await client.query("ROLLBACK");

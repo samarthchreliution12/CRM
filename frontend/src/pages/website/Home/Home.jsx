@@ -2,6 +2,7 @@ import React from 'react';
 import { Hero } from '../../../components/website/home/Hero';
 import { TrustMetrics } from '../../../components/website/home/TrustMetrics';
 import { AboutPreview } from '../../../components/website/home/AboutPreview';
+import { FinancialJourney } from '../../../components/website/home/FinancialJourney';
 import { ServicesPreview } from '../../../components/website/home/ServicesPreview';
 import { InvestmentRecovery } from '../../../components/website/home/InvestmentRecovery';
 import { WhyParshwa } from '../../../components/website/home/WhyParshwa';
@@ -16,6 +17,7 @@ export const Home = () => {
       <Hero />
       <TrustMetrics />
       <AboutPreview />
+      <FinancialJourney />
       <ServicesPreview />
       <InvestmentRecovery />
       <WhyParshwa />

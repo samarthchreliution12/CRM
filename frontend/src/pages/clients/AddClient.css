@@ -136,6 +136,50 @@
   font-weight: 500;
 }
 
+/* Segmented Control for Client Status */
+.segmented-control {
+  display: inline-flex;
+  align-items: center;
+  background-color: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  gap: 4px;
+  width: 100%;
+}
+
+.segmented-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  border-radius: calc(var(--radius-sm) - 2px);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.segmented-btn:hover:not(.active) {
+  color: #1e293b;
+  background-color: #ffffff;
+}
+
+.segmented-btn.active {
+  background-color: #9E241E;
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgba(158, 36, 30, 0.2);
+}
+
+.segmented-check-icon {
+  stroke-width: 2.5px;
+}
+
 /* WhatsApp Sync Checkbox Wrapper */
 .checkbox-inline-wrapper {
   display: flex;
@@ -257,12 +301,14 @@
   align-items: center;
   gap: 0.625rem;
   padding: 0.875rem 1.25rem;
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #b91c1c;
+  background-color: #FDF2F2;
+  border: 1px solid #F5C6C4;
+  color: var(--danger, #B52B27);
   border-radius: var(--radius-sm);
   font-size: 0.875rem;
   font-weight: 500;
+  box-shadow: 0 1px 3px rgba(181, 43, 39, 0.05);
+  animation: bannerSlideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .banner-success {
@@ -270,12 +316,14 @@
   align-items: center;
   gap: 0.625rem;
   padding: 0.875rem 1.25rem;
-  background-color: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  color: #15803d;
+  background-color: var(--primary-lighter, #FAF3F2);
+  border: 1px solid #F5E6E4;
+  color: var(--primary, #9E241D);
   border-radius: var(--radius-sm);
   font-size: 0.875rem;
   font-weight: 600;
+  box-shadow: 0 1px 3px rgba(158, 36, 29, 0.05);
+  animation: bannerSlideDown 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Responsive Breakpoints */
