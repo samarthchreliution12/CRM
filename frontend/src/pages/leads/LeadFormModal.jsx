@@ -407,7 +407,7 @@ const LeadFormModal = ({
                   <option value="">Unassigned</option>
                   {staffUsers.map((st) => (
                     <option key={st.id} value={st.id}>
-                      {st.name} ({st.email})
+                      {st.name} ({st.email}) {String(st.id) === String(user?.id) ? " (You)" : ""}
                     </option>
                   ))}
                 </select>

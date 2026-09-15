@@ -172,6 +172,13 @@ const TaskFormModal = ({
     setSubmitError("");
   }, [targetTask, user, initialDueDate, initialDueTime]);
 
+  // Ensure default assigned_to is set to current logged-in user when creating a new task
+  useEffect(() => {
+    if (!targetTask && user?.id && !formData.assigned_to) {
+      setFormData((prev) => ({ ...prev, assigned_to: String(user.id) }));
+    }
+  }, [user, targetTask, formData.assigned_to]);
+
   if (!isOpen) return null;
 
   const handleChange = (e) => {
@@ -487,15 +494,15 @@ const TaskFormModal = ({
                 </label>
                 <select
                   name="assigned_to"
-                  value={formData.assigned_to}
+                  value={String(formData.assigned_to)}
                   onChange={handleChange}
                   className={`form-select ${errors.assigned_to ? "error" : ""}`}
                   disabled={isSubmitting || loadingOptions}
                 >
                   <option value="">-- Select User --</option>
                   {staffOptions.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.full_name || s.name || s.email}
+                    <option key={s.id} value={String(s.id)}>
+                      {s.full_name || s.name || s.email} {String(s.id) === String(user?.id) ? " (You)" : ""}
                     </option>
                   ))}
                 </select>
