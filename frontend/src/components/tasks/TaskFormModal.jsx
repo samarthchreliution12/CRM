@@ -80,45 +80,64 @@ const TaskFormModal = ({
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Sync options if passed as props or fetch if empty
+const extractList = (res, key) => {
+  if (!res) return [];
+  if (Array.isArray(res)) return res;
+  if (res.data) {
+    if (Array.isArray(res.data)) return res.data;
+    if (res.data[key] && Array.isArray(res.data[key])) return res.data[key];
+    if (res.data.data && Array.isArray(res.data.data)) return res.data.data;
+  }
+  if (res[key] && Array.isArray(res[key])) return res[key];
+  return [];
+};
+
+  // Sync options if passed as props
   useEffect(() => {
     if (clients && clients.length > 0) setClientsOptions(clients);
     if (leads && leads.length > 0) setLeadsOptions(leads);
     if (staffUsers && staffUsers.length > 0) setStaffOptions(staffUsers);
+  }, [clients, leads, staffUsers]);
 
-    if (
-      (!clients || clients.length === 0) ||
-      (!leads || leads.length === 0) ||
-      (!staffUsers || staffUsers.length === 0)
-    ) {
-      let isMounted = true;
-      const fetchOptions = async () => {
-        try {
-          setLoadingOptions(true);
-          const [clientsRes, leadsRes, staffRes] = await Promise.all([
-            ClientService.getClients({ limit: 100 }, token).catch(() => null),
-            LeadService.getLeads({ limit: 100 }, token).catch(() => null),
-            StaffService.getStaffUsers({ limit: 100 }, token).catch(() => null),
-          ]);
+  // Always fetch reference options on modal mount
+  useEffect(() => {
+    let isMounted = true;
+    const fetchOptions = async () => {
+      try {
+        setLoadingOptions(true);
+        const [clientsRes, leadsRes, staffRes] = await Promise.all([
+          ClientService.getClients({ limit: 100 }, token).catch(() => null),
+          LeadService.getLeads({ limit: 100 }, token).catch(() => null),
+          StaffService.getStaffUsers({ limit: 100 }, token).catch(() => null),
+        ]);
 
-          if (isMounted) {
-            if (clientsRes?.data?.clients) setClientsOptions(clientsRes.data.clients);
-            if (leadsRes?.data?.leads) setLeadsOptions(leadsRes.data.leads);
-            if (staffRes?.data?.staff) setStaffOptions(staffRes.data.staff);
+        if (isMounted) {
+          const cList = extractList(clientsRes, "clients");
+          const lList = extractList(leadsRes, "leads");
+          const sList = extractList(staffRes, "staff");
+
+          if (cList.length > 0) setClientsOptions(cList);
+          if (lList.length > 0) setLeadsOptions(lList);
+          if (sList.length > 0) {
+            let list = [...sList];
+            if (user && !list.some((s) => String(s.id) === String(user.id))) {
+              list.unshift({ id: user.id, name: user.name || user.email || "Current User" });
+            }
+            setStaffOptions(list);
           }
-        } catch (e) {
-          // non-blocking
-        } finally {
-          if (isMounted) setLoadingOptions(false);
         }
-      };
+      } catch (e) {
+        // non-blocking
+      } finally {
+        if (isMounted) setLoadingOptions(false);
+      }
+    };
 
-      fetchOptions();
-      return () => {
-        isMounted = false;
-      };
-    }
-  }, [clients, leads, staffUsers, token]);
+    fetchOptions();
+    return () => {
+      isMounted = false;
+    };
+  }, [token, user]);
 
   // Pre-fill form when editing or resetting
   useEffect(() => {

@@ -168,18 +168,25 @@ const Tasks = ({ isMyTasksMode = false, autoOpenCreate = false }) => {
 
         if (!isMounted) return;
 
-        if (clientsRes && clientsRes.data) {
-          const clientList = clientsRes.data.clients || (Array.isArray(clientsRes.data) ? clientsRes.data : []);
-          setClients(clientList);
-        }
-        if (leadsRes && leadsRes.data) {
-          const leadList = leadsRes.data.leads || (Array.isArray(leadsRes.data) ? leadsRes.data : []);
-          setLeads(leadList);
-        }
-        if (staffRes && staffRes.data) {
-          const staffList = staffRes.data.staff || (Array.isArray(staffRes.data) ? staffRes.data : []);
-          setStaffUsers(staffList);
-        }
+        const extractList = (res, key) => {
+          if (!res) return [];
+          if (Array.isArray(res)) return res;
+          if (res.data) {
+            if (Array.isArray(res.data)) return res.data;
+            if (res.data[key] && Array.isArray(res.data[key])) return res.data[key];
+            if (res.data.data && Array.isArray(res.data.data)) return res.data.data;
+          }
+          if (res[key] && Array.isArray(res[key])) return res[key];
+          return [];
+        };
+
+        const cList = extractList(clientsRes, "clients");
+        const lList = extractList(leadsRes, "leads");
+        const sList = extractList(staffRes, "staff");
+
+        if (cList.length > 0) setClients(cList);
+        if (lList.length > 0) setLeads(lList);
+        if (sList.length > 0) setStaffUsers(sList);
       } catch (err) {
         console.error("Error fetching reference options:", err);
       }
