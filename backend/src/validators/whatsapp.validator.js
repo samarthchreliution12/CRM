@@ -36,7 +36,39 @@ const validateSendTemplate = (req, res, next) => {
   next();
 };
 
+const validateCreateSettings = (req, res, next) => {
+  const { cp_api_key, whatsapp_mobile } = req.body || {};
+
+  if (!cp_api_key || String(cp_api_key).trim() === "") {
+    return sendError(res, 400, "CP API key is required.");
+  }
+
+  if (whatsapp_mobile !== undefined && whatsapp_mobile !== null && String(whatsapp_mobile).trim() !== "") {
+    const cleanMobile = String(whatsapp_mobile).trim().replace(/[\s\-()+]/g, "");
+    if (!/^[0-9]{10,15}$/.test(cleanMobile)) {
+      return sendError(res, 400, "Invalid WhatsApp mobile number format. Mobile number must contain 10 to 15 digits.");
+    }
+  }
+
+  next();
+};
+
+const validateUpdateSettings = (req, res, next) => {
+  const { whatsapp_mobile } = req.body || {};
+
+  if (whatsapp_mobile !== undefined && whatsapp_mobile !== null && String(whatsapp_mobile).trim() !== "") {
+    const cleanMobile = String(whatsapp_mobile).trim().replace(/[\s\-()+]/g, "");
+    if (!/^[0-9]{10,15}$/.test(cleanMobile)) {
+      return sendError(res, 400, "Invalid WhatsApp mobile number format. Mobile number must contain 10 to 15 digits.");
+    }
+  }
+
+  next();
+};
+
 module.exports = {
   validateAccountInfoQuery,
   validateSendTemplate,
+  validateCreateSettings,
+  validateUpdateSettings,
 };

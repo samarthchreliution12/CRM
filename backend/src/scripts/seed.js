@@ -69,6 +69,12 @@ const PERMISSIONS = [
   { permission_key: "document.update", module: "document", action: "update", description: "Replace document records" },
   { permission_key: "document.verify", module: "document", action: "verify", description: "Approve or reject document records" },
   { permission_key: "document.delete", module: "document", action: "delete", description: "Delete document records" },
+
+  // WhatsApp Module
+  { permission_key: "whatsapp.view", module: "whatsapp", action: "view", description: "View WhatsApp settings and status" },
+  { permission_key: "whatsapp.create", module: "whatsapp", action: "create", description: "Create WhatsApp configuration" },
+  { permission_key: "whatsapp.edit", module: "whatsapp", action: "edit", description: "Update WhatsApp settings and status" },
+  { permission_key: "whatsapp.update", module: "whatsapp", action: "update", description: "Update WhatsApp settings and status" },
 ];
 
 const ROLE_PERMISSION_MAP = {
@@ -79,7 +85,8 @@ const ROLE_PERMISSION_MAP = {
     "client_type.view", "client_service.view",
     "lead.view", "lead.create", "lead.edit",
     "task.view", "task.create", "task.edit",
-    "document.view", "document.create", "document.edit", "document.update", "document.verify"
+    "document.view", "document.create", "document.edit", "document.update", "document.verify",
+    "whatsapp.view", "whatsapp.create", "whatsapp.edit", "whatsapp.update"
   ],
   Client: [
     "client.view"

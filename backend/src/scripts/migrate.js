@@ -333,6 +333,43 @@ async function runMigrations() {
       CROSS JOIN permissions p
       WHERE r.name IN ('Admin', 'Staff') AND p.module = 'task'
       ON CONFLICT DO NOTHING;
+
+      -- Migration step 8: Ensure whatsapp_settings table and permissions exist
+      CREATE TABLE IF NOT EXISTS whatsapp_settings (
+        id SERIAL PRIMARY KEY,
+        provider VARCHAR(50) DEFAULT 'ChatterPillar' NOT NULL,
+        cp_api_key_encrypted TEXT NOT NULL,
+        cp_api_key_iv VARCHAR(255) NOT NULL,
+        cp_api_key_tag VARCHAR(255) NOT NULL,
+        whatsapp_account_id VARCHAR(100),
+        whatsapp_mobile VARCHAR(50),
+        is_connected BOOLEAN DEFAULT false NOT NULL,
+        created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_whatsapp_settings_provider ON whatsapp_settings(provider);
+
+      INSERT INTO permissions (permission_key, description, module, action)
+      VALUES 
+        ('whatsapp.view', 'View WhatsApp settings and status', 'whatsapp', 'view'),
+        ('whatsapp.read', 'View WhatsApp settings and status', 'whatsapp', 'read'),
+        ('whatsapp.create', 'Create WhatsApp configuration', 'whatsapp', 'create'),
+        ('whatsapp.update', 'Update WhatsApp settings and status', 'whatsapp', 'update'),
+        ('whatsapp.edit', 'Update WhatsApp settings and status', 'whatsapp', 'edit')
+      ON CONFLICT (permission_key) DO UPDATE SET 
+        description = EXCLUDED.description, 
+        module = EXCLUDED.module, 
+        action = EXCLUDED.action, 
+        updated_at = CURRENT_TIMESTAMP;
+
+      INSERT INTO role_permissions (role_id, permission_id)
+      SELECT r.id, p.id
+      FROM roles r
+      CROSS JOIN permissions p
+      WHERE r.name IN ('Admin', 'Staff') AND p.module = 'whatsapp'
+      ON CONFLICT DO NOTHING;
     `);
 
     console.log("Database migrations completed successfully.");

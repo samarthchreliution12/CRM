@@ -65,9 +65,62 @@ function decryptBuffer(encryptedBuffer, ivHex, authTagHex) {
   return decrypted;
 }
 
+/**
+ * Encrypt a plaintext string using AES-256-GCM.
+ * @param {string} text - Plaintext string
+ * @returns {{ encryptedText: string, iv: string, authTag: string }}
+ */
+function encryptString(text) {
+  if (typeof text !== "string") {
+    throw new Error("Input to encryptString must be a string");
+  }
+  const result = encryptBuffer(Buffer.from(text, "utf8"));
+  return {
+    encryptedText: result.encryptedData.toString("hex"),
+    iv: result.iv,
+    authTag: result.authTag,
+  };
+}
+
+/**
+ * Decrypt an encrypted hex string using AES-256-GCM.
+ * @param {string} encryptedHex - Hex-encoded ciphertext
+ * @param {string} ivHex - Hex-encoded IV
+ * @param {string} authTagHex - Hex-encoded auth tag
+ * @returns {string} Plaintext string
+ */
+function decryptString(encryptedHex, ivHex, authTagHex) {
+  if (!encryptedHex || typeof encryptedHex !== "string") {
+    throw new Error("Encrypted string is required");
+  }
+  const encryptedBuffer = Buffer.from(encryptedHex, "hex");
+  const decryptedBuffer = decryptBuffer(encryptedBuffer, ivHex, authTagHex);
+  return decryptedBuffer.toString("utf8");
+}
+
+/**
+ * Mask sensitive credentials for API responses.
+ * Never exposes the full API key.
+ * @param {string} key - API Key or credential string
+ * @returns {string} Masked string (e.g. "CP_K...cdef")
+ */
+function maskApiKey(key) {
+  if (!key || typeof key !== "string" || key.trim() === "") {
+    return "";
+  }
+  const trimmed = key.trim();
+  if (trimmed.length <= 8) {
+    return "••••••••";
+  }
+  return `${trimmed.substring(0, 4)}...${trimmed.substring(trimmed.length - 4)}`;
+}
+
 module.exports = {
   encryptBuffer,
   decryptBuffer,
+  encryptString,
+  decryptString,
+  maskApiKey,
   ENCRYPTION_VERSION,
   KEY_ID,
 };
