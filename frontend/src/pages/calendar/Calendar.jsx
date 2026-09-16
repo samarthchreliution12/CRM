@@ -14,6 +14,7 @@ import StaffService from "../../services/staff.service";
 import ClientService from "../../services/client.service";
 import LeadService from "../../services/lead.service";
 import useAuth from "../../hooks/useAuth";
+import { formatTaskDate, isPastTaskDate } from "../../utils/taskDate";
 
 import CalendarMonthView from "./components/CalendarMonthView";
 import CalendarWeekView from "./components/CalendarWeekView";
@@ -235,6 +236,10 @@ const Calendar = () => {
       triggerToast("You do not have permission to create tasks.", "error");
       return;
     }
+    if (isPastTaskDate(dateStr)) {
+      triggerToast("Tasks cannot be created for past dates. Choose today or a future date.");
+      return;
+    }
     setEditingTask(null);
     setCreateInitialDueDate(dateStr);
     setCreateInitialDueTime(timeStr || "10:00");
@@ -281,8 +286,8 @@ const Calendar = () => {
       return;
     }
     setEditingTask(null);
-    const todayYMD = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(currentDate.getDate()).padStart(2, "0")}`;
-    setCreateInitialDueDate(todayYMD);
+    const selectedDate = formatTaskDate(currentDate);
+    setCreateInitialDueDate(isPastTaskDate(selectedDate) ? formatTaskDate() : selectedDate);
     setCreateInitialDueTime("10:00");
     setIsFormOpen(true);
   };

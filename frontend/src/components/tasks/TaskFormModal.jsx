@@ -5,6 +5,7 @@ import ClientService from "../../services/client.service";
 import LeadService from "../../services/lead.service";
 import StaffService from "../../services/staff.service";
 import useAuth from "../../hooks/useAuth";
+import { formatTaskDate, isPastTaskDate } from "../../utils/taskDate";
 
 const TASK_TYPES = [
   { value: "CALL", label: "Call" },
@@ -171,7 +172,7 @@ const extractList = (res, key) => {
         reminder: targetTask.reminder || "NONE",
       });
     } else {
-      const todayStr = new Date().toISOString().split("T")[0];
+      const todayStr = formatTaskDate();
       setFormData({
         title: "",
         description: "",
@@ -247,6 +248,10 @@ const extractList = (res, key) => {
 
     if (formData.related_to_type === "LEAD" && !formData.related_lead_id) {
       newErrors.related_lead_id = "Please select a Lead.";
+    }
+
+    if (!isEditMode && formData.due_date && isPastTaskDate(formData.due_date)) {
+      newErrors.due_date = "Tasks cannot be created for past dates. Choose today or a future date.";
     }
 
     setErrors(newErrors);
@@ -557,6 +562,7 @@ const extractList = (res, key) => {
                 <input
                   type="date"
                   name="due_date"
+                  min={isEditMode ? undefined : formatTaskDate()}
                   value={formData.due_date}
                   onChange={handleChange}
                   className={`form-input ${errors.due_date ? "error" : ""}`}

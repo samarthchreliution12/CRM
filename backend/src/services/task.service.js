@@ -113,6 +113,14 @@ class TaskService {
       throw err;
     }
 
+    const today = new Date();
+    const todayYMD = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    if (String(data.due_date).trim() < todayYMD) {
+      const err = new Error("Tasks cannot be created for past dates. Choose today or a future date.");
+      err.statusCode = 400;
+      throw err;
+    }
+
     // Optional Due Time validation
     if (data.due_time && !this.isValidTime(String(data.due_time))) {
       const err = new Error("Invalid due_time format. Must be HH:MM or HH:MM:SS.");
