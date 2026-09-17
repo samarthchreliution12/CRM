@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { Container } from '../common/Container';
 import { Button } from '../common/Button';
+
+const Hero3DScene = lazy(() => import('../3d/Hero3DScene'));
 
 export const Hero = () => {
   const [scrollY, setScrollY] = useState(0);
@@ -71,6 +73,13 @@ export const Hero = () => {
               </Button>
             </div>
           </div>
+
+          {/* Hero 3D Ecosystem Column */}
+          <div className="website-hero-3d-col">
+            <Suspense fallback={<div className="hero-3d-loading-placeholder" />}>
+              <Hero3DScene />
+            </Suspense>
+          </div>
         </div>
       </Container>
 
@@ -113,10 +122,20 @@ export const Hero = () => {
         }
 
         .website-hero-grid {
-          display: flex;
+          display: grid;
+          grid-template-columns: 1.15fr 0.85fr;
+          gap: 2rem;
           align-items: center;
           width: 100%;
           will-change: transform, opacity;
+        }
+
+        .website-hero-3d-col {
+          width: 100%;
+          height: 480px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
         .website-hero-content {

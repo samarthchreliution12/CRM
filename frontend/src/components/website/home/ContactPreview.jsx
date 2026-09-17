@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Container } from '../common/Container';
 import { SectionHeading } from '../common/SectionHeading';
 import { COMPANY_INFO } from '../../../utils/website/constants';
 import { Button } from '../common/Button';
 import { useScrollReveal } from '../../../hooks/website/useScrollReveal';
+
+const Shield3DScene = lazy(() => import('../3d/Shield3DScene'));
 
 export const ContactPreview = () => {
   const [sectionRef, isRevealed] = useScrollReveal({ threshold: 0.15 });
@@ -13,6 +15,10 @@ export const ContactPreview = () => {
       <Container>
         <div className="contact-cta-card">
           <div className="contact-cta-glow" />
+
+          <Suspense fallback={null}>
+            <Shield3DScene />
+          </Suspense>
 
           <div className={`scroll-reveal ${isRevealed ? 'revealed' : ''}`}>
             <SectionHeading

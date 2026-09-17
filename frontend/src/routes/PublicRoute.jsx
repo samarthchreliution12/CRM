@@ -1,6 +1,7 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
+import SEO from "../components/SEO";
 
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -28,7 +29,12 @@ const PublicRoute = ({ children }) => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  return children;
+  return (
+    <>
+      <SEO title="CRM Login & Portal" noindex={true} />
+      {children}
+    </>
+  );
 };
 
 export default PublicRoute;

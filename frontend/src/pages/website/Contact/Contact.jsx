@@ -1,12 +1,48 @@
 import React from 'react';
+import SEO from '../../../components/SEO';
 import { Container } from '../../../components/website/common/Container';
 import { SectionHeading } from '../../../components/website/common/SectionHeading';
 import { ContactForm } from '../../../components/website/contact/ContactForm';
 import { COMPANY_INFO } from '../../../utils/website/constants';
 
 export const Contact = () => {
+  const contactSchemas = [
+    {
+      "@context": "https://schema.org",
+      "@type": "ContactPage",
+      "name": "Contact Parshwa Consultancy",
+      "url": "https://parshwaconsultancy.in/contact",
+      "description": "Get in touch with Parshwa Consultancy for expert financial advisory, mutual fund management, and investment recovery."
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://parshwaconsultancy.in/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Contact Us",
+          "item": "https://parshwaconsultancy.in/contact"
+        }
+      ]
+    }
+  ];
+
   return (
     <>
+      <SEO
+        title="Contact Us - Parshwa Consultancy Advisory Team"
+        description="Connect with Parshwa Consultancy in Ahmedabad, Gujarat for financial advisory, mutual funds, physical share demat, and IEPF recovery assistance."
+        canonical="/contact"
+        keywords={['Contact Parshwa Consultancy', 'Financial Advisory Contact', 'Ahmedabad Investment Consultant', 'IEPF Recovery Help']}
+        schemaData={contactSchemas}
+      />
       <section className="website-section">
         <Container>
           <SectionHeading

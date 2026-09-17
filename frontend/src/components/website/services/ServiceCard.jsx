@@ -1,22 +1,25 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import Tilt3DCard from '../common/Tilt3DCard';
 
 export const ServiceCard = ({ service }) => {
   const detailUrl = `/services/${service.slug}`;
 
   return (
-    <Link to={detailUrl} className="website-service-card">
-      <div className="website-service-icon-wrapper">
-        {service.icon}
-      </div>
-      <h3 className="website-service-title">{service.title}</h3>
-      <p className="website-service-description">{service.description}</p>
-      
-      <div className="website-service-footer">
-        <span className="website-service-link">
-          More →
-        </span>
-      </div>
+    <Tilt3DCard maxTilt={8} scale={1.02} style={{ height: '100%' }}>
+      <Link to={detailUrl} className="website-service-card">
+        <div className="website-service-icon-wrapper">
+          {service.icon}
+        </div>
+        <h3 className="website-service-title">{service.title}</h3>
+        <p className="website-service-description">{service.description}</p>
+        
+        <div className="website-service-footer">
+          <span className="website-service-link">
+            More →
+          </span>
+        </div>
+      </Link>
 
       <style>{`
         .website-service-card {
@@ -27,6 +30,7 @@ export const ServiceCard = ({ service }) => {
           box-shadow: var(--shadow-sm);
           display: flex;
           flex-direction: column;
+          height: 100%;
           transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
           position: relative;
           text-decoration: none;
@@ -93,7 +97,7 @@ export const ServiceCard = ({ service }) => {
           color: var(--color-primary-hover);
         }
       `}</style>
-    </Link>
+    </Tilt3DCard>
   );
 };
 

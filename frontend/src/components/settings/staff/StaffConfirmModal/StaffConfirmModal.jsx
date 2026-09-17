@@ -17,8 +17,8 @@ const StaffConfirmModal = ({ isOpen, onClose, onConfirm, type = "deactivate", st
 
   if (isDelete) {
     title = `Delete ${staffUser.name}?`;
-    description = "This action cannot be undone. All access for this staff user will be permanently removed.";
-    confirmBtnText = "Delete Staff";
+    description = "This action cannot be undone. All access for this user will be permanently removed.";
+    confirmBtnText = "Delete User";
     iconClass = "danger";
     Icon = Trash2;
   } else if (isActivate) {

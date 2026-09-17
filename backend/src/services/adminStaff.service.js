@@ -166,8 +166,15 @@ class AdminStaffService {
       throw error;
     }
 
+    const targetRoleName = targetStaff.role?.name || targetStaff.role_name;
+    if ((targetRoleName && targetRoleName.toLowerCase() === "admin") || Number(targetStaff.role?.id || targetStaff.role_id) === 1) {
+      const error = new Error("Admin users cannot be deleted.");
+      error.statusCode = 400;
+      throw error;
+    }
+
     if (Number(id) === Number(adminUserId)) {
-      const error = new Error("Admin cannot delete their own account through Staff Management");
+      const error = new Error("Admin cannot delete their own account");
       error.statusCode = 400;
       throw error;
     }
@@ -180,11 +187,11 @@ class AdminStaffService {
       module: "USERS",
       entityType: "USER",
       entityId: targetStaff.id,
-      description: `Deleted staff user: ${targetStaff.name} (${targetStaff.email})`,
+      description: `Deleted user: ${targetStaff.name} (${targetStaff.email})`,
       ipAddress: context.ipAddress,
     });
 
-    return { message: "Staff user deleted successfully" };
+    return { message: "User deleted successfully" };
   }
 }
 

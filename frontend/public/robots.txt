@@ -1,3 +1,35 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
-Disallow:
+Allow: /
+Allow: /about
+Allow: /services
+Allow: /services/
+Allow: /contact
+Allow: /static/
+Allow: /*.css$
+Allow: /*.js$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.svg$
+Allow: /*.webp$
+
+# Disallow authenticated application, admin & API routes
+Disallow: /dashboard
+Disallow: /clients
+Disallow: /leads
+Disallow: /tasks
+Disallow: /documents
+Disallow: /settings
+Disallow: /communication
+Disallow: /client/
+Disallow: /api/
+Disallow: /login
+Disallow: /crm
+Disallow: /admin
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /reset-password
+
+# XML Sitemap Location
+Sitemap: https://parshwaconsultancy.in/sitemap.xml

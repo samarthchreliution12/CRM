@@ -1,5 +1,6 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "./context/AuthContext";
 import PublicRoute from "./routes/PublicRoute";
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -43,8 +44,9 @@ import "./styles/global.css";
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
+    <HelmetProvider>
+      <BrowserRouter>
+        <AuthProvider>
         <Routes>
           {/* Public Website Routes */}
           <Route
@@ -348,6 +350,7 @@ function App() {
         </Routes>
       </AuthProvider>
     </BrowserRouter>
+  </HelmetProvider>
   );
 }
 

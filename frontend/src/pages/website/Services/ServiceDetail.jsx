@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import SEO from '../../../components/SEO';
 import { Container } from '../../../components/website/common/Container';
 import { Button } from '../../../components/website/common/Button';
 import { ServiceCard } from '../../../components/website/services/ServiceCard';
@@ -312,8 +313,56 @@ export const ServiceDetail = () => {
     .filter((s) => s.slug !== service.slug)
     .slice(0, 3);
 
+  const serviceSchemas = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Service",
+      "name": `${service.title} - Parshwa Consultancy`,
+      "serviceType": service.title,
+      "provider": {
+        "@type": "FinancialService",
+        "name": "Parshwa Consultancy",
+        "url": "https://parshwaconsultancy.in/"
+      },
+      "description": service.intro || service.description,
+      "areaServed": "India"
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://parshwaconsultancy.in/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Services",
+          "item": "https://parshwaconsultancy.in/services"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": service.title,
+          "item": `https://parshwaconsultancy.in/services/${service.slug}`
+        }
+      ]
+    }
+  ];
+
   return (
-    <article className="service-detail-page">
+    <>
+      <SEO
+        title={`${service.title} - Expert Financial Solutions`}
+        description={service.intro ? `${service.intro.slice(0, 155)}...` : service.description}
+        canonical={`/services/${service.slug}`}
+        keywords={[service.title, 'Parshwa Consultancy', 'Financial Advisory', service.slug.replace('-', ' ')]}
+        schemaData={serviceSchemas}
+      />
+      <article className="service-detail-page">
       {/* Top Subtle Scroll Progress Indicator */}
       <div className="service-scroll-progress-bar" style={{ width: `${scrollProgress}%` }} />
 
@@ -1282,6 +1331,7 @@ export const ServiceDetail = () => {
         }
       `}</style>
     </article>
+    </>
   );
 };
 

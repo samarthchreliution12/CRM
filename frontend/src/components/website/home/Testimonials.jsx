@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Container } from '../common/Container';
 import { SectionHeading } from '../common/SectionHeading';
 import { useScrollReveal } from '../../../hooks/website/useScrollReveal';
+import Tilt3DCard from '../common/Tilt3DCard';
 
 const testimonialsData = [
   {
@@ -135,95 +136,97 @@ export const Testimonials = () => {
             transitionDelay: '0.15s',
           }}
         >
-          <div
-            key={current.id}
-            className="testimonial-card fade-in"
-            style={{
-              backgroundColor: 'var(--color-white)',
-              borderRadius: 'var(--radius-lg)',
-              padding: 'var(--spacing-xxl) var(--spacing-xl)',
-              border: '1px solid var(--color-border)',
-              boxShadow: 'var(--shadow-md)',
-              position: 'relative',
-            }}
-          >
+          <Tilt3DCard maxTilt={5} scale={1.01}>
             <div
+              key={current.id}
+              className="testimonial-card fade-in"
               style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: 'var(--spacing-md)',
-                flexWrap: 'wrap',
-                gap: '8px',
+                backgroundColor: 'var(--color-white)',
+                borderRadius: 'var(--radius-lg)',
+                padding: 'var(--spacing-xxl) var(--spacing-xl)',
+                border: '1px solid var(--color-border)',
+                boxShadow: 'var(--shadow-md)',
+                position: 'relative',
               }}
             >
-              <div style={{ color: '#FFB800', fontSize: '1.25rem', letterSpacing: '2px' }}>
-                {'★'.repeat(current.rating)}
-              </div>
-
-              {current.verified && (
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                    color: '#28A745',
-                    fontSize: '0.8125rem',
-                    fontWeight: 600,
-                    padding: '4px 10px',
-                    borderRadius: 'var(--radius-full)',
-                    border: '1px solid rgba(40, 167, 69, 0.2)',
-                  }}
-                >
-                  ✓ Verified Client
-                </span>
-              )}
-            </div>
-
-            <blockquote
-              style={{
-                fontSize: '1.15rem',
-                lineHeight: 1.6,
-                color: 'var(--color-dark)',
-                fontStyle: 'italic',
-                marginBottom: 'var(--spacing-xl)',
-                margin: '0 0 var(--spacing-xl) 0',
-              }}
-            >
-              "{current.quote}"
-            </blockquote>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               <div
                 style={{
-                  width: '52px',
-                  height: '52px',
-                  borderRadius: '50%',
-                  backgroundColor: current.avatarBg,
-                  color: '#FFFFFF',
                   display: 'flex',
+                  justifyContent: 'space-between',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 700,
-                  fontSize: '1.1rem',
-                  boxShadow: 'var(--shadow-sm)',
-                  flexShrink: 0,
+                  marginBottom: 'var(--spacing-md)',
+                  flexWrap: 'wrap',
+                  gap: '8px',
                 }}
               >
-                {current.initials}
+                <div style={{ color: '#FFB800', fontSize: '1.25rem', letterSpacing: '2px' }}>
+                  {'★'.repeat(current.rating)}
+                </div>
+
+                {current.verified && (
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                      color: '#28A745',
+                      fontSize: '0.8125rem',
+                      fontWeight: 600,
+                      padding: '4px 10px',
+                      borderRadius: 'var(--radius-full)',
+                      border: '1px solid rgba(40, 167, 69, 0.2)',
+                    }}
+                  >
+                    ✓ Verified Client
+                  </span>
+                )}
               </div>
 
-              <div>
-                <h4 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--color-dark)' }}>
-                  {current.name}
-                </h4>
-                <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--color-secondary)' }}>
-                  {current.role} &bull; <span style={{ color: 'var(--color-muted)' }}>{current.company}</span>
-                </p>
+              <blockquote
+                style={{
+                  fontSize: '1.15rem',
+                  lineHeight: 1.6,
+                  color: 'var(--color-dark)',
+                  fontStyle: 'italic',
+                  marginBottom: 'var(--spacing-xl)',
+                  margin: '0 0 var(--spacing-xl) 0',
+                }}
+              >
+                "{current.quote}"
+              </blockquote>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div
+                  style={{
+                    width: '52px',
+                    height: '52px',
+                    borderRadius: '50%',
+                    backgroundColor: current.avatarBg,
+                    color: '#FFFFFF',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 700,
+                    fontSize: '1.1rem',
+                    boxShadow: 'var(--shadow-sm)',
+                    flexShrink: 0,
+                  }}
+                >
+                  {current.initials}
+                </div>
+
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--color-dark)' }}>
+                    {current.name}
+                  </h4>
+                  <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--color-secondary)' }}>
+                    {current.role} &bull; <span style={{ color: 'var(--color-muted)' }}>{current.company}</span>
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          </Tilt3DCard>
 
           <button
             type="button"

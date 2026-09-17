@@ -149,7 +149,7 @@ class UserModel {
              r.name AS role_name, r.description AS role_description
       FROM users u
       LEFT JOIN roles r ON r.id = u.role_id
-      WHERE u.id = $1 AND r.name = 'Staff'
+      WHERE u.id = $1
     `;
     const result = await pool.query(query, [id]);
     const row = result.rows[0];

@@ -108,6 +108,11 @@ const UserAccess = () => {
   };
 
   const handleOpenDeleteModal = (staffUser) => {
+    const isAdminUser = staffUser?.role?.name?.toLowerCase() === "admin" || Number(staffUser?.role?.id || staffUser?.role_id) === 1;
+    if (isAdminUser) {
+      setGlobalError("Admin users cannot be deleted.");
+      return;
+    }
     setTargetStaff(staffUser);
     setConfirmType("delete");
     setIsConfirmModalOpen(true);
@@ -159,11 +164,11 @@ const UserAccess = () => {
       if (confirmType === "delete") {
         const response = await StaffService.deleteStaffUser(targetStaff.id, token);
         if (response && response.success) {
-          setSuccessMessage(`Staff member "${targetStaff.name}" deleted successfully.`);
+          setSuccessMessage(`User "${targetStaff.name}" deleted successfully.`);
           setIsConfirmModalOpen(false);
           fetchStaff();
         } else {
-          setGlobalError(response.message || "Failed to delete Staff user.");
+          setGlobalError(response.message || "Failed to delete user.");
         }
       } else {
         const nextStatus = confirmType === "activate" ? "active" : "inactive";

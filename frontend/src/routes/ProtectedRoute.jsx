@@ -1,6 +1,7 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
+import SEO from "../components/SEO";
 
 const ProtectedRoute = ({ children, requiredPermission }) => {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -43,7 +44,12 @@ const ProtectedRoute = ({ children, requiredPermission }) => {
     }
   }
 
-  return children;
+  return (
+    <>
+      <SEO title="CRM Dashboard" noindex={true} />
+      {children}
+    </>
+  );
 };
 
 export default ProtectedRoute;

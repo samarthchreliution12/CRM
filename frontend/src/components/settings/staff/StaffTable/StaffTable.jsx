@@ -49,6 +49,7 @@ const StaffTable = ({ staffList, onView, onEdit, onToggleStatus, onDelete }) => 
           <tbody>
             {staffList.map((user) => {
               const isActive = user.status === "active";
+              const isAdminUser = user.role?.name?.toLowerCase() === "admin" || Number(user.role?.id || user.role_id) === 1;
               return (
                 <tr key={user.id}>
                   <td>
@@ -132,17 +133,19 @@ const StaffTable = ({ staffList, onView, onEdit, onToggleStatus, onDelete }) => 
                             )}
                           </button>
 
-                          <button
-                            type="button"
-                            className="action-menu-item danger"
-                            onClick={() => {
-                              setActiveMenuId(null);
-                              onDelete(user);
-                            }}
-                          >
-                            <Trash2 size={15} />
-                            <span>Delete Staff</span>
-                          </button>
+                          {!isAdminUser && (
+                            <button
+                              type="button"
+                              className="action-menu-item danger"
+                              onClick={() => {
+                                setActiveMenuId(null);
+                                onDelete(user);
+                              }}
+                            >
+                              <Trash2 size={15} />
+                              <span>Delete User</span>
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -158,6 +161,7 @@ const StaffTable = ({ staffList, onView, onEdit, onToggleStatus, onDelete }) => 
       <div className="staff-mobile-cards-list">
         {staffList.map((user) => {
           const isActive = user.status === "active";
+          const isAdminUser = user.role?.name?.toLowerCase() === "admin" || Number(user.role?.id || user.role_id) === 1;
           return (
             <div key={user.id} className="staff-mobile-card">
               <div className="mobile-card-top">
@@ -213,17 +217,19 @@ const StaffTable = ({ staffList, onView, onEdit, onToggleStatus, onDelete }) => 
                         {isActive ? <UserX size={15} color="#d97706" /> : <UserCheck size={15} color="#16a34a" />}
                         <span>{isActive ? "Deactivate" : "Activate"}</span>
                       </button>
-                      <button
-                        type="button"
-                        className="action-menu-item danger"
-                        onClick={() => {
-                          setActiveMenuId(null);
-                          onDelete(user);
-                        }}
-                      >
-                        <Trash2 size={15} />
-                        <span>Delete Staff</span>
-                      </button>
+                      {!isAdminUser && (
+                        <button
+                          type="button"
+                          className="action-menu-item danger"
+                          onClick={() => {
+                            setActiveMenuId(null);
+                            onDelete(user);
+                          }}
+                        >
+                          <Trash2 size={15} />
+                          <span>Delete User</span>
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>

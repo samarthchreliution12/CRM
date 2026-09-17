@@ -1,12 +1,35 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Container } from '../common/Container';
 import { SectionHeading } from '../common/SectionHeading';
 import { Button } from '../common/Button';
 import { partnerLogos } from '../../../data/website/partners';
 import { useScrollReveal } from '../../../hooks/website/useScrollReveal';
+import Tilt3DCard from '../common/Tilt3DCard';
+
+const Recovery3DScene = lazy(() => import('../3d/Recovery3DScene'));
 
 export const InvestmentRecovery = () => {
   const [sectionRef, isRevealed] = useScrollReveal({ threshold: 0.15 });
+
+  // Customizable 4 Step Cards Data
+  const recoverySteps = [
+    {
+      title: "LOST INVESTMENT",
+      desc: "Unclaimed dividends, physical share certificates, forgotten accounts",
+    },
+    {
+      title: "DOCUMENTATION",
+      desc: "IEPF verification, legal affidavits, signature validation",
+    },
+    {
+      title: "RECOVERY PROCESS",
+      desc: "Liaison with RTA, company registrar, and IEPF authority",
+    },
+    {
+      title: "SECURED WEALTH",
+      desc: "Dematerialization into your active demat account safely",
+    },
+  ];
 
   const trustPoints = [
     'Client-Centric Approach',
@@ -17,6 +40,21 @@ export const InvestmentRecovery = () => {
   return (
     <section ref={sectionRef} className="website-section website-section-light trusted-partners-section">
       <Container>
+        {/* 3D Investment Recovery Storytelling Block */}
+        <div className={`scroll-reveal ${isRevealed ? 'revealed' : ''}`} style={{ marginBottom: 'var(--spacing-xxl)' }}>
+          <SectionHeading
+            badge="SPECIALIZED RECOVERY"
+            title="Recover Your Unclaimed Wealth & Physical Shares"
+            subtitle="From lost certificates to seamless IEPF dematerialization — your journey to recovered wealth."
+            center={true}
+          />
+          <div style={{ marginTop: '1.5rem' }}>
+            <Suspense fallback={<div style={{ minHeight: '300px' }} />}>
+              <Recovery3DScene steps={recoverySteps} />
+            </Suspense>
+          </div>
+        </div>
+
         <div className={`scroll-reveal ${isRevealed ? 'revealed' : ''}`}>
           <SectionHeading
             badge="TRUSTED PARTNERS"
@@ -39,25 +77,26 @@ export const InvestmentRecovery = () => {
 
         <div className="partner-logo-grid">
           {partnerLogos.map((partner, index) => (
-            <div
-              key={partner.id}
-              className={`partner-card scroll-reveal-scale ${isRevealed ? 'revealed' : ''}`}
-              style={{ transitionDelay: `${0.18 + index * 0.06}s` }}
-            >
-              {partner.logo ? (
-                <img
-                  src={partner.logo}
-                  alt={partner.name}
-                  className="partner-img"
-                />
-              ) : (
-                <div className="partner-placeholder-emblem">
-                  <div className="partner-placeholder-bar" />
-                  <div className="partner-placeholder-circle" />
-                  <div className="partner-placeholder-bar short" />
-                </div>
-              )}
-            </div>
+            <Tilt3DCard key={partner.id} maxTilt={6} scale={1.04}>
+              <div
+                className={`partner-card scroll-reveal-scale ${isRevealed ? 'revealed' : ''}`}
+                style={{ transitionDelay: `${0.18 + index * 0.06}s` }}
+              >
+                {partner.logo ? (
+                  <img
+                    src={partner.logo}
+                    alt={partner.name}
+                    className="partner-img"
+                  />
+                ) : (
+                  <div className="partner-placeholder-emblem">
+                    <div className="partner-placeholder-bar" />
+                    <div className="partner-placeholder-circle" />
+                    <div className="partner-placeholder-bar short" />
+                  </div>
+                )}
+              </div>
+            </Tilt3DCard>
           ))}
         </div>
 

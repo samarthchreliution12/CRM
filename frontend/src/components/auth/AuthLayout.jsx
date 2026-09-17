@@ -1,14 +1,24 @@
+import React, { lazy, Suspense } from "react";
 import headerLogo from "../../assets/website/logo/header-logo.png";
 import "./AuthLayout.css";
+
+const Hero3DScene = lazy(() => import("../website/3d/Hero3DScene"));
 
 const AuthLayout = ({ children }) => {
   return (
     <div className="auth-container">
-      {/* Left Light Financial Branding Section */}
+      {/* Left Light Financial Branding Section with 3D Scene */}
       <div className="auth-branding-panel">
         <div className="ambient-blob ambient-blob-1" />
         <div className="ambient-blob ambient-blob-2" />
         <div className="ambient-lines-pattern" />
+
+        {/* 3D Visual Element Background */}
+        <div className="auth-3d-bg-wrapper">
+          <Suspense fallback={null}>
+            <Hero3DScene />
+          </Suspense>
+        </div>
 
         <div className="auth-logo">
           <img src={headerLogo} alt="Parshwa Consultancy" className="auth-logo-img" />

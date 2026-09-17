@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Container } from '../common/Container';
 import { useScrollReveal } from '../../../hooks/website/useScrollReveal';
+import Tilt3DCard from '../common/Tilt3DCard';
 
 export const TrustMetrics = () => {
   const [sectionRef, isRevealed] = useScrollReveal({ threshold: 0.2 });
@@ -72,27 +73,28 @@ export const TrustMetrics = () => {
               : item.format(0);
 
             return (
-              <div
-                key={idx}
-                className={`website-metric-card scroll-reveal ${isRevealed ? 'revealed' : ''}`}
-                style={{ transitionDelay: `${idx * 0.1}s` }}
-              >
-                <h2 className="website-metric-value">{displayValue}</h2>
-                <p className="website-metric-label">{item.label}</p>
+              <Tilt3DCard key={idx} maxTilt={6} scale={1.03}>
+                <div
+                  className={`website-metric-card scroll-reveal ${isRevealed ? 'revealed' : ''}`}
+                  style={{ transitionDelay: `${idx * 0.1}s` }}
+                >
+                  <h2 className="website-metric-value">{displayValue}</h2>
+                  <p className="website-metric-label">{item.label}</p>
 
-                {/* Decorative Sparkline */}
-                <div className="metric-sparkline-box">
-                  <svg viewBox="0 0 200 40" className="metric-sparkline-svg" fill="none">
-                    <path
-                      d={item.path}
-                      stroke="var(--color-primary, #9E241D)"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      opacity="0.35"
-                    />
-                  </svg>
+                  {/* Decorative Sparkline */}
+                  <div className="metric-sparkline-box">
+                    <svg viewBox="0 0 200 40" className="metric-sparkline-svg" fill="none">
+                      <path
+                        d={item.path}
+                        stroke="var(--color-primary, #9E241D)"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        opacity="0.35"
+                      />
+                    </svg>
+                  </div>
                 </div>
-              </div>
+              </Tilt3DCard>
             );
           })}
         </div>

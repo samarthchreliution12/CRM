@@ -10,14 +10,19 @@
     "lucide-react": "^1.33.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-helmet-async": "^3.0.0",
     "react-icons": "^5.7.0",
     "react-router-dom": "^7.18.2",
     "react-scripts": "5.0.1",
+    "three": "^0.186.0",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "CI=false react-scripts build",
+    "start:prod": "node scripts/serve-build.js",
+    "serve:prod": "node scripts/serve-build.js",
+    "build": "CI=false react-scripts build && node scripts/postbuild-ssg.js",
+    "postbuild-ssg": "node scripts/postbuild-ssg.js",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -38,5 +43,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "puppeteer": "^25.11.0"
   }
 }

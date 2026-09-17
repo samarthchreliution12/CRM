@@ -21,6 +21,22 @@
   border-right: 1px solid rgba(139, 35, 29, 0.08);
 }
 
+/* Left Side 3D Scene Wrapper - Centered */
+.auth-3d-bg-wrapper {
+  position: absolute;
+  top: 38%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  height: 60%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0.85;
+  z-index: 1;
+}
+
 /* Ambient Background Animation Blobs & Pattern */
 .ambient-blob {
   position: absolute;
@@ -96,7 +112,7 @@
 
 .auth-branding-content {
   margin-top: auto;
-  margin-bottom: 2rem;
+  margin-bottom: 0.5rem;
   max-width: 520px;
   z-index: 2;
 }
