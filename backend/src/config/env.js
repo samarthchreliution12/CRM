@@ -5,8 +5,8 @@ const isProduction = process.env.NODE_ENV === "production";
 const jwtSecret = process.env.JWT_SECRET || process.env.JWT_ACCESS_SECRET;
 const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET || (jwtSecret ? `${jwtSecret}_refresh` : null);
 
-if (isProduction && (!jwtSecret || !process.env.JWT_REFRESH_SECRET)) {
-  console.error("FATAL CONFIG ERROR: JWT_SECRET and JWT_REFRESH_SECRET must be explicitly set in production environment.");
+if (isProduction && (!jwtSecret || !jwtRefreshSecret)) {
+  console.error("FATAL CONFIG ERROR: JWT_SECRET must be explicitly set in production environment.");
   process.exit(1);
 }
 
