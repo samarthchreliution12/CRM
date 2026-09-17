@@ -165,6 +165,8 @@ const Clients = () => {
     limit: 10,
     total: 0,
     totalPages: 1,
+    active: 0,
+    inactive: 0,
   });
 
   // Search & Filter State
@@ -256,6 +258,8 @@ const Clients = () => {
             ...prev,
             total: res.data.pagination.total || 0,
             totalPages: res.data.pagination.totalPages || 1,
+            active: res.data.pagination.active ?? 0,
+            inactive: res.data.pagination.inactive ?? 0,
           }));
         }
       }
@@ -506,6 +510,7 @@ const Clients = () => {
         ...prev,
         total: Math.max(0, prev.total - 1),
       }));
+      fetchClients();
       setSuccessMessage(`Client "${clientToDelete.name}" deleted successfully.`);
       setTimeout(() => {
         setSuccessMessage("");
@@ -528,8 +533,8 @@ const Clients = () => {
 
   // Calculate summary statistics
   const totalCount = pagination.total;
-  const activeCount = clients.filter((c) => c.status === "active").length;
-  const inactiveCount = clients.filter((c) => c.status === "inactive").length;
+  const activeCount = pagination.active ?? 0;
+  const inactiveCount = pagination.inactive ?? 0;
 
   const startRecord = totalCount > 0 ? (pagination.page - 1) * pagination.limit + 1 : 0;
   const endRecord = Math.min(pagination.page * pagination.limit, totalCount);

@@ -145,9 +145,17 @@ class ClientModel {
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
-    const countQuery = `SELECT COUNT(*) AS total FROM clients c ${whereClause}`;
+    const countQuery = `
+      SELECT 
+        COUNT(*) AS total,
+        COUNT(*) FILTER (WHERE c.status = 'active') AS active_count,
+        COUNT(*) FILTER (WHERE c.status = 'inactive') AS inactive_count
+      FROM clients c ${whereClause}
+    `;
     const countResult = await pool.query(countQuery, params);
-    const total = parseInt(countResult.rows[0].total, 10);
+    const total = parseInt(countResult.rows[0].total, 10) || 0;
+    const activeCount = parseInt(countResult.rows[0].active_count, 10) || 0;
+    const inactiveCount = parseInt(countResult.rows[0].inactive_count, 10) || 0;
 
     const dataParams = [...params, limit, offset];
     const dataQuery = `
@@ -204,6 +212,8 @@ class ClientModel {
       clients: formattedClients,
       pagination: {
         total,
+        active: activeCount,
+        inactive: inactiveCount,
         page: parseInt(page, 10),
         limit: parseInt(limit, 10),
         totalPages,
