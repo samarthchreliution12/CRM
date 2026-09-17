@@ -32,9 +32,116 @@ const InternalChat = () => {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sendingMsg, setSendingMsg] = useState(false);
 
+  // Dragging state for movable floating chat button
+  const [position, setPosition] = useState(() => {
+    // Default position: bottom-right
+    return {
+      x: window.innerWidth - 76,
+      y: window.innerHeight - 76,
+    };
+  });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0, buttonX: 0, buttonY: 0 });
+  const hasMovedRef = useRef(false);
+
   const messagesEndRef = useRef(null);
 
   const isCommunicationPage = location.pathname === "/communication";
+
+  // Reposition on window resize so button stays inside screen boundaries
+  useEffect(() => {
+    const handleResize = () => {
+      setPosition((prev) => ({
+        x: Math.max(12, Math.min(prev.x, window.innerWidth - 64)),
+        y: Math.max(12, Math.min(prev.y, window.innerHeight - 64)),
+      }));
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Mouse Drag Handlers
+  const handleMouseDown = (e) => {
+    if (e.button !== 0) return;
+    setIsDragging(true);
+    hasMovedRef.current = false;
+    dragStartRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      buttonX: position.x,
+      buttonY: position.y,
+    };
+  };
+
+  const handleMouseMove = useCallback(
+    (e) => {
+      if (!isDragging) return;
+      const dx = e.clientX - dragStartRef.current.x;
+      const dy = e.clientY - dragStartRef.current.y;
+
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+        hasMovedRef.current = true;
+      }
+
+      const newX = Math.max(12, Math.min(window.innerWidth - 64, dragStartRef.current.buttonX + dx));
+      const newY = Math.max(12, Math.min(window.innerHeight - 64, dragStartRef.current.buttonY + dy));
+
+      setPosition({ x: newX, y: newY });
+    },
+    [isDragging]
+  );
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+    } else {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDragging, handleMouseMove, handleMouseUp]);
+
+  // Touch Drag Handlers for Mobile
+  const handleTouchStart = (e) => {
+    if (e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    setIsDragging(true);
+    hasMovedRef.current = false;
+    dragStartRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+      buttonX: position.x,
+      buttonY: position.y,
+    };
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isDragging || e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    const dx = touch.clientX - dragStartRef.current.x;
+    const dy = touch.clientY - dragStartRef.current.y;
+
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+      hasMovedRef.current = true;
+    }
+
+    const newX = Math.max(12, Math.min(window.innerWidth - 64, dragStartRef.current.buttonX + dx));
+    const newY = Math.max(12, Math.min(window.innerHeight - 64, dragStartRef.current.buttonY + dy));
+
+    setPosition({ x: newX, y: newY });
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
 
   // Fetch Conversations & Staff Users when Widget Opens
   const loadInitialData = useCallback(async () => {
@@ -105,7 +212,13 @@ const InternalChat = () => {
     return null;
   }
 
-  const toggleChat = () => {
+  const handleBtnClick = (e) => {
+    // If user dragged the button, do not toggle panel
+    if (hasMovedRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
     setIsOpen((prev) => !prev);
   };
 
@@ -154,23 +267,58 @@ const InternalChat = () => {
     }
   };
 
+  // Dynamic style calculation for chat panel positioning relative to movable button
+  const getPanelStyle = () => {
+    const isRightHalf = position.x > window.innerWidth / 2;
+    const isBottomHalf = position.y > window.innerHeight / 2;
+
+    const style = {
+      position: "fixed",
+      zIndex: 1040,
+    };
+
+    if (isBottomHalf) {
+      style.top = `${Math.max(12, position.y - 490)}px`;
+    } else {
+      style.top = `${position.y + 60}px`;
+    }
+
+    if (isRightHalf) {
+      style.left = `${Math.max(12, position.x - 310)}px`;
+    } else {
+      style.left = `${Math.min(window.innerWidth - 370, position.x)}px`;
+    }
+
+    return style;
+  };
+
   return (
     <div className="internal-chat-widget-root">
-      {/* Floating Chat Button */}
+      {/* Movable Floating Chat Button */}
       <button
         type="button"
-        className={`floating-chat-btn ${isOpen ? "active" : ""}`}
-        onClick={toggleChat}
+        className={`floating-chat-btn ${isOpen ? "active" : ""} ${isDragging ? "dragging" : ""}`}
+        style={{
+          left: `${position.x}px`,
+          top: `${position.y}px`,
+          bottom: "auto",
+          right: "auto",
+        }}
+        onClick={handleBtnClick}
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         aria-label="Toggle Internal Chat"
-        title="Internal Communication Chat"
+        title="Internal Communication Chat (Drag to move)"
       >
         <MessageSquare size={22} className="chat-btn-icon" />
         <span className="chat-btn-pulse" />
       </button>
 
-      {/* Slide-Up Chat Panel */}
+      {/* Dynamic Floating Chat Panel */}
       {isOpen && (
-        <div className="internal-chat-panel">
+        <div className="internal-chat-panel" style={getPanelStyle()}>
           {/* Panel Header */}
           <div className="chat-panel-header">
             <div className="chat-header-title-group">

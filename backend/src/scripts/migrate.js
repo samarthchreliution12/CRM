@@ -370,6 +370,22 @@ async function runMigrations() {
       CROSS JOIN permissions p
       WHERE r.name IN ('Admin', 'Staff') AND p.module = 'whatsapp'
       ON CONFLICT DO NOTHING;
+
+      -- Migration step 11: Ensure refresh_sessions table and indexes exist
+      CREATE TABLE IF NOT EXISTS refresh_sessions (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        token_hash VARCHAR(255) NOT NULL UNIQUE,
+        ip_address VARCHAR(50),
+        user_agent TEXT,
+        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        revoked_at TIMESTAMP WITH TIME ZONE
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_refresh_sessions_user ON refresh_sessions(user_id);
+      CREATE INDEX IF NOT EXISTS idx_refresh_sessions_hash ON refresh_sessions(token_hash);
+      CREATE INDEX IF NOT EXISTS idx_refresh_sessions_expires ON refresh_sessions(expires_at);
     `);
 
     console.log("Database migrations completed successfully.");

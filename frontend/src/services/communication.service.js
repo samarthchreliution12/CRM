@@ -1,38 +1,15 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5050/api";
+import apiFetch from "./apiClient";
 
 class CommunicationService {
   static async request(endpoint, options = {}, token = null) {
-    const url = `${API_BASE_URL}${endpoint}`;
-    const headers = {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    };
-
-    const config = {
+    const headers = { ...options.headers };
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    return apiFetch(endpoint, {
       ...options,
       headers,
-    };
-
-    try {
-      const response = await fetch(url, config);
-      const data = await response.json();
-
-      if (!response.ok) {
-        const error = new Error(data.message || "An error occurred");
-        error.statusCode = response.status;
-        throw error;
-      }
-
-      return data;
-    } catch (err) {
-      if (err.statusCode) {
-        throw err;
-      }
-      const networkError = new Error("Unable to connect to server.");
-      networkError.statusCode = 503;
-      throw networkError;
-    }
+    });
   }
 
   // GET /api/communication/conversations - List logged in user's active conversations

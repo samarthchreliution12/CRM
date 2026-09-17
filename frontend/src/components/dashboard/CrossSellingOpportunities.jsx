@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
 import DashboardService from "../../services/dashboard.service";
-import { ArrowRight, TrendingUp, PieChart, AlertCircle } from "lucide-react";
+import { Store, ArrowRight, Megaphone, AlertCircle } from "lucide-react";
 import "./CrossSellingOpportunities.css";
 
 const CrossSellingOpportunities = () => {
@@ -16,6 +16,7 @@ const CrossSellingOpportunities = () => {
   const [stats, setStats] = useState({
     equityWithoutMutualFund: { count: 0 },
     mutualFundWithoutEquity: { count: 0 },
+    noTermInsurance: { count: 0 },
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -38,6 +39,9 @@ const CrossSellingOpportunities = () => {
           mutualFundWithoutEquity: {
             count: response.data.mutualFundWithoutEquity?.count || 0,
           },
+          noTermInsurance: {
+            count: response.data.noTermInsurance?.count || 0,
+          },
         });
       }
     } catch (err) {
@@ -55,143 +59,93 @@ const CrossSellingOpportunities = () => {
     fetchCrossSellingData();
   }, [fetchCrossSellingData]);
 
-  // If user has no client read permission, do not render cross-selling data
   if (!canViewClients) {
     return null;
   }
 
-  if (error) {
-    return (
-      <div className="cross-selling-section">
-        <div className="cross-selling-error-banner">
-          <AlertCircle size={16} />
-          <span>{error}</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="cross-selling-section">
-        <div className="cross-selling-header">
-          <div className="cross-selling-title-group">
-            <h3 className="cross-selling-title">Cross-Selling Opportunities</h3>
-            <p className="cross-selling-subtitle">
-              Identify clients who may be suitable for additional services.
-            </p>
-          </div>
-        </div>
-        <div className="cross-selling-grid">
-          {[1, 2].map((i) => (
-            <div key={i} className="cross-selling-card cross-selling-card-skeleton">
-              <div className="cross-selling-title-box">
-                <div className="skeleton-pulse" style={{ width: 140, height: 16 }} />
-                <div className="skeleton-pulse" style={{ width: 200, height: 12, marginTop: 4 }} />
-              </div>
-              <div className="skeleton-pulse" style={{ width: 60, height: 28, margin: "8px 0" }} />
-              <div className="skeleton-pulse" style={{ width: 90, height: 14 }} />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  const isTotalZero =
-    stats.equityWithoutMutualFund.count === 0 &&
-    stats.mutualFundWithoutEquity.count === 0;
-
   return (
-    <div className="cross-selling-section">
-      {/* Header Section */}
-      <div className="cross-selling-header">
-        <div className="cross-selling-title-group">
-          <h3 className="cross-selling-title">Cross-Selling Opportunities</h3>
-          <p className="cross-selling-subtitle">
-            Identify clients who may be suitable for additional services.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          className="cross-selling-view-all"
-          onClick={() => navigate("/clients")}
-        >
-          <span>View All</span>
-          <ArrowRight size={14} />
-        </button>
+    <div className="cross-selling-card-container">
+      {/* Header with Store Icon */}
+      <div className="cross-selling-card-header">
+        <h3 className="cross-selling-card-main-title">Cross-Selling</h3>
+        <Store size={22} className="cross-selling-store-icon" />
       </div>
 
-      {isTotalZero ? (
-        <div className="cross-selling-empty">
-          <p>No cross-selling opportunities found.</p>
-        </div>
-      ) : (
-        <div className="cross-selling-grid">
-          {/* Card 1: Equity -> Mutual Fund */}
-          <div className="cross-selling-card">
-            <div className="cross-selling-card-header">
-              <div className="cross-selling-title-box">
-                <h4 className="cross-selling-card-title">
-                  <TrendingUp size={16} className="cross-selling-icon" />
-                  <span>Equity → Mutual Fund</span>
-                </h4>
-                <p className="cross-selling-card-desc">
-                  Clients having Equity but no Mutual Fund
-                </p>
-              </div>
-            </div>
-
-            <div className="cross-selling-metric">
-              <span className="cross-selling-count">
-                {stats.equityWithoutMutualFund.count}
-              </span>
-              <span className="cross-selling-label">POTENTIAL CLIENTS</span>
-            </div>
-
-            <button
-              type="button"
-              className="cross-selling-action-link"
-              onClick={() => navigate("/clients?cross_sell=equity_without_mf")}
-            >
-              <span>View Clients</span>
-              <ArrowRight size={14} className="arrow-icon" />
-            </button>
+      {/* Body with Stacked Opportunity Boxes */}
+      <div className="cross-selling-card-body">
+        {error ? (
+          <div className="cross-selling-error-banner">
+            <AlertCircle size={16} />
+            <span>{error}</span>
           </div>
-
-          {/* Card 2: Mutual Fund -> Equity */}
-          <div className="cross-selling-card">
-            <div className="cross-selling-card-header">
-              <div className="cross-selling-title-box">
-                <h4 className="cross-selling-card-title">
-                  <PieChart size={16} className="cross-selling-icon" />
-                  <span>Mutual Fund → Equity</span>
-                </h4>
-                <p className="cross-selling-card-desc">
-                  Clients having Mutual Fund but no Equity
-                </p>
+        ) : loading ? (
+          <div className="cross-selling-skeleton-list">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="cross-selling-item cross-selling-item-skeleton">
+                <div className="skeleton-pulse" style={{ width: "60%", height: 18 }} />
+                <div className="skeleton-pulse" style={{ width: "85%", height: 14, margin: "8px 0" }} />
+                <div className="skeleton-pulse" style={{ width: "40%", height: 16 }} />
               </div>
-            </div>
-
-            <div className="cross-selling-metric">
-              <span className="cross-selling-count">
-                {stats.mutualFundWithoutEquity.count}
-              </span>
-              <span className="cross-selling-label">POTENTIAL CLIENTS</span>
-            </div>
-
-            <button
-              type="button"
-              className="cross-selling-action-link"
-              onClick={() => navigate("/clients?cross_sell=mf_without_equity")}
-            >
-              <span>View Clients</span>
-              <ArrowRight size={14} className="arrow-icon" />
-            </button>
+            ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <>
+            {/* Box 1: Equity, No Mutual Fund */}
+            <div className="cross-selling-item">
+              <div className="cross-selling-item-top">
+                <h4 className="cross-selling-item-title">Equity, No Mutual Fund</h4>
+                <span className="cross-selling-pill">{stats.equityWithoutMutualFund.count}</span>
+              </div>
+              <p className="cross-selling-item-desc">
+                Clients with active trading but no SIPs.
+              </p>
+              <button
+                type="button"
+                className="cross-selling-link-btn"
+                onClick={() => navigate("/clients?cross_sell=equity_without_mf")}
+              >
+                <span>View Clients</span>
+                <ArrowRight size={15} />
+              </button>
+            </div>
+
+            {/* Box 2: Mutual Fund, No Equity */}
+            <div className="cross-selling-item">
+              <div className="cross-selling-item-top">
+                <h4 className="cross-selling-item-title">Mutual Fund, No Equity</h4>
+                <span className="cross-selling-pill">{stats.mutualFundWithoutEquity.count}</span>
+              </div>
+              <p className="cross-selling-item-desc">
+                SIP investors without demat accounts.
+              </p>
+              <button
+                type="button"
+                className="cross-selling-link-btn"
+                onClick={() => navigate("/clients?cross_sell=mf_without_equity")}
+              >
+                <span>View Clients</span>
+                <ArrowRight size={15} />
+              </button>
+            </div>
+
+            {/* Box 3: No Term Insurance */}
+            <div className="cross-selling-item">
+              <div className="cross-selling-item-top">
+                <h4 className="cross-selling-item-title">No Term Insurance</h4>
+                <span className="cross-selling-pill">{stats.noTermInsurance.count}</span>
+              </div>
+              <button
+                type="button"
+                className="cross-selling-link-btn"
+                onClick={() => navigate("/clients?cross_sell=no_term_insurance")}
+              >
+                <span>Run Campaign</span>
+                <Megaphone size={15} />
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };

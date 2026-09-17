@@ -25,46 +25,48 @@ export const Shield3DScene = () => {
     });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
     container.appendChild(renderer.domElement);
 
     // Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.1);
     scene.add(ambientLight);
 
-    const mainLight = new THREE.DirectionalLight(0xffd700, 2.0);
+    const mainLight = new THREE.DirectionalLight(0xfff8ee, 2.2);
     mainLight.position.set(3, 4, 3);
     scene.add(mainLight);
 
-    // Materials
+    // Gold & Crimson Materials
     const goldMat = new THREE.MeshStandardMaterial({
       color: 0xd4af37,
       metalness: 0.9,
-      roughness: 0.2,
+      roughness: 0.18,
     });
 
     const crimsonMat = new THREE.MeshStandardMaterial({
       color: 0x9e241d,
-      metalness: 0.7,
-      roughness: 0.3,
+      metalness: 0.65,
+      roughness: 0.28,
     });
 
     const group = new THREE.Group();
     scene.add(group);
 
-    // Outer Shield Ring
-    const outerRingGeo = new THREE.TorusGeometry(1.6, 0.04, 16, 80);
+    // Outer Protective Torus Ring
+    const outerRingGeo = new THREE.TorusGeometry(1.65, 0.045, 16, 80);
     const outerRing = new THREE.Mesh(outerRingGeo, goldMat);
     outerRing.rotation.x = Math.PI / 4;
     group.add(outerRing);
 
-    // Inner Shield Ring
-    const innerRingGeo = new THREE.TorusGeometry(1.2, 0.03, 16, 60);
+    // Inner Protective Ring
+    const innerRingGeo = new THREE.TorusGeometry(1.22, 0.035, 16, 60);
     const innerRing = new THREE.Mesh(innerRingGeo, crimsonMat);
     innerRing.rotation.x = -Math.PI / 4;
     group.add(innerRing);
 
-    // Protective Emblem Core
-    const coreGeo = new THREE.IcosahedronGeometry(0.35, 1);
+    // Protective Emblem Core Shield
+    const coreGeo = new THREE.IcosahedronGeometry(0.38, 1);
     const coreMesh = new THREE.Mesh(coreGeo, goldMat);
     group.add(coreMesh);
 

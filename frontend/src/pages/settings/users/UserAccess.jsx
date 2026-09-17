@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import AppLayout from "../../../components/layout/AppLayout/AppLayout";
 import useAuth from "../../../hooks/useAuth";
 import StaffService from "../../../services/staff.service";
@@ -13,9 +14,17 @@ import "./UserAccess.css";
 
 const UserAccess = () => {
   const { token } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  // Tab State: "users" or "permissions" (Roles tab omitted)
-  const [activeTab, setActiveTab] = useState("users");
+  // Tab State derived from URL: "users", "groups", or "permissions"
+  const getTabFromPath = (pathname) => {
+    if (pathname === "/settings/groups") return "groups";
+    if (pathname === "/settings/permissions") return "permissions";
+    return "users";
+  };
+
+  const activeTab = getTabFromPath(location.pathname);
 
   const [staffList, setStaffList] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 1 });
@@ -196,7 +205,7 @@ const UserAccess = () => {
           <button
             type="button"
             className={`nav-tab-button ${activeTab === "users" ? "active" : ""}`}
-            onClick={() => setActiveTab("users")}
+            onClick={() => navigate("/settings/users")}
           >
             <UsersIcon size={18} />
             <span>Users</span>
@@ -205,7 +214,7 @@ const UserAccess = () => {
           <button
             type="button"
             className={`nav-tab-button ${activeTab === "groups" ? "active" : ""}`}
-            onClick={() => setActiveTab("groups")}
+            onClick={() => navigate("/settings/groups")}
           >
             <FolderGit2 size={18} />
             <span>Groups</span>
@@ -214,7 +223,7 @@ const UserAccess = () => {
           <button
             type="button"
             className={`nav-tab-button ${activeTab === "permissions" ? "active" : ""}`}
-            onClick={() => setActiveTab("permissions")}
+            onClick={() => navigate("/settings/permissions")}
           >
             <KeyRound size={18} />
             <span>Permissions</span>

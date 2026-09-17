@@ -33,6 +33,20 @@ class DashboardController {
       return sendError(res, error.statusCode || 500, error.message, error.errors);
     }
   }
+
+  static async getPendingFollowups(req, res) {
+    try {
+      const userContext = {
+        userId: req.user?.id,
+        roleName: req.user?.role?.name || req.user?.role,
+      };
+      const data = await DashboardService.getPendingFollowups(userContext);
+      return sendSuccess(res, 200, "Pending client follow-ups retrieved successfully", data);
+    } catch (error) {
+      return sendError(res, error.statusCode || 500, error.message, error.errors);
+    }
+  }
 }
 
 module.exports = DashboardController;
+

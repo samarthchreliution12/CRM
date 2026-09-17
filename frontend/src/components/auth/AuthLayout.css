@@ -94,9 +94,21 @@
 .auth-logo {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  width: 100%;
   gap: 0.75rem;
   z-index: 2;
   animation: fadeInUp 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.auth-logo-img-link {
+  display: inline-flex;
+  text-decoration: none;
+  transition: transform 0.2s ease;
+}
+
+.auth-logo-img-link:hover {
+  transform: translateY(-1px);
 }
 
 .auth-logo-img {
@@ -108,6 +120,46 @@
   border-radius: 10px;
   box-shadow: 0 4px 16px rgba(139, 35, 29, 0.08);
   border: 1px solid rgba(139, 35, 29, 0.12);
+}
+
+.auth-brand-home-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #9E241D;
+  background: rgba(158, 36, 29, 0.06);
+  padding: 0.45rem 0.9rem;
+  border-radius: 20px;
+  border: 1px solid rgba(158, 36, 29, 0.15);
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.auth-brand-home-link:hover {
+  background: rgba(158, 36, 29, 0.12);
+  color: #7E1E19;
+  transform: translateX(-2px);
+}
+
+.auth-card-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #9E241D;
+  text-decoration: none;
+  margin-bottom: 1.25rem;
+  transition: color 0.2s ease, transform 0.2s ease;
+  width: fit-content;
+}
+
+.auth-card-back-link:hover {
+  color: #7E1E19;
+  transform: translateX(-3px);
+  text-decoration: underline;
 }
 
 .auth-branding-content {

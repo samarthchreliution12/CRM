@@ -6,7 +6,7 @@ import {
   Cake,
   Gift,
   Calendar,
-  ChevronRight,
+  ArrowRight,
   Search,
   X,
   Loader2,
@@ -20,6 +20,14 @@ const getInitials = (name) => {
   const parts = name.trim().split(" ").filter(Boolean);
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
+
+const capitalizeWords = (str) => {
+  if (!str) return "";
+  return str
+    .split(" ")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ");
 };
 
 const UpcomingBirthdaysCard = () => {
@@ -73,10 +81,8 @@ const UpcomingBirthdaysCard = () => {
     setIsModalOpen(true);
   };
 
-  // Preview limit (3-5 items)
   const previewItems = birthdays.slice(0, 4);
 
-  // Filtered list for View All modal
   const filteredModalBirthdays = birthdays.filter((item) =>
     item.name.toLowerCase().includes(modalSearch.toLowerCase())
   );
@@ -90,7 +96,7 @@ const UpcomingBirthdaysCard = () => {
             <Cake size={18} />
           </div>
           <h3 className="birthdays-card-title">Upcoming Birthdays</h3>
-          {birthdays.length > 0 && (
+          {!loading && !error && (
             <span className="birthdays-card-count-badge">{birthdays.length}</span>
           )}
         </div>
@@ -101,7 +107,8 @@ const UpcomingBirthdaysCard = () => {
             onClick={handleViewAllClick}
             type="button"
           >
-            View All <ChevronRight size={14} />
+            <span>View All</span>
+            <ArrowRight size={14} />
           </button>
         )}
       </div>
@@ -124,7 +131,7 @@ const UpcomingBirthdaysCard = () => {
           </div>
           <h4 className="birthdays-empty-title">No upcoming birthdays</h4>
           <p className="birthdays-empty-desc">
-            There are no client birthdays occurring in the next 2 days.
+            All client birthdays are up to date.
           </p>
         </div>
       ) : (
@@ -142,14 +149,14 @@ const UpcomingBirthdaysCard = () => {
                 key={item.id}
                 className="birthday-item"
                 onClick={() => handleClientClick(item.id)}
-                title={`View ${item.name}'s profile`}
+                title={`View ${capitalizeWords(item.name)}'s profile`}
               >
                 <div className="birthday-item-left">
                   <div className={`birthday-avatar ${isToday ? "today" : ""}`}>
                     {getInitials(item.name)}
                   </div>
                   <div className="birthday-info">
-                    <h4 className="birthday-name">{item.name}</h4>
+                    <h4 className="birthday-name">{capitalizeWords(item.name)}</h4>
                     <p className="birthday-age">
                       {item.age !== null ? `${item.age} years` : "Age N/A"}
                     </p>
@@ -161,9 +168,9 @@ const UpcomingBirthdaysCard = () => {
                     {item.relative_label}
                   </span>
                   {isToday ? (
-                    <PartyPopper size={16} className="birthday-icon" />
+                    <PartyPopper size={15} className="birthday-icon" />
                   ) : (
-                    <Gift size={16} className="birthday-icon" />
+                    <Gift size={15} className="birthday-icon" />
                   )}
                 </div>
               </div>
@@ -235,7 +242,7 @@ const UpcomingBirthdaysCard = () => {
                             {getInitials(item.name)}
                           </div>
                           <div className="birthday-info">
-                            <h4 className="birthday-name">{item.name}</h4>
+                            <h4 className="birthday-name">{capitalizeWords(item.name)}</h4>
                             <p className="birthday-age">
                               {item.age !== null ? `${item.age} years old` : "Age N/A"} • DOB: {item.dob}
                             </p>

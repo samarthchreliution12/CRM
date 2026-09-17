@@ -630,7 +630,7 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
         <div className="sidebar-footer">
           <Link
             to="/settings"
-            className={`nav-link ${location.pathname === "/settings" ? "active" : ""}`}
+            className={`nav-link ${location.pathname.startsWith("/settings") ? "active" : ""}`}
             onClick={onClose}
             title={isCollapsed ? "Settings" : undefined}
             data-tooltip="Settings"

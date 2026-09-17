@@ -19,10 +19,56 @@ import {
   Eye,
   EyeOff,
   Download,
+  Award,
+  Crown,
+  Gem,
 } from "lucide-react";
 import DocumentUploadModal from "../documents/DocumentUploadModal";
 import DocumentReviewDrawer from "../documents/DocumentReviewDrawer";
 import "./ClientDetails.css";
+
+const renderCategoryBadge = (categoryStr) => {
+  if (!categoryStr) return null;
+  const clean = categoryStr.toString().trim().toUpperCase();
+
+  switch (clean) {
+    case "BRONZE":
+      return (
+        <span className="category-badge cat-bronze">
+          <Award size={13} className="cat-icon" />
+          <span>Bronze</span>
+        </span>
+      );
+    case "SILVER":
+      return (
+        <span className="category-badge cat-silver">
+          <Award size={13} className="cat-icon" />
+          <span>Silver</span>
+        </span>
+      );
+    case "GOLD":
+      return (
+        <span className="category-badge cat-gold">
+          <Crown size={13} className="cat-icon" />
+          <span>Gold</span>
+        </span>
+      );
+    case "PLATINUM":
+      return (
+        <span className="category-badge cat-platinum">
+          <Gem size={13} className="cat-icon" />
+          <span>Platinum</span>
+        </span>
+      );
+    default:
+      return (
+        <span className="category-badge cat-bronze">
+          <Award size={13} className="cat-icon" />
+          <span>{clean}</span>
+        </span>
+      );
+  }
+};
 
 const getInitials = (name) => {
   if (!name) return "CL";
@@ -415,9 +461,7 @@ const ClientDetails = () => {
                 <span className="badge-tag role">
                   {client.client_status === "NON_CLIENT" ? "Non-Client" : "Client"}
                 </span>
-                {(client.client_category || client.category) && (
-                  <span className="badge-tag role">{client.client_category || client.category}</span>
-                )}
+                {renderCategoryBadge(client.client_category || client.category)}
                 <span className={`badge-tag ${client.status === "active" ? "active" : "inactive"}`}>
                   {client.status === "active" ? "Active" : "Inactive"}
                 </span>

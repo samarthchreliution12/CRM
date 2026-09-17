@@ -75,7 +75,32 @@ class ClientController {
     }
   }
 
+  static async updateClientCategory(req, res) {
+    try {
+      const { id } = req.params;
+      const { category, client_category } = req.body || {};
+      const targetCategory = category || client_category;
+
+      if (!targetCategory || typeof targetCategory !== "string") {
+        return sendError(res, 400, "Category is required");
+      }
+
+      const cleanCat = targetCategory.trim().toUpperCase();
+      const validCategories = ["BRONZE", "SILVER", "GOLD", "PLATINUM"];
+      if (!validCategories.includes(cleanCat)) {
+        return sendError(res, 400, "Client category must be 'BRONZE', 'SILVER', 'GOLD', or 'PLATINUM'");
+      }
+
+      const context = { userId: req.user?.id, ipAddress: req.ip || req.headers["x-forwarded-for"] };
+      const client = await ClientService.updateClientCategory(id, cleanCat, context);
+      return sendSuccess(res, 200, "Client category updated successfully", { client });
+    } catch (error) {
+      return sendError(res, error.statusCode || 500, error.message, error.errors);
+    }
+  }
+
   static async updateClientStatus(req, res) {
+
     try {
       const { id } = req.params;
       const validation = validateStatusInput(req.body);

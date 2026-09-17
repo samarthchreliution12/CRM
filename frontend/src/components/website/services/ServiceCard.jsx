@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import Tilt3DCard from '../common/Tilt3DCard';
+import Service3DIcon from './Service3DIcon';
 
 export const ServiceCard = ({ service }) => {
   const detailUrl = `/services/${service.slug}`;
@@ -9,7 +10,7 @@ export const ServiceCard = ({ service }) => {
     <Tilt3DCard maxTilt={8} scale={1.02} style={{ height: '100%' }}>
       <Link to={detailUrl} className="website-service-card">
         <div className="website-service-icon-wrapper">
-          {service.icon}
+          <Service3DIcon slug={service.slug} size={42} />
         </div>
         <h3 className="website-service-title">{service.title}</h3>
         <p className="website-service-description">{service.description}</p>

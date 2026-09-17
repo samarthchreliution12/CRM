@@ -1,46 +1,15 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5050/api";
+import apiFetch from "./apiClient";
 
 class ClientService {
   static async request(endpoint, options = {}, token = null) {
-    const url = `${API_BASE_URL}${endpoint}`;
-    const headers = {
-      ...options.headers,
-    };
-
+    const headers = { ...options.headers };
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
-
-    // Default Content-Type to application/json unless sending FormData
-    if (!headers["Content-Type"] && !(options.body instanceof FormData)) {
-      headers["Content-Type"] = "application/json";
-    }
-
-    const config = {
+    return apiFetch(endpoint, {
       ...options,
       headers,
-    };
-
-    try {
-      const response = await fetch(url, config);
-      const data = await response.json();
-
-      if (!response.ok) {
-        const error = new Error(data.message || "An unexpected error occurred");
-        error.statusCode = response.status;
-        error.errors = data.errors || null;
-        throw error;
-      }
-
-      return data;
-    } catch (err) {
-      if (err.statusCode) {
-        throw err;
-      }
-      const networkError = new Error("Unable to connect to the server. Please check your connection.");
-      networkError.statusCode = 503;
-      throw networkError;
-    }
+    });
   }
 
   /**
@@ -234,9 +203,24 @@ class ClientService {
   }
 
   /**
+   * Update Client category (Bronze, Silver, Gold, Platinum).
+   */
+  static async updateClientCategory(id, category, token) {
+    return this.request(
+      `/clients/${id}/category`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ category }),
+      },
+      token
+    );
+  }
+
+  /**
    * Update Client status (active / inactive).
    */
   static async updateClientStatus(id, status, token) {
+
     return this.request(
       `/clients/${id}/status`,
       {
@@ -298,25 +282,20 @@ class ClientService {
    * Export clients to CSV downloadable blob file.
    */
   static async exportClients({ client_ids = [], filters = {}, format = "csv" } = {}, token) {
-    const url = `${API_BASE_URL}/clients/export`;
-    const headers = {
-      "Content-Type": "application/json",
-    };
-
+    const headers = {};
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const body = JSON.stringify({
-      client_ids,
-      filters,
-      format,
-    });
-
-    const response = await fetch(url, {
+    const response = await apiFetch("/clients/export", {
       method: "POST",
       headers,
-      body,
+      body: JSON.stringify({
+        client_ids,
+        filters,
+        format,
+      }),
+      rawResponse: true,
     });
 
     if (!response.ok) {
@@ -341,7 +320,6 @@ class ClientService {
 
     const blob = await response.blob();
 
-    // Extract filename from Content-Disposition header if available
     let filename = `clients-export-${new Date().toISOString().split("T")[0]}.csv`;
     const contentDisposition = response.headers.get("Content-Disposition");
     if (contentDisposition) {
@@ -413,13 +391,17 @@ class ClientService {
    * Fetch decrypted binary blob stream for document viewing/previewing.
    */
   static async getDocumentFileBlob(clientId, documentId, token) {
-    const url = `${API_BASE_URL}/clients/${clientId}/documents/${documentId}`;
     const headers = {};
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const response = await fetch(url, { headers });
+    const response = await apiFetch(`/clients/${clientId}/documents/${documentId}`, {
+      method: "GET",
+      headers,
+      rawResponse: true,
+    });
+
     if (!response.ok) {
       let errorMsg = `Failed to fetch document file (Status: ${response.status})`;
       try {
@@ -482,7 +464,6 @@ class ClientService {
    * Validate Client CSV file before import.
    */
   static async validateImportClients(file, token) {
-    const url = `${API_BASE_URL}/clients/import/validate`;
     const formData = new FormData();
     formData.append("file", file);
 
@@ -491,27 +472,17 @@ class ClientService {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const response = await fetch(url, {
+    return apiFetch("/clients/import/validate", {
       method: "POST",
       headers,
       body: formData,
     });
-
-    const data = await response.json();
-    if (!response.ok) {
-      const error = new Error(data.message || "Failed to validate CSV file.");
-      error.statusCode = response.status;
-      error.details = data.data || data.details || null;
-      throw error;
-    }
-    return data;
   }
 
   /**
    * Import validated Client CSV file.
    */
   static async importClients(file, token) {
-    const url = `${API_BASE_URL}/clients/import`;
     const formData = new FormData();
     formData.append("file", file);
 
@@ -520,20 +491,11 @@ class ClientService {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const response = await fetch(url, {
+    return apiFetch("/clients/import", {
       method: "POST",
       headers,
       body: formData,
     });
-
-    const data = await response.json();
-    if (!response.ok) {
-      const error = new Error(data.message || "Failed to import clients.");
-      error.statusCode = response.status;
-      error.details = data.data || data.details || null;
-      throw error;
-    }
-    return data;
   }
 
   /**

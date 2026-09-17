@@ -1,6 +1,17 @@
 const AuthService = require("../services/auth.service");
 const { sendSuccess } = require("../utils/response.util");
 
+function getRefreshTokenCookieOptions() {
+  const isProd = process.env.NODE_ENV === "production";
+  return {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? "strict" : "lax",
+    path: "/api/auth",
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+  };
+}
+
 class AuthController {
   /**
    * POST /api/auth/login
@@ -8,10 +19,47 @@ class AuthController {
   static async login(req, res, next) {
     try {
       const { email, password } = req.body;
-      const context = { ipAddress: req.ip || req.headers["x-forwarded-for"] };
+      const context = {
+        ipAddress: req.ip || req.headers["x-forwarded-for"],
+        userAgent: req.headers["user-agent"],
+      };
       const result = await AuthService.login(email.trim(), password, context);
+
+      // Set HttpOnly refresh token cookie
+      res.cookie("refreshToken", result.refreshToken, getRefreshTokenCookieOptions());
+
+      // Strip raw refreshToken from JSON body payload
+      delete result.refreshToken;
+
       return sendSuccess(res, 200, "Login successful", result);
     } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * POST /api/auth/refresh
+   * Rotates refresh token cookie and issues a new 30-minute access token.
+   */
+  static async refreshToken(req, res, next) {
+    try {
+      const rawRefreshToken = req.cookies.refreshToken;
+      const context = {
+        ipAddress: req.ip || req.headers["x-forwarded-for"],
+        userAgent: req.headers["user-agent"],
+      };
+
+      const result = await AuthService.refreshToken(rawRefreshToken, context);
+
+      // Set rotated HttpOnly refresh token cookie
+      res.cookie("refreshToken", result.refreshToken, getRefreshTokenCookieOptions());
+
+      delete result.refreshToken;
+
+      return sendSuccess(res, 200, "Token refreshed successfully", result);
+    } catch (error) {
+      // Clear cookie if refresh failed
+      res.clearCookie("refreshToken", { path: "/api/auth" });
       next(error);
     }
   }
@@ -46,9 +94,15 @@ class AuthController {
    */
   static async logout(req, res, next) {
     try {
-      res.clearCookie("token");
+      const rawRefreshToken = req.cookies.refreshToken;
+      await AuthService.logout(rawRefreshToken, req.user ? req.user.id : null);
+      
+      res.clearCookie("refreshToken", { path: "/api/auth" });
+      res.clearCookie("token", { path: "/api/auth" });
+
       return sendSuccess(res, 200, "Logout successful");
     } catch (error) {
+      res.clearCookie("refreshToken", { path: "/api/auth" });
       next(error);
     }
   }

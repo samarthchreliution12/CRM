@@ -9,15 +9,23 @@ const {
 } = require("../validators/auth.validator");
 const { authenticate } = require("../middleware/auth.middleware");
 const { checkSignupEnabled } = require("../middleware/signup.middleware");
+const { loginLimiter, refreshLimiter, passwordResetLimiter } = require("../middleware/rateLimiter.middleware");
 
 const router = express.Router();
 
 /**
  * @route   POST /api/auth/login
- * @desc    Authenticate user & get JWT token
+ * @desc    Authenticate user & get JWT access token + HttpOnly refresh cookie
  * @access  Public
  */
-router.post("/login", validateLoginInput, AuthController.login);
+router.post("/login", loginLimiter, validateLoginInput, AuthController.login);
+
+/**
+ * @route   POST /api/auth/refresh
+ * @desc    Rotate refresh token and issue new access token
+ * @access  Public (via HttpOnly cookie)
+ */
+router.post("/refresh", refreshLimiter, AuthController.refreshToken);
 
 /**
  * @route   GET /api/auth/me
@@ -35,10 +43,10 @@ router.patch("/profile", authenticate, validateUpdateProfileInput, AuthControlle
 
 /**
  * @route   POST /api/auth/logout
- * @desc    Stateless logout
- * @access  Private
+ * @desc    Revoke refresh token & clear cookies
+ * @access  Public / Private
  */
-router.post("/logout", authenticate, AuthController.logout);
+router.post("/logout", AuthController.logout);
 
 /**
  * @route   POST /api/auth/signup
@@ -52,13 +60,13 @@ router.post("/signup", checkSignupEnabled, validateSignupInput, AuthController.s
  * @desc    Request password reset link & token
  * @access  Public
  */
-router.post("/forgot-password", validateForgotPasswordInput, AuthController.forgotPassword);
+router.post("/forgot-password", passwordResetLimiter, validateForgotPasswordInput, AuthController.forgotPassword);
 
 /**
  * @route   POST /api/auth/reset-password
  * @desc    Reset password using valid reset token & matching new passwords
  * @access  Public
  */
-router.post("/reset-password", validateResetPasswordInput, AuthController.resetPassword);
+router.post("/reset-password", passwordResetLimiter, validateResetPasswordInput, AuthController.resetPassword);
 
 module.exports = router;

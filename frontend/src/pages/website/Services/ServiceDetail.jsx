@@ -4,6 +4,7 @@ import SEO from '../../../components/SEO';
 import { Container } from '../../../components/website/common/Container';
 import { Button } from '../../../components/website/common/Button';
 import { ServiceCard } from '../../../components/website/services/ServiceCard';
+import Service3DIcon from '../../../components/website/services/Service3DIcon';
 import { servicesData } from '../../../data/website/services';
 import { useScrollReveal } from '../../../hooks/website/useScrollReveal';
 
@@ -24,6 +25,9 @@ const ServiceHeroVisual = ({ service }) => {
           className="service-hero-img"
         />
         <div className="service-hero-img-overlay" />
+        <div className="service-hero-3d-badge">
+          <Service3DIcon slug={service.slug} size={48} />
+        </div>
       </div>
     );
   }
@@ -33,7 +37,9 @@ const ServiceHeroVisual = ({ service }) => {
     <div className="service-hero-placeholder-card">
       <div className="placeholder-glow-bg" />
       <div className="placeholder-content">
-        <div className="placeholder-icon-circle">{service.icon}</div>
+        <div className="placeholder-icon-circle">
+          <Service3DIcon slug={service.slug} size={64} />
+        </div>
         <span className="placeholder-badge">PARSHWA CONSULTANCY</span>
         <h4 className="placeholder-title">{service.title}</h4>
         <p className="placeholder-sub">Trusted Financial Advisory & Operational Support</p>
@@ -262,14 +268,17 @@ const ServiceVisualWidget = ({ slug }) => {
 export const ServiceDetail = () => {
   const { slug } = useParams();
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [openFaqIndex, setOpenFaqIndex] = useState(0);
 
   const [heroRef, isHeroRevealed] = useScrollReveal({ threshold: 0.1 });
   const [overviewRef, isOverviewRevealed] = useScrollReveal({ threshold: 0.1 });
   const [benefitsRef, isBenefitsRevealed] = useScrollReveal({ threshold: 0.1 });
+  const [offeringsRef, isOfferingsRevealed] = useScrollReveal({ threshold: 0.1 });
   const [processRef, isProcessRevealed] = useScrollReveal({ threshold: 0.1 });
   const [visualRef, isVisualRevealed] = useScrollReveal({ threshold: 0.1 });
   const [audienceRef, isAudienceRevealed] = useScrollReveal({ threshold: 0.1 });
   const [notesRef, isNotesRevealed] = useScrollReveal({ threshold: 0.1 });
+  const [faqsRef, isFaqsRevealed] = useScrollReveal({ threshold: 0.1 });
   const [ctaRef, isCtaRevealed] = useScrollReveal({ threshold: 0.1 });
   const [relatedRef, isRelatedRevealed] = useScrollReveal({ threshold: 0.1 });
 
@@ -350,7 +359,19 @@ export const ServiceDetail = () => {
           "item": `https://parshwaconsultancy.in/services/${service.slug}`
         }
       ]
-    }
+    },
+    ...(service.faqs && service.faqs.length > 0 ? [{
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": service.faqs.map((faq) => ({
+        "@type": "Question",
+        "name": faq.question,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": faq.answer
+        }
+      }))
+    }] : [])
   ];
 
   return (
@@ -382,7 +403,7 @@ export const ServiceDetail = () => {
             <div className="service-hero-left">
               <div className="service-badge-pill">
                 <span className="hero-icon-span">{service.icon}</span>
-                <span>FINANCIAL ADVISORY</span>
+                <span>{service.categoryPill || 'FINANCIAL ADVISORY'}</span>
               </div>
               <h1 className="service-hero-title">{service.title}</h1>
               <p className="service-hero-subtitle">{service.description}</p>
@@ -400,7 +421,7 @@ export const ServiceDetail = () => {
       <section className="website-section service-main-section">
         <Container>
           <div className="service-content-container">
-            {/* 2. Storytelling Overview Section */}
+            {/* 2. Overview Section */}
             <div ref={overviewRef} className={`service-content-block scroll-reveal ${isOverviewRevealed ? 'revealed' : ''}`}>
               <span className="section-mini-badge">OVERVIEW</span>
               <h2 className="service-block-heading">{service.overviewHeading || 'Service Overview'}</h2>
@@ -415,7 +436,7 @@ export const ServiceDetail = () => {
               </div>
             </div>
 
-            {/* 3. Interactive Key Benefits Cards */}
+            {/* 3. Key Benefits Cards */}
             {service.keyBenefits && service.keyBenefits.length > 0 && (
               <div ref={benefitsRef} className={`service-content-block scroll-reveal ${isBenefitsRevealed ? 'revealed' : ''}`}>
                 <span className="section-mini-badge">KEY BENEFITS</span>
@@ -440,12 +461,29 @@ export const ServiceDetail = () => {
               </div>
             )}
 
-            {/* 4. Service-Specific Feature Visual Block */}
+            {/* 4. What We Offer / Services */}
+            {service.whatWeOffer && service.whatWeOffer.length > 0 && (
+              <div ref={offeringsRef} className={`service-content-block scroll-reveal ${isOfferingsRevealed ? 'revealed' : ''}`}>
+                <span className="section-mini-badge">WHAT WE OFFER</span>
+                <h2 className="service-block-heading">Our {service.title} Solutions</h2>
+                <div className="service-offerings-grid">
+                  {service.whatWeOffer.map((item, oIdx) => (
+                    <div key={oIdx} className="service-offering-card" style={{ animationDelay: `${oIdx * 90}ms` }}>
+                      <div className="offering-card-badge">{`0${oIdx + 1}`}</div>
+                      <h4 className="offering-card-title">{item.title}</h4>
+                      <p className="offering-card-desc">{item.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 5. Service-Specific Feature Visual Block */}
             <div ref={visualRef} className={`service-content-block scroll-reveal ${isVisualRevealed ? 'revealed' : ''}`}>
               <ServiceVisualWidget slug={service.slug} />
             </div>
 
-            {/* 5. How It Works - Step-by-Step Process */}
+            {/* 6. How It Works - Step-by-Step Process */}
             {service.process && service.process.length > 0 && (
               <div ref={processRef} className={`service-content-block scroll-reveal ${isProcessRevealed ? 'revealed' : ''}`}>
                 <span className="section-mini-badge">PROCESS</span>
@@ -464,7 +502,7 @@ export const ServiceDetail = () => {
               </div>
             )}
 
-            {/* 6. Who Can Benefit (Target Audience Chips) */}
+            {/* 7. Who Can Benefit (Target Audience Chips) */}
             {service.whoItIsFor && (
               <div ref={audienceRef} className={`service-content-block scroll-reveal ${isAudienceRevealed ? 'revealed' : ''}`}>
                 <span className="section-mini-badge">SUITABILITY</span>
@@ -486,7 +524,7 @@ export const ServiceDetail = () => {
               </div>
             )}
 
-            {/* 7. Important Considerations / Service Notes */}
+            {/* 8. Important Considerations / Service Notes */}
             {service.importantConsiderations && service.importantConsiderations.length > 0 && (
               <div ref={notesRef} className={`service-content-block scroll-reveal ${isNotesRevealed ? 'revealed' : ''}`}>
                 <span className="section-mini-badge">SERVICE NOTES</span>
@@ -501,16 +539,44 @@ export const ServiceDetail = () => {
               </div>
             )}
 
-            {/* 8. CTA Consultation Banner */}
+            {/* 9. Frequently Asked Questions */}
+            {service.faqs && service.faqs.length > 0 && (
+              <div ref={faqsRef} className={`service-content-block scroll-reveal ${isFaqsRevealed ? 'revealed' : ''}`}>
+                <span className="section-mini-badge">FREQUENTLY ASKED QUESTIONS</span>
+                <h2 className="service-block-heading">Frequently Asked Questions</h2>
+                <div className="service-faq-accordion">
+                  {service.faqs.map((faq, fIdx) => {
+                    const isOpen = openFaqIndex === fIdx;
+                    return (
+                      <div key={fIdx} className={`faq-accordion-item ${isOpen ? 'active' : ''}`}>
+                        <button
+                          className="faq-accordion-question"
+                          onClick={() => setOpenFaqIndex(isOpen ? null : fIdx)}
+                          aria-expanded={isOpen}
+                        >
+                          <span className="faq-question-text">{faq.question}</span>
+                          <span className="faq-chevron-icon">{isOpen ? '−' : '+'}</span>
+                        </button>
+                        <div className={`faq-accordion-answer ${isOpen ? 'show' : ''}`}>
+                          <p>{faq.answer}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* 10. CTA Consultation Banner */}
             <div ref={ctaRef} className={`service-cta-banner scroll-reveal ${isCtaRevealed ? 'revealed' : ''}`}>
-              <h3>Need Help Choosing the Right Solution?</h3>
-              <p>Speak with our senior advisory team to discuss your specific requirements and explore customized solutions.</p>
+              <h3>{service.ctaHeading || `Need Help With Your ${service.title}?`}</h3>
+              <p>{service.ctaSubtext || 'Speak with our senior advisory team to discuss your specific requirements and explore customized solutions.'}</p>
               <Button to="/contact" variant="primary" size="md" className="website-btn cta-talk-btn">
-                <span>Talk to Our Team</span> <span className="btn-arrow">→</span>
+                <span>{service.ctaButtonText || 'Talk to Our Team'}</span> <span className="btn-arrow">→</span>
               </Button>
             </div>
 
-            {/* 9. Related Financial Services */}
+            {/* 11. Related Financial Services */}
             <div ref={relatedRef} className={`related-services-section scroll-reveal ${isRelatedRevealed ? 'revealed' : ''}`}>
               <h2 className="service-block-heading" style={{ textAlign: 'center', marginBottom: 'var(--spacing-xl)' }}>
                 Related Financial Services
@@ -542,6 +608,7 @@ export const ServiceDetail = () => {
           background-color: var(--color-background, #F8F9FA);
           border-bottom: 1px solid var(--color-border, #E2E2DF);
           padding: var(--spacing-xl) 0 var(--spacing-xxl) 0;
+          overflow-x: hidden;
         }
 
         .service-detail-top-nav {
@@ -578,12 +645,39 @@ export const ServiceDetail = () => {
           text-decoration: none;
         }
 
-        /* 2-Column Hero Grid */
+        /* 2-Column Hero Grid Reveal Animations */
         .service-hero-grid {
           display: grid;
           grid-template-columns: 1.15fr 0.85fr;
           gap: var(--spacing-xxl, 2.5rem);
           align-items: center;
+        }
+
+        /* Initial unrevealed state for Left Content (start 60px left) */
+        .service-hero-grid.scroll-reveal .service-hero-left {
+          opacity: 0;
+          transform: translateX(-60px);
+          transition: opacity 800ms cubic-bezier(0.16, 1, 0.3, 1), transform 800ms cubic-bezier(0.16, 1, 0.3, 1);
+          will-change: opacity, transform;
+        }
+
+        /* Initial unrevealed state for Right Image/Visual (start 60px right, 120ms stagger) */
+        .service-hero-grid.scroll-reveal .service-hero-right {
+          opacity: 0;
+          transform: translateX(60px);
+          transition: opacity 800ms cubic-bezier(0.16, 1, 0.3, 1) 120ms, transform 800ms cubic-bezier(0.16, 1, 0.3, 1) 120ms;
+          will-change: opacity, transform;
+        }
+
+        /* Revealed state when hero section enters viewport */
+        .service-hero-grid.scroll-reveal.revealed .service-hero-left {
+          opacity: 1;
+          transform: translateX(0);
+        }
+
+        .service-hero-grid.scroll-reveal.revealed .service-hero-right {
+          opacity: 1;
+          transform: translateX(0);
         }
 
         .service-badge-pill {
@@ -639,7 +733,23 @@ export const ServiceDetail = () => {
           box-shadow: 0 16px 36px rgba(0, 0, 0, 0.12);
           border: 1px solid var(--color-border, #E2E2DF);
           aspect-ratio: 4 / 3;
-          animation: heroImageEntrance 750ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .service-hero-3d-badge {
+          position: absolute;
+          bottom: 16px;
+          right: 16px;
+          width: 56px;
+          height: 56px;
+          border-radius: 50%;
+          background: rgba(253, 251, 247, 0.92);
+          backdrop-filter: blur(8px);
+          border: 1px solid rgba(212, 175, 55, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 8px 24px rgba(158, 36, 29, 0.2);
+          z-index: 5;
         }
 
         @keyframes heroImageEntrance {
@@ -832,6 +942,117 @@ export const ServiceDetail = () => {
           color: var(--color-secondary, #475569);
           line-height: 1.6;
           margin: 0;
+        }
+
+        /* What We Offer Cards Grid */
+        .service-offerings-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: var(--spacing-lg, 1.5rem);
+        }
+
+        .service-offering-card {
+          background-color: #FFFFFF;
+          border: 1px solid var(--color-border, #E2E2DF);
+          border-radius: var(--radius-md, 8px);
+          padding: 1.5rem;
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+          position: relative;
+          transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .service-offering-card:hover {
+          transform: translateY(-4px);
+          border-color: rgba(158, 36, 29, 0.35);
+          box-shadow: 0 12px 28px rgba(158, 36, 29, 0.08);
+        }
+
+        .offering-card-badge {
+          display: inline-block;
+          font-size: 0.75rem;
+          font-weight: 800;
+          color: var(--color-primary, #9E241D);
+          background: rgba(158, 36, 29, 0.08);
+          padding: 3px 10px;
+          border-radius: 12px;
+          margin-bottom: 0.75rem;
+          border: 1px solid rgba(158, 36, 29, 0.15);
+        }
+
+        .offering-card-title {
+          font-size: 1.15rem;
+          font-weight: 700;
+          color: var(--color-dark, #0F172A);
+          margin-bottom: 0.5rem;
+          line-height: 1.35;
+        }
+
+        .offering-card-desc {
+          font-size: 0.95rem;
+          color: var(--color-secondary, #475569);
+          margin: 0;
+          line-height: 1.6;
+        }
+
+        /* FAQ Accordion Styling */
+        .service-faq-accordion {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .faq-accordion-item {
+          background-color: #FFFFFF;
+          border: 1px solid var(--color-border, #E2E2DF);
+          border-radius: var(--radius-md, 8px);
+          overflow: hidden;
+          transition: border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .faq-accordion-item.active {
+          border-color: rgba(158, 36, 29, 0.4);
+          box-shadow: 0 6px 20px rgba(158, 36, 29, 0.06);
+        }
+
+        .faq-accordion-question {
+          width: 100%;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 1.25rem 1.5rem;
+          background: none;
+          border: none;
+          text-align: left;
+          font-size: 1.05rem;
+          font-weight: 700;
+          color: var(--color-dark, #0F172A);
+          cursor: pointer;
+          gap: 1rem;
+          transition: color 0.2s ease;
+        }
+
+        .faq-accordion-question:hover {
+          color: var(--color-primary, #9E241D);
+        }
+
+        .faq-chevron-icon {
+          font-size: 1.35rem;
+          font-weight: 700;
+          color: var(--color-primary, #9E241D);
+          flex-shrink: 0;
+          line-height: 1;
+        }
+
+        .faq-accordion-answer {
+          padding: 0 1.5rem 1.25rem 1.5rem;
+          color: var(--color-secondary, #475569);
+          font-size: 0.975rem;
+          line-height: 1.65;
+          display: none;
+        }
+
+        .faq-accordion-answer.show {
+          display: block;
         }
 
         /* Widget Card Styling */
@@ -1294,6 +1515,14 @@ export const ServiceDetail = () => {
         }
 
         @media (max-width: 768px) {
+          .service-hero-grid.scroll-reveal .service-hero-left {
+            transform: translateX(-25px);
+          }
+
+          .service-hero-grid.scroll-reveal .service-hero-right {
+            transform: translateX(25px);
+          }
+
           .service-hero-title {
             font-size: 1.85rem;
           }
@@ -1316,6 +1545,8 @@ export const ServiceDetail = () => {
         /* Accessibility: Prefers Reduced Motion */
         @media (prefers-reduced-motion: reduce) {
           .service-hero-grid,
+          .service-hero-left,
+          .service-hero-right,
           .service-content-block,
           .service-benefit-card,
           .process-timeline-card,
@@ -1327,6 +1558,7 @@ export const ServiceDetail = () => {
             opacity: 1 !important;
             transform: none !important;
             transition: none !important;
+            will-change: auto !important;
           }
         }
       `}</style>

@@ -23,7 +23,9 @@ router.post("/import", requirePermission("client.create"), upload.single("file")
 router.get("/:id", requirePermission("client.view"), ClientController.getClient);
 router.post("/", requirePermission("client.create"), ClientController.createClient);
 router.patch("/:id", requirePermission("client.edit"), ClientController.updateClient);
+router.patch("/:id/category", requirePermission("client.edit"), ClientController.updateClientCategory);
 router.patch("/:id/status", requirePermission("client.edit"), ClientController.updateClientStatus);
 router.delete("/:id", requirePermission("client.delete"), ClientController.deleteClient);
 
 module.exports = router;
+

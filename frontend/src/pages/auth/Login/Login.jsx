@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { AlertCircle } from "lucide-react";
+import { ArrowLeft, AlertCircle } from "lucide-react";
 import AuthLayout from "../../../components/auth/AuthLayout";
 import AuthInput from "../../../components/auth/AuthInput";
 import PasswordInput from "../../../components/auth/PasswordInput";
@@ -89,6 +89,10 @@ const Login = () => {
   return (
     <AuthLayout>
       <div className="auth-header">
+        <Link to="/" className="auth-card-back-link">
+          <ArrowLeft size={16} />
+          <span>Back to Home Page</span>
+        </Link>
         <h2 className="auth-title">Welcome Back</h2>
         <p className="auth-subtitle">Sign in to access your CRM</p>
       </div>

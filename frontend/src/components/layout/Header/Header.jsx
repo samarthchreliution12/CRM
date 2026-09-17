@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Search, Bell, HelpCircle, Menu, FileText, BellOff, ArrowRight, MessageSquare, Hash, CheckSquare } from "lucide-react";
+import { Search, Bell, HelpCircle, Menu, FileText, BellOff, ArrowRight, MessageSquare, Hash, CheckSquare, X, Loader2 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import useAuth from "../../../hooks/useAuth";
 import ClientService from "../../../services/client.service";
@@ -30,6 +30,22 @@ const formatTimeAgo = (dateStr) => {
   }
 };
 
+const getInitials = (name) => {
+  if (!name) return "CL";
+  const parts = name.trim().split(" ").filter(Boolean);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
+
+const maskMobile = (mobile) => {
+  if (!mobile || typeof mobile !== "string") return "";
+  const cleaned = mobile.trim();
+  if (cleaned.length <= 4) return "*".repeat(cleaned.length);
+  const first2 = cleaned.slice(0, 2);
+  const last2 = cleaned.slice(-2);
+  return `${first2}******${last2}`;
+};
+
 const Header = ({ title = "Dashboard", onToggleSidebar }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -51,7 +67,77 @@ const Header = ({ title = "Dashboard", onToggleSidebar }) => {
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
   const notifRef = useRef(null);
 
+  // Global Header Client Search State
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearchLoading, setIsSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState("");
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const searchContainerRef = useRef(null);
+
   const isSearchBlocked = BLOCKED_SEARCH_ROUTES.includes(location.pathname);
+
+  // Debounce effect on header search term
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(searchTerm.trim());
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
+  // Execute client database search when debouncedQuery changes
+  useEffect(() => {
+    if (!debouncedQuery) {
+      setSearchResults([]);
+      setIsSearchLoading(false);
+      setSearchError("");
+      setShowSearchDropdown(false);
+      return;
+    }
+
+    let isMounted = true;
+    const performSearch = async () => {
+      setIsSearchLoading(true);
+      setSearchError("");
+      setShowSearchDropdown(true);
+      try {
+        const response = await ClientService.searchClients(debouncedQuery, token);
+        if (isMounted) {
+          if (response && response.success && response.data) {
+            setSearchResults(response.data.clients || []);
+          } else {
+            setSearchResults([]);
+          }
+        }
+      } catch (err) {
+        if (isMounted) {
+          setSearchError(err.message || "Failed to search clients.");
+          setSearchResults([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsSearchLoading(false);
+        }
+      }
+    };
+
+    performSearch();
+    return () => {
+      isMounted = false;
+    };
+  }, [debouncedQuery, token]);
+
+  // Click Outside Listener for Header Search Dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
+        setShowSearchDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Fetch Pending Documents Count from Backend API
   const fetchPendingDocCount = useCallback(async () => {
@@ -172,13 +258,91 @@ const Header = ({ title = "Dashboard", onToggleSidebar }) => {
 
         {/* Global CRM Search Bar vs Page Title Heading */}
         {!isSearchBlocked ? (
-          <div className="header-search">
+          <div className="header-search" ref={searchContainerRef}>
             <Search size={20} className="header-search-icon" />
             <input
               type="text"
               className="header-search-input"
-              placeholder="Search clients, leads, tasks..."
+              placeholder="Search clients by name, PAN or mobile number..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onFocus={() => {
+                if (debouncedQuery && searchResults.length > 0) {
+                  setShowSearchDropdown(true);
+                }
+              }}
             />
+            {searchTerm && (
+              <button
+                type="button"
+                className="header-search-clear-btn"
+                onClick={() => {
+                  setSearchTerm("");
+                  setDebouncedQuery("");
+                  setSearchResults([]);
+                  setShowSearchDropdown(false);
+                }}
+                title="Clear search"
+              >
+                <X size={16} />
+              </button>
+            )}
+
+            {/* Header Live Search Dropdown Popover */}
+            {showSearchDropdown && (
+              <div className="header-search-dropdown">
+                <div className="header-search-dropdown-header">
+                  <span>Client Search Results</span>
+                  {searchResults.length > 0 && (
+                    <span className="header-search-count-badge">{searchResults.length} found</span>
+                  )}
+                </div>
+
+                <div className="header-search-dropdown-body">
+                  {isSearchLoading ? (
+                    <div className="header-search-loading">
+                      <Loader2 size={18} className="animate-spin" />
+                      <span>Searching database...</span>
+                    </div>
+                  ) : searchError ? (
+                    <div className="header-search-error">
+                      <span>{searchError}</span>
+                    </div>
+                  ) : searchResults.length === 0 ? (
+                    <div className="header-search-empty">
+                      <span>No clients found matching "<strong>{debouncedQuery}</strong>"</span>
+                    </div>
+                  ) : (
+                    searchResults.map((client) => (
+                      <div
+                        key={client.id}
+                        className="header-search-item"
+                        onClick={() => {
+                          setShowSearchDropdown(false);
+                          setSearchTerm("");
+                          navigate(`/clients/${client.id}`);
+                        }}
+                      >
+                        <div className="header-search-item-left">
+                          <div className="header-search-initials">
+                            {getInitials(client.name)}
+                          </div>
+                          <div className="header-search-info">
+                            <span className="header-search-name">{client.name}</span>
+                            <span className="header-search-meta">
+                              {client.pan ? `PAN: ${client.pan}` : ""}
+                              {client.pan && client.mobile_no ? " • " : ""}
+                              {client.mobile_no ? maskMobile(client.mobile_no) : ""}
+                            </span>
+                          </div>
+                        </div>
+                        <ArrowRight size={14} className="header-search-item-arrow" />
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <h2 className="header-title">

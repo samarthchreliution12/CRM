@@ -1,9 +1,19 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const UserModel = require("../models/user.model");
 const RoleModel = require("../models/role.model");
+const RefreshSessionModel = require("../models/refreshSession.model");
 const AuditService = require("./audit.service");
 const config = require("../config/env");
+
+function hashToken(rawToken) {
+  return crypto.createHash("sha256").update(rawToken).digest("hex");
+}
+
+function generateRawRefreshToken() {
+  return crypto.randomBytes(40).toString("hex");
+}
 
 class AuthService {
   /**
@@ -12,10 +22,12 @@ class AuthService {
   static async login(email, password, context = {}) {
     const user = await UserModel.findByEmail(email);
 
+    // Generic response message to prevent email/mobile user enumeration
+    const genericError = new Error("Invalid email/mobile or password");
+    genericError.statusCode = 401;
+
     if (!user) {
-      const error = new Error("Invalid email or password");
-      error.statusCode = 401;
-      throw error;
+      throw genericError;
     }
 
     if (user.status !== "active") {
@@ -26,9 +38,7 @@ class AuthService {
 
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
-      const error = new Error("Invalid email or password");
-      error.statusCode = 401;
-      throw error;
+      throw genericError;
     }
 
     // Update last login timestamp in PostgreSQL database
@@ -37,8 +47,8 @@ class AuthService {
     // Fetch sanitized profile with assigned permissions
     const userProfile = await UserModel.findByIdWithRoleAndPermissions(user.id);
 
-    // Sign JWT token payload
-    const token = jwt.sign(
+    // 1. Sign short-lived 30-minute Access Token
+    const accessToken = jwt.sign(
       {
         id: userProfile.id,
         user_id: userProfile.id,
@@ -48,6 +58,19 @@ class AuthService {
       config.jwtSecret,
       { expiresIn: config.jwtExpiresIn }
     );
+
+    // 2. Generate 7-day Refresh Token string & store hash in database
+    const rawRefreshToken = generateRawRefreshToken();
+    const tokenHash = hashToken(rawRefreshToken);
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+
+    await RefreshSessionModel.createSession({
+      userId: userProfile.id,
+      tokenHash,
+      ipAddress: context.ipAddress,
+      userAgent: context.userAgent,
+      expiresAt,
+    });
 
     await AuditService.log({
       userId: userProfile.id,
@@ -60,7 +83,93 @@ class AuthService {
     });
 
     return {
-      token,
+      token: accessToken,
+      refreshToken: rawRefreshToken,
+      user: userProfile,
+    };
+  }
+
+  /**
+   * Rotates refresh token and issues a new 30-minute access token.
+   */
+  static async refreshToken(rawRefreshToken, context = {}) {
+    if (!rawRefreshToken || typeof rawRefreshToken !== "string") {
+      const error = new Error("Refresh token required");
+      error.statusCode = 401;
+      throw error;
+    }
+
+    const tokenHash = hashToken(rawRefreshToken);
+    const session = await RefreshSessionModel.findByTokenHash(tokenHash);
+
+    // Token reuse / theft detection: If session does not exist or was already revoked
+    if (!session || session.revoked_at) {
+      if (session && session.user_id) {
+        // Potential security breach: Revoke ALL active sessions for this user!
+        await RefreshSessionModel.revokeAllUserSessions(session.user_id);
+        await AuditService.log({
+          userId: session.user_id,
+          action: "REFRESH_TOKEN_REUSE_DETECTED",
+          module: "AUTH",
+          entityType: "USER",
+          entityId: session.user_id,
+          description: `Revoked all refresh sessions due to attempted reuse of revoked token.`,
+          ipAddress: context.ipAddress,
+        });
+      }
+      const error = new Error("Invalid or revoked refresh session. Please log in again.");
+      error.statusCode = 401;
+      throw error;
+    }
+
+    // Check expiration
+    if (new Date(session.expires_at).getTime() < Date.now()) {
+      await RefreshSessionModel.revokeSession(session.id);
+      const error = new Error("Refresh session expired. Please log in again.");
+      error.statusCode = 401;
+      throw error;
+    }
+
+    // Fetch active user profile
+    const userProfile = await UserModel.findByIdWithRoleAndPermissions(session.user_id);
+    if (!userProfile || userProfile.status !== "active") {
+      await RefreshSessionModel.revokeSession(session.id);
+      const error = new Error("User account is inactive or no longer exists");
+      error.statusCode = 401;
+      throw error;
+    }
+
+    // 1. Revoke current refresh session (Rotation)
+    await RefreshSessionModel.revokeSession(session.id);
+
+    // 2. Issue NEW 7-day Refresh Token string & store hash in database
+    const newRawRefreshToken = generateRawRefreshToken();
+    const newTokenHash = hashToken(newRawRefreshToken);
+    const newExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    await RefreshSessionModel.createSession({
+      userId: userProfile.id,
+      tokenHash: newTokenHash,
+      ipAddress: context.ipAddress,
+      userAgent: context.userAgent,
+      expiresAt: newExpiresAt,
+    });
+
+    // 3. Issue NEW 30-minute Access Token
+    const newAccessToken = jwt.sign(
+      {
+        id: userProfile.id,
+        user_id: userProfile.id,
+        role_id: userProfile.role.id,
+        email: userProfile.email,
+      },
+      config.jwtSecret,
+      { expiresIn: config.jwtExpiresIn }
+    );
+
+    return {
+      token: newAccessToken,
+      refreshToken: newRawRefreshToken,
       user: userProfile,
     };
   }
@@ -105,11 +214,28 @@ class AuthService {
   }
 
   /**
+   * Revokes refresh token session on logout.
+   */
+  static async logout(rawRefreshToken, userId = null) {
+    if (rawRefreshToken) {
+      const tokenHash = hashToken(rawRefreshToken);
+      const session = await RefreshSessionModel.findByTokenHash(tokenHash);
+      if (session) {
+        await RefreshSessionModel.revokeSession(session.id);
+      }
+    }
+
+    if (userId) {
+      await RefreshSessionModel.revokeAllUserSessions(userId);
+    }
+
+    return true;
+  }
+
+  /**
    * Prepared future signup business logic.
-   * Registers a user account with role validation and password hashing.
    */
   static async signup({ name, email, password, mobile, role_id }, requester = null) {
-    // 1. Check duplicate email
     const existingUser = await UserModel.findByEmail(email);
     if (existingUser) {
       const error = new Error("Email is already registered");
@@ -117,7 +243,6 @@ class AuthService {
       throw error;
     }
 
-    // 2. Check target role existence
     const targetRole = await RoleModel.findById(role_id);
     if (!targetRole) {
       const error = new Error("Specified role does not exist");
@@ -125,7 +250,6 @@ class AuthService {
       throw error;
     }
 
-    // 3. Security check: Non-Admin users or public signup requests cannot create Admin accounts
     if (targetRole.name === "Admin") {
       const isRequesterAdmin = requester && requester.role && requester.role.name === "Admin";
       if (!isRequesterAdmin) {
@@ -135,10 +259,8 @@ class AuthService {
       }
     }
 
-    // 4. Hash password with bcrypt
     const password_hash = await bcrypt.hash(password, 10);
 
-    // 5. Create user in database
     const newUser = await UserModel.createUser({
       name: name.trim(),
       email: email.trim().toLowerCase(),
@@ -148,7 +270,6 @@ class AuthService {
       status: "active",
     });
 
-    // 6. Return sanitized user profile without password_hash
     const createdProfile = await UserModel.findByIdWithRoleAndPermissions(newUser.id);
     return createdProfile;
   }
@@ -158,17 +279,12 @@ class AuthService {
    */
   static async forgotPassword(email) {
     const user = await UserModel.findByEmail(email.trim());
-    
-    // Generic response message to prevent email enumeration
     const genericMessage = "If an account with that email exists, a password reset link has been created.";
 
     if (!user || user.status !== "active") {
-      return {
-        message: genericMessage,
-      };
+      return { message: genericMessage };
     }
 
-    // Generate a 15-minute JWT password reset token
     const resetPayload = {
       id: user.id,
       email: user.email,
@@ -180,11 +296,6 @@ class AuthService {
     });
 
     const resetLink = `${config.clientUrl}/reset-password?token=${resetToken}`;
-
-    console.log("\n==================================================================");
-    console.log(`🔑 [PASSWORD RESET LINK GENERATED]:`);
-    console.log(`   ${resetLink}`);
-    console.log("==================================================================\n");
 
     return {
       message: genericMessage,
@@ -230,10 +341,7 @@ class AuthService {
       throw error;
     }
 
-    // Hash new password using bcrypt
     const password_hash = await bcrypt.hash(password, 10);
-
-    // Update password in database
     await UserModel.updatePassword(user.id, password_hash);
 
     return {

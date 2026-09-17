@@ -7,18 +7,13 @@
   font-family: var(--font-family, sans-serif);
 }
 
-/* 2-Column Grid Layout: Left Column for Birthdays Card, Right Column for Main Content */
+/* 2-Column Grid Layout */
 .dashboard-layout-grid {
   display: grid;
-  grid-template-columns: 380px 1fr;
+  grid-template-columns: 480px 1fr;
   gap: 1.5rem;
+  margin-top: 1.5rem;
   align-items: start;
-}
-
-@media (max-width: 1024px) {
-  .dashboard-layout-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 .dashboard-left-column {
@@ -26,10 +21,18 @@
 }
 
 .dashboard-right-column {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
   width: 100%;
+}
+
+@media (max-width: 992px) {
+  .dashboard-layout-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dashboard-bottom-section {
+  width: 100%;
+  margin-top: 1.5rem;
 }
 
 .dashboard-welcome-card {
@@ -52,3 +55,4 @@
   color: #64748b;
   line-height: 1.6;
 }
+

@@ -1,17 +1,17 @@
-/* Parshwa Consultancy CRM - Light Sidebar Theme */
+/* Parshwa Consultancy CRM - Theme 1: Executive Burgundy & Gold Sidebar */
 .sidebar-container {
   width: 260px;
   height: 100vh;
   position: fixed;
   top: 0;
   left: 0;
-  background-color: #ffffff;
-  color: #1e293b;
+  background-color: #723d3a;
+  color: #F1F5F9;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  border-right: 1px solid #e2e2df;
-  box-shadow: 2px 0 14px rgba(0, 0, 0, 0.03);
+  border-right: 1px solid rgba(212, 175, 55, 0.25);
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.18);
   z-index: 50;
   transition: width 280ms cubic-bezier(0.16, 1, 0.3, 1), transform 280ms cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
@@ -27,11 +27,11 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  border-bottom: 1px solid #e2e2df;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   min-height: 70px;
   box-sizing: border-box;
   gap: 0.5rem;
-  background-color: #ffffff;
+  background-color: #723d3a;
 }
 
 .sidebar-branding-clickable {
@@ -41,12 +41,12 @@
 }
 
 .sidebar-branding-clickable:hover {
-  background-color: #f8fafc;
+  background-color: #4A110E;
 }
 
 .sidebar-branding-clickable:hover .sidebar-logo-wrapper {
   transform: scale(1.05);
-  border-color: rgba(158, 36, 29, 0.3);
+  border-color: #D4AF37;
 }
 
 .sidebar-branding-left {
@@ -65,8 +65,8 @@
   align-items: center;
   justify-content: center;
   padding: 4px;
-  border: 1px solid #e2e2df;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  border: 1px solid #D4AF37;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   flex-shrink: 0;
   transition: transform 0.2s ease, border-color 0.2s ease;
 }
@@ -89,16 +89,18 @@
 .sidebar-company-name {
   font-weight: 800;
   font-size: 0.925rem;
-  color: #1e293b;
+  color: #FFFFFF;
   line-height: 1.2;
   white-space: nowrap;
 }
 
 .sidebar-company-subtitle {
   font-size: 0.725rem;
-  color: #64748b;
+  color: #FDE047;
   white-space: nowrap;
   margin-top: 0.125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
 }
 
 .sidebar-container.collapsed .sidebar-branding {
@@ -134,7 +136,7 @@
   justify-content: space-between;
   padding: 0.75rem 0.875rem;
   border-radius: 6px;
-  color: #4e565a;
+  color: #F1F5F9;
   font-size: 0.9rem;
   font-weight: 500;
   text-decoration: none;
@@ -158,7 +160,7 @@
 
 .nav-icon {
   flex-shrink: 0;
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.8);
   transition: color 0.15s ease;
 }
 
@@ -171,7 +173,7 @@
 .nav-chevron {
   display: flex;
   align-items: center;
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.7);
   transition: transform 0.2s ease, color 0.2s ease;
 }
 
@@ -193,29 +195,32 @@
 }
 
 .nav-link:hover {
-  color: #9e241d;
-  background-color: #f8fafc;
+  color: #FFFFFF;
+  background-color: #723d3a;
 }
 
 .nav-link:hover .nav-icon,
 .nav-link:hover .nav-chevron {
-  color: #9e241d;
+  color: #FFFFFF;
 }
 
+/* Active Tab Highlight (Gold Accent with Dark Text) */
 .nav-link.active {
-  color: #9e241d;
-  background-color: #faf0ee;
-  border-left: 3.5px solid #9e241d;
+  color: #1E293B;
+  background-color: #D4AF37;
+  border-left: 4px solid #FFFFFF;
   font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .sidebar-container.collapsed .nav-link.active {
-  border-left: 3.5px solid #9e241d;
+  border-left: 4px solid #FFFFFF;
   border-radius: 4px;
 }
 
-.nav-link.active .nav-icon {
-  color: #9e241d;
+.nav-link.active .nav-icon,
+.nav-link.active .nav-chevron {
+  color: #1E293B;
 }
 
 /* Nav Submenu (OPEN Sidebar Accordion) */
@@ -250,7 +255,7 @@
   gap: 0.625rem;
   padding: 0.55rem 0.875rem;
   border-radius: 6px;
-  color: #596067;
+  color: rgba(255, 255, 255, 0.85);
   font-size: 0.85rem;
   font-weight: 500;
   text-decoration: none;
@@ -258,38 +263,38 @@
 }
 
 .submenu-icon {
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.7);
   transition: color 0.15s ease;
 }
 
 .submenu-link:hover {
-  color: #9e241d;
-  background-color: #f8fafc;
+  color: #FFFFFF;
+  background-color: #723d3a;
 }
 
 .submenu-link:hover .submenu-icon {
-  color: #9e241d;
+  color: #FFFFFF;
 }
 
 .submenu-link.active {
-  color: #9e241d;
-  background-color: #faf0ee;
+  color: #1E293B;
+  background-color: #D4AF37;
   font-weight: 700;
-  border-left: 2.5px solid #9e241d;
+  border-left: 3px solid #FFFFFF;
 }
 
 .submenu-link.active .submenu-icon {
-  color: #9e241d;
+  color: #1E293B;
 }
 
 /* Collapsed Sidebar Flyout Popover Menu */
 .nav-flyout-menu {
   position: fixed;
   left: 76px;
-  background-color: #ffffff;
-  border: 1px solid #e2e2df;
+  background-color: #723d3a;
+  border: 1px solid #D4AF37;
   border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   padding: 0.5rem;
   display: flex;
   flex-direction: column;
@@ -299,7 +304,6 @@
   animation: flyoutSlideIn 150ms ease forwards;
 }
 
-/* Hover-bridge pseudo element preventing premature closing when moving mouse */
 .nav-flyout-menu::before {
   content: "";
   position: absolute;
@@ -326,9 +330,9 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #9e241d;
+  color: #FDE047;
   padding: 0.4rem 0.625rem;
-  border-bottom: 1px solid #e2e2df;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
   margin-bottom: 0.25rem;
 }
 
@@ -338,7 +342,7 @@
   gap: 0.625rem;
   padding: 0.55rem 0.75rem;
   border-radius: 6px;
-  color: #4e565a;
+  color: #F1F5F9;
   font-size: 0.85rem;
   font-weight: 500;
   text-decoration: none;
@@ -347,13 +351,13 @@
 }
 
 .flyout-link:hover {
-  color: #9e241d;
-  background-color: #f8fafc;
+  color: #FFFFFF;
+  background-color: #723d3a;
 }
 
 .flyout-link.active {
-  color: #9e241d;
-  background-color: #faf0ee;
+  color: #1E293B;
+  background-color: #D4AF37;
   font-weight: 700;
 }
 
@@ -364,14 +368,15 @@
   left: calc(100% + 12px);
   top: 50%;
   transform: translateY(-50%);
-  background-color: #1e293b;
-  color: #ffffff;
+  background-color: #723d3a;
+  color: #FDE047;
+  border: 1px solid #D4AF37;
   padding: 0.35rem 0.75rem;
   border-radius: 6px;
   font-size: 0.8rem;
   font-weight: 600;
   white-space: nowrap;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
   z-index: 100;
   pointer-events: none;
   animation: tooltipFade 150ms ease forwards;
@@ -391,8 +396,8 @@
 /* Sidebar Bottom Footer */
 .sidebar-footer {
   padding: 1rem 0.625rem;
-  border-top: 1px solid #e2e2df;
-  background-color: #ffffff;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  background-color: #723d3a;
 }
 
 /* Responsive Collapsible Sidebar */

@@ -154,7 +154,33 @@ class ClientService {
     }
   }
 
+  static async updateClientCategory(id, category, context = {}) {
+    const existing = await ClientModel.findById(id);
+    if (!existing) {
+      const error = new Error("Client not found");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const updated = await ClientModel.update(id, { client_category: category });
+
+    await AuditService.log({
+      userId: context.userId,
+      action: "UPDATE",
+      module: "CLIENTS",
+      entityType: "CLIENT",
+      entityId: existing.id,
+      description: `Updated category for client '${existing.name}' from '${existing.client_category || 'NONE'}' to '${updated.client_category}'`,
+      oldValues: { client_category: existing.client_category },
+      newValues: { client_category: updated.client_category },
+      ipAddress: context.ipAddress,
+    });
+
+    return updated;
+  }
+
   static async updateClientStatus(id, status, context = {}) {
+
     const existing = await ClientModel.findById(id);
     if (!existing) {
       const error = new Error("Client not found");

@@ -3,7 +3,7 @@ import AppLayout from "../../components/layout/AppLayout/AppLayout";
 import ClientOverviewStats from "../../components/dashboard/ClientOverviewStats";
 import CrossSellingOpportunities from "../../components/dashboard/CrossSellingOpportunities";
 import UpcomingBirthdaysCard from "../../components/dashboard/UpcomingBirthdaysCard";
-import ClientSearchWidget from "../../components/dashboard/ClientSearchWidget";
+import PendingFollowupsCard from "../../components/dashboard/PendingFollowupsCard";
 import "./Dashboard.css";
 
 const Dashboard = () => {
@@ -13,25 +13,25 @@ const Dashboard = () => {
         {/* 1. Client Overview Statistics */}
         <ClientOverviewStats />
 
-        {/* 2. Cross-Selling Opportunities Section */}
-        <CrossSellingOpportunities />
-
-        {/* 3. Dashboard 2-Column Grid */}
+        {/* 2. Dashboard 2-Column Grid */}
         <div className="dashboard-layout-grid">
           {/* Left Column: Upcoming Birthdays Card */}
           <div className="dashboard-left-column">
             <UpcomingBirthdaysCard />
           </div>
 
-          {/* Right Column: Client Search Widget & Welcome Card */}
+          {/* Right Column: Redesigned Cross-Selling Card */}
           <div className="dashboard-right-column">
-            <ClientSearchWidget />
-
+            <CrossSellingOpportunities />
           </div>
         </div>
+
+        {/* 3. Clients with Pending Follow-ups */}
+        <PendingFollowupsCard />
       </div>
     </AppLayout>
   );
 };
 
 export default Dashboard;
+

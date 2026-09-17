@@ -29,70 +29,168 @@ export const Hero3DScene = () => {
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.15;
+    renderer.toneMappingExposure = 1.2;
     container.appendChild(renderer.domElement);
 
-    // 3. Lighting System
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+    // 3. Studio Lighting System (Soft Warm Gold & Burgundy Palette)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1.1);
     scene.add(ambientLight);
 
-    const mainLight = new THREE.DirectionalLight(0xfff5e6, 2.2);
+    const mainLight = new THREE.DirectionalLight(0xfff8ee, 2.4);
     mainLight.position.set(5, 6, 6);
     scene.add(mainLight);
 
-    const accentLight = new THREE.PointLight(0x9e241d, 2.5, 12);
+    const accentLight = new THREE.PointLight(0x9e241d, 2.2, 12);
     accentLight.position.set(-4, -3, 3);
     scene.add(accentLight);
 
-    const goldFillLight = new THREE.PointLight(0xd4af37, 1.8, 10);
+    const goldFillLight = new THREE.PointLight(0xfde047, 2.0, 10);
     goldFillLight.position.set(4, -2, 2);
     scene.add(goldFillLight);
 
-    // 4. Materials
+    // 4. Realistic Materials
     const goldMaterial = new THREE.MeshStandardMaterial({
       color: 0xd4af37,
-      metalness: 0.88,
-      roughness: 0.22,
+      metalness: 0.9,
+      roughness: 0.18,
     });
 
     const crimsonMaterial = new THREE.MeshStandardMaterial({
       color: 0x9e241d,
-      metalness: 0.65,
-      roughness: 0.35,
+      metalness: 0.6,
+      roughness: 0.28,
     });
 
     const acrylicMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0xfdfdfd,
-      metalness: 0.1,
-      roughness: 0.2,
-      transmission: 0.6,
-      opacity: 0.92,
+      color: 0xfdfbf7,
+      metalness: 0.08,
+      roughness: 0.12,
+      transmission: 0.75,
+      opacity: 0.95,
       transparent: true,
-      thickness: 0.2,
+      thickness: 0.25,
     });
 
-    // 5. 3D Elements Group
+    // 5. Main 3D Composition Group
     const mainGroup = new THREE.Group();
     scene.add(mainGroup);
 
-    // A. Floating Gold Coins
-    const coins = [];
-    const coinGeo = new THREE.CylinderGeometry(0.7, 0.7, 0.1, 32);
-    const coinPositions = [
-      { x: -1.8, y: 1.2, z: 0.8, rx: 0.4, ry: 0.5 },
-      { x: 2.1, y: -0.9, z: 1.1, rx: 0.8, ry: 0.2 },
-      { x: 0.9, y: 1.6, z: -0.5, rx: 0.2, ry: 0.9 },
+    // A. 3D Floating Gold Circles with Embossed Text
+    const coinTextures = [];
+    const createCoinTexture = (symbol, textLine1, textLine2) => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext("2d");
+
+      // Premium Metallic Gold Surface Gradient
+      const grad = ctx.createRadialGradient(256, 256, 20, 256, 256, 250);
+      grad.addColorStop(0, "#fffbeb");
+      grad.addColorStop(0.35, "#fde047");
+      grad.addColorStop(0.7, "#d4af37");
+      grad.addColorStop(1, "#854d0e");
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(256, 256, 250, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Outer Maroon & Gold Coin Border Ring
+      ctx.lineWidth = 16;
+      ctx.strokeStyle = "#9e241d";
+      ctx.beginPath();
+      ctx.arc(256, 256, 238, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(256, 256, 222, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      // Center Symbol (₹ / ★ / 📈)
+      if (symbol) {
+        ctx.font = "900 130px 'Segoe UI', Arial, sans-serif";
+        ctx.fillStyle = "#78350f";
+        ctx.fillText(symbol, 256, 195);
+      }
+
+      // Line 1: Primary Text
+      if (textLine1) {
+        ctx.font = "900 42px 'Segoe UI', Arial, sans-serif";
+        ctx.fillStyle = "#9e241d";
+        ctx.fillText(textLine1, 256, 310);
+      }
+
+      // Line 2: Subtitle Text
+      if (textLine2) {
+        ctx.font = "800 32px 'Segoe UI', Arial, sans-serif";
+        ctx.fillStyle = "#1e293b";
+        ctx.fillText(textLine2, 256, 365);
+      }
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.needsUpdate = true;
+      coinTextures.push(texture);
+      return texture;
+    };
+
+    const coinData = [
+      {
+        x: -1.9,
+        y: 1.3,
+        z: 0.8,
+        rx: 0.2,
+        ry: 0.3,
+        symbol: "₹",
+        line1: "SINCE 1991",
+        line2: "TRUSTED",
+      },
+      {
+        x: 2.2,
+        y: -0.9,
+        z: 1.1,
+        rx: 0.1,
+        ry: -0.3,
+        symbol: "★",
+        line1: "100% SECURE",
+        line2: "WEALTH",
+      },
+      {
+        x: 1.0,
+        y: 1.7,
+        z: -0.5,
+        rx: 0.3,
+        ry: 0.2,
+        symbol: "📈",
+        line1: "GROWTH",
+        line2: "EXPERT",
+      },
     ];
 
-    coinPositions.forEach((pos) => {
-      const coin = new THREE.Mesh(coinGeo, goldMaterial);
-      coin.position.set(pos.x, pos.y, pos.z);
-      coin.rotation.set(pos.rx, pos.ry, 0);
+    const coins = [];
+    const coinGeo = new THREE.CylinderGeometry(0.75, 0.75, 0.12, 36);
+
+    coinData.forEach((c) => {
+      const tex = createCoinTexture(c.symbol, c.line1, c.line2);
+      const capMat = new THREE.MeshStandardMaterial({
+        map: tex,
+        roughness: 0.2,
+        metalness: 0.6,
+      });
+
+      const materials = [goldMaterial, capMat, capMat];
+      const coin = new THREE.Mesh(coinGeo, materials);
+      coin.position.set(c.x, c.y, c.z);
+      // Set rotation so flat circular cap faces forward towards camera with subtle 3D tilt
+      coin.rotation.set(Math.PI / 2 + c.rx, c.ry, 0);
       mainGroup.add(coin);
       coins.push(coin);
     });
 
-    // Extended & Larger BSE & NSE Stamp Texture for Document Card
+    // B. BSE & NSE Share Certificate Texture Stamp
     const createBseNseTexture = () => {
       const canvas = document.createElement("canvas");
       canvas.width = 512;
@@ -101,25 +199,25 @@ export const Hero3DScene = () => {
 
       ctx.clearRect(0, 0, 512, 512);
 
-      // Dual Gold & Crimson Frame
-      ctx.lineWidth = 10;
-      ctx.strokeStyle = "rgba(158, 36, 29, 0.75)";
-      ctx.strokeRect(20, 20, 472, 472);
+      // Gold & Maroon Double Frame
+      ctx.lineWidth = 12;
+      ctx.strokeStyle = "#9e241d";
+      ctx.strokeRect(18, 18, 476, 476);
 
-      ctx.lineWidth = 5;
-      ctx.strokeStyle = "rgba(212, 175, 55, 0.85)";
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = "#d4af37";
       ctx.strokeRect(34, 34, 444, 444);
 
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
 
       // Header Label
-      ctx.font = "800 38px 'Segoe UI', Arial, sans-serif";
-      ctx.fillStyle = "#64748b";
-      ctx.fillText("REGISTERED", 256, 82);
+      ctx.font = "800 36px 'Segoe UI', Arial, sans-serif";
+      ctx.fillStyle = "#475569";
+      ctx.fillText("PARSHWA CONSULTANCY", 256, 80);
 
-      // BSE Text
-      ctx.font = "900 120px 'Segoe UI', Arial, sans-serif";
+      // BSE Stamp Text
+      ctx.font = "900 115px 'Segoe UI', Arial, sans-serif";
       ctx.fillStyle = "#9e241d";
       ctx.fillText("BSE", 256, 175);
 
@@ -128,18 +226,18 @@ export const Hero3DScene = () => {
       ctx.moveTo(60, 256);
       ctx.lineTo(452, 256);
       ctx.lineWidth = 6;
-      ctx.strokeStyle = "rgba(212, 175, 55, 0.9)";
+      ctx.strokeStyle = "#d4af37";
       ctx.stroke();
 
-      // NSE Text
-      ctx.font = "900 120px 'Segoe UI', Arial, sans-serif";
+      // NSE Stamp Text
+      ctx.font = "900 115px 'Segoe UI', Arial, sans-serif";
       ctx.fillStyle = "#b8860b";
       ctx.fillText("NSE", 256, 345);
 
       // Subtitle
-      ctx.font = "800 34px 'Segoe UI', Arial, sans-serif";
-      ctx.fillStyle = "#64748b";
-      ctx.fillText("SHARES & STOCKS", 256, 435);
+      ctx.font = "800 32px 'Segoe UI', Arial, sans-serif";
+      ctx.fillStyle = "#475569";
+      ctx.fillText("EQUITY & DEMAT VAULT", 256, 435);
 
       const texture = new THREE.CanvasTexture(canvas);
       texture.needsUpdate = true;
@@ -147,64 +245,62 @@ export const Hero3DScene = () => {
     };
 
     const bseNseTexture = createBseNseTexture();
-
     const bseNseMaterial = new THREE.MeshBasicMaterial({
       map: bseNseTexture,
       transparent: true,
-      opacity: 0.95,
+      opacity: 0.96,
       side: THREE.DoubleSide,
     });
 
-    // B. Floating Share Certificate Document Panel
+    // C. Floating Share Certificate Document Panel
     const docGroup = new THREE.Group();
-    const docGeo = new THREE.BoxGeometry(1.6, 2.2, 0.05);
+    const docGeo = new THREE.BoxGeometry(1.65, 2.25, 0.05);
     const docMesh = new THREE.Mesh(docGeo, acrylicMaterial);
     docGroup.add(docMesh);
 
-    // Extended Larger BSE and NSE Text Stamp on Card
-    const stampGeo = new THREE.PlaneGeometry(1.2, 1.4);
+    const stampGeo = new THREE.PlaneGeometry(1.25, 1.45);
     const stampMesh = new THREE.Mesh(stampGeo, bseNseMaterial);
-    stampMesh.position.set(0, 0.15, 0.03);
+    stampMesh.position.set(0, 0.15, 0.035);
     docGroup.add(stampMesh);
 
-    // Seal on Document
-    const sealGeo = new THREE.CylinderGeometry(0.22, 0.22, 0.07, 24);
+    // Official Seal on Document
+    const sealGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.07, 32);
     const sealMesh = new THREE.Mesh(sealGeo, goldMaterial);
     sealMesh.rotation.x = Math.PI / 2;
-    sealMesh.position.set(0.4, -0.6, 0.04);
+    sealMesh.position.set(0.42, -0.62, 0.045);
     docGroup.add(sealMesh);
 
     docGroup.position.set(-0.6, 0.1, 0.2);
     docGroup.rotation.set(0.15, -0.25, 0.08);
     mainGroup.add(docGroup);
 
-    // C. Wealth Growth Torus Ring
-    const torusGeo = new THREE.TorusGeometry(2.3, 0.06, 16, 100);
+    // D. Wealth Growth Dual Torus Rings
+    const torusGeo = new THREE.TorusGeometry(2.35, 0.06, 16, 100);
     const torusRing = new THREE.Mesh(torusGeo, crimsonMaterial);
     torusRing.rotation.x = Math.PI / 3;
     torusRing.rotation.y = 0.2;
     mainGroup.add(torusRing);
 
-    const innerTorusGeo = new THREE.TorusGeometry(1.7, 0.03, 16, 80);
+    const innerTorusGeo = new THREE.TorusGeometry(1.75, 0.035, 16, 80);
     const innerTorusRing = new THREE.Mesh(innerTorusGeo, goldMaterial);
     innerTorusRing.rotation.x = -Math.PI / 4;
     innerTorusRing.rotation.y = -0.3;
     mainGroup.add(innerTorusRing);
 
-    // D. Abstract Bar Chart Blocks
+    // E. Financial Growth Bar Chart Blocks
     const barGroup = new THREE.Group();
-    const barHeights = [0.6, 1.1, 1.6, 2.2];
+    const barHeights = [0.65, 1.15, 1.65, 2.25];
     barHeights.forEach((h, i) => {
-      const barGeo = new THREE.BoxGeometry(0.3, h, 0.3);
+      const barGeo = new THREE.BoxGeometry(0.32, h, 0.32);
       const barMat = i % 2 === 0 ? crimsonMaterial : goldMaterial;
       const bar = new THREE.Mesh(barGeo, barMat);
-      bar.position.set(1.4 + i * 0.45, -1.0 + h / 2, -0.4);
+      bar.position.set(1.45 + i * 0.45, -1.0 + h / 2, -0.4);
       barGroup.add(bar);
     });
     mainGroup.add(barGroup);
 
-    // E. Ambient Floating Particles
-    const particleCount = 120;
+    // F. Ambient Floating Gold Dust Particles
+    const particleCount = 140;
     const particleGeo = new THREE.BufferGeometry();
     const posArray = new Float32Array(particleCount * 3);
 
@@ -220,16 +316,16 @@ export const Hero3DScene = () => {
     );
 
     const particleMat = new THREE.PointsMaterial({
-      size: 0.04,
-      color: 0xd4af37,
+      size: 0.045,
+      color: 0xfde047,
       transparent: true,
-      opacity: 0.65,
+      opacity: 0.7,
     });
 
     const particlePoints = new THREE.Points(particleGeo, particleMat);
     scene.add(particlePoints);
 
-    // 6. Interaction & Motion Tracking
+    // 6. Smooth Mouse Parallax Interaction
     let mouseX = 0;
     let mouseY = 0;
     let targetMouseX = 0;
@@ -250,29 +346,29 @@ export const Hero3DScene = () => {
       animationFrameId = requestAnimationFrame(animate);
       const elapsedTime = clock.getElapsedTime();
 
-      // Smooth Mouse Interpolation (Lerp)
+      // Smooth Lerp Interpolation
       mouseX += (targetMouseX - mouseX) * 0.05;
       mouseY += (targetMouseY - mouseY) * 0.05;
 
-      // Group Parallax & Tilt
-      mainGroup.rotation.y = elapsedTime * 0.08 + mouseX * 0.3;
-      mainGroup.rotation.x = Math.sin(elapsedTime * 0.05) * 0.08 - mouseY * 0.2;
+      // Group Tilt Parallax
+      mainGroup.rotation.y = elapsedTime * 0.08 + mouseX * 0.28;
+      mainGroup.rotation.x = Math.sin(elapsedTime * 0.05) * 0.08 - mouseY * 0.18;
 
-      // Coins Gentle Spin & Bobbing
+      // Coins Bobbing & Spin
       coins.forEach((coin, idx) => {
         coin.rotation.y += 0.015 * (idx % 2 === 0 ? 1 : -1);
         coin.position.y += Math.sin(elapsedTime * 1.5 + idx) * 0.0015;
       });
 
-      // Document Float
+      // Share Document Float
       docGroup.position.y = 0.1 + Math.sin(elapsedTime * 1.2) * 0.08;
       docGroup.rotation.z = 0.08 + Math.cos(elapsedTime * 0.8) * 0.03;
 
-      // Torus Rings
+      // Wealth Torus Rings
       torusRing.rotation.z += 0.003;
       innerTorusRing.rotation.z -= 0.005;
 
-      // Particles Slow Drift
+      // Ambient Dust Drift
       particlePoints.rotation.y = elapsedTime * 0.02;
 
       renderer.render(scene, camera);
@@ -280,7 +376,7 @@ export const Hero3DScene = () => {
 
     animate();
 
-    // 8. Resize Handler
+    // 8. Responsive Resize Handler
     const handleResize = () => {
       if (!containerRef.current) return;
       const w = containerRef.current.clientWidth;
@@ -302,7 +398,6 @@ export const Hero3DScene = () => {
         container.removeChild(renderer.domElement);
       }
 
-      // Dispose Geometries & Materials
       coinGeo.dispose();
       docGeo.dispose();
       sealGeo.dispose();
@@ -312,6 +407,7 @@ export const Hero3DScene = () => {
       particleGeo.dispose();
 
       bseNseTexture.dispose();
+      coinTextures.forEach((t) => t.dispose());
 
       goldMaterial.dispose();
       crimsonMaterial.dispose();
@@ -325,8 +421,14 @@ export const Hero3DScene = () => {
   if (!isWebGLSupported || prefersReduced) {
     return (
       <div className="hero-3d-fallback">
-        <div className="hero-3d-fallback-ring" />
-        <div className="hero-3d-fallback-coin" />
+        <svg viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', maxHeight: '380px' }}>
+          <circle cx="200" cy="150" r="110" stroke="#D4AF37" strokeWidth="2" strokeDasharray="6 6" />
+          <circle cx="200" cy="150" r="80" stroke="#9E241D" strokeWidth="3" />
+          <rect x="140" y="100" width="120" height="100" rx="8" fill="#FDFBF7" stroke="#D4AF37" strokeWidth="2" />
+          <rect x="160" y="120" width="80" height="10" rx="3" fill="#9E241D" />
+          <rect x="160" y="140" width="60" height="6" rx="2" fill="#64748B" />
+          <circle cx="200" cy="170" r="12" fill="#D4AF37" />
+        </svg>
       </div>
     );
   }

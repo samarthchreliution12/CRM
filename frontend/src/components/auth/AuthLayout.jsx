@@ -1,4 +1,6 @@
 import React, { lazy, Suspense } from "react";
+import { Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import headerLogo from "../../assets/website/logo/header-logo.png";
 import "./AuthLayout.css";
 
@@ -21,7 +23,13 @@ const AuthLayout = ({ children }) => {
         </div>
 
         <div className="auth-logo">
-          <img src={headerLogo} alt="Parshwa Consultancy" className="auth-logo-img" />
+          <Link to="/" className="auth-logo-img-link" title="Parshwa Consultancy Home">
+            <img src={headerLogo} alt="Parshwa Consultancy" className="auth-logo-img" />
+          </Link>
+          <Link to="/" className="auth-brand-home-link">
+            <ArrowLeft size={15} />
+            <span>Back to Home</span>
+          </Link>
         </div>
 
         <div className="auth-branding-content">

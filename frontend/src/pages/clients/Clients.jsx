@@ -23,8 +23,12 @@ import {
   Trash2,
   UserCheck,
   UserX,
+  Award,
+  Crown,
+  Gem,
 } from "lucide-react";
 import "./Clients.css";
+
 
 const getInitials = (name) => {
   if (!name) return "CL";
@@ -60,6 +64,49 @@ const maskEmail = (email) => {
   return `${firstChar}******@${domain}`;
 };
 
+const renderCategoryBadge = (categoryStr) => {
+  if (!categoryStr) return <span className="text-muted-dash">-</span>;
+  const clean = categoryStr.toString().trim().toUpperCase();
+
+  switch (clean) {
+    case "BRONZE":
+      return (
+        <span className="category-badge cat-bronze">
+          <Award size={13} className="cat-icon" />
+          <span>Bronze</span>
+        </span>
+      );
+    case "SILVER":
+      return (
+        <span className="category-badge cat-silver">
+          <Award size={13} className="cat-icon" />
+          <span>Silver</span>
+        </span>
+      );
+    case "GOLD":
+      return (
+        <span className="category-badge cat-gold">
+          <Crown size={13} className="cat-icon" />
+          <span>Gold</span>
+        </span>
+      );
+    case "PLATINUM":
+      return (
+        <span className="category-badge cat-platinum">
+          <Gem size={13} className="cat-icon" />
+          <span>Platinum</span>
+        </span>
+      );
+    default:
+      return (
+        <span className="category-badge cat-bronze">
+          <Award size={13} className="cat-icon" />
+          <span>{clean}</span>
+        </span>
+      );
+  }
+};
+
 const Clients = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -86,6 +133,13 @@ const Clients = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
+  // Category Change Modal State
+  const [targetCategoryClient, setTargetCategoryClient] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState("BRONZE");
+  const [isSavingCategory, setIsSavingCategory] = useState(false);
+  const [categoryError, setCategoryError] = useState("");
+
 
   // Import / Export Dropdown & Selection State
   const [isImpExpOpen, setIsImpExpOpen] = useState(false);
@@ -381,8 +435,42 @@ const Clients = () => {
     }
   };
 
+  // Save Client Category Handler
+  const handleSaveCategory = async () => {
+    if (!targetCategoryClient) return;
+    if (!canEdit) {
+      triggerPermissionToast("You do not have permission to edit clients.");
+      setTargetCategoryClient(null);
+      return;
+    }
+
+    try {
+      setIsSavingCategory(true);
+      setCategoryError("");
+
+      await ClientService.updateClientCategory(targetCategoryClient.id, selectedCategory, token);
+
+      setClients((prev) =>
+        prev.map((c) => (c.id === targetCategoryClient.id ? { ...c, client_category: selectedCategory } : c))
+      );
+
+      const catCap = selectedCategory.charAt(0) + selectedCategory.slice(1).toLowerCase();
+      setSuccessMessage(`Category for client "${targetCategoryClient.name}" updated to ${catCap} successfully.`);
+      setTimeout(() => {
+        setSuccessMessage("");
+      }, 4000);
+
+      setTargetCategoryClient(null);
+    } catch (err) {
+      setCategoryError(err.message || "Failed to update client category.");
+    } finally {
+      setIsSavingCategory(false);
+    }
+  };
+
   // Toggle Client Active / Inactive Status
   const handleToggleStatus = async (clientItem) => {
+
     const newStatus = clientItem.status === "inactive" ? "active" : "inactive";
     try {
       await ClientService.updateClientStatus(clientItem.id, newStatus, token);
@@ -756,13 +844,7 @@ const Clients = () => {
                           </span>
                         </td> */}
                         <td>
-                          {client.client_category ? (
-                            <span className={`category-badge cat-${client.client_category.toLowerCase()}`}>
-                              {client.client_category}
-                            </span>
-                          ) : (
-                            <span className="text-muted-dash">-</span>
-                          )}
+                          {renderCategoryBadge(client.client_category)}
                         </td>
                         <td>
                           <div className="contact-cell">
@@ -869,6 +951,25 @@ const Clients = () => {
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setOpenActionsMenuId(null);
+                                    if (!canEdit) {
+                                      triggerPermissionToast("You do not have permission to edit clients.");
+                                      return;
+                                    }
+                                    setCategoryError("");
+                                    setTargetCategoryClient(client);
+                                    setSelectedCategory((client.client_category || "BRONZE").toUpperCase());
+                                  }}
+                                >
+                                  <Award size={14} className="menu-action-icon" />
+                                  <span>Change Category</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  className="actions-menu-item"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenActionsMenuId(null);
                                     handleToggleStatus(client);
                                   }}
                                 >
@@ -884,6 +985,7 @@ const Clients = () => {
                                     </>
                                   )}
                                 </button>
+
 
                                 <button
                                   type="button"
@@ -1145,8 +1247,114 @@ const Clients = () => {
           </div>
         </div>
       )}
+      {/* Change Client Category Modal */}
+      {targetCategoryClient && (
+        <div className="modal-backdrop">
+          <div className="category-modal-card">
+            <div className="category-modal-header">
+              <div className="category-modal-header-text">
+                <h3 className="category-modal-title">Change Client Category</h3>
+                <p className="category-modal-desc">
+                  Select a new service tier category for this client.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn-export-modal-close"
+                onClick={() => setTargetCategoryClient(null)}
+                disabled={isSavingCategory}
+                aria-label="Close modal"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="category-modal-body">
+              {categoryError && (
+                <div className="banner-error" style={{ marginBottom: "1rem" }}>
+                  <AlertCircle size={16} />
+                  <span>{categoryError}</span>
+                </div>
+              )}
+
+              <div className="category-client-summary">
+                <div className="summary-field">
+                  <span className="summary-label">Client</span>
+                  <span className="summary-value-name">{targetCategoryClient.name}</span>
+                </div>
+                <div className="summary-field">
+                  <span className="summary-label">Current Category</span>
+                  <div style={{ marginTop: "0.25rem" }}>
+                    {renderCategoryBadge(targetCategoryClient.client_category)}
+                  </div>
+                </div>
+              </div>
+
+              <div className="category-option-group">
+                <label className="export-label">New Category</label>
+                <div className="category-radio-list">
+                  {[
+                    { value: "BRONZE", label: "Bronze", desc: "Standard entry-level client tier" },
+                    { value: "SILVER", label: "Silver", desc: "Preferred active client tier" },
+                    { value: "GOLD", label: "Gold", desc: "High-value premium client tier" },
+                    { value: "PLATINUM", label: "Platinum", desc: "Exclusive top-tier VIP client category" },
+                  ].map((cat) => (
+                    <label
+                      key={cat.value}
+                      className={`category-radio-item ${selectedCategory === cat.value ? "selected" : ""}`}
+                      onClick={() => setSelectedCategory(cat.value)}
+                    >
+                      <input
+                        type="radio"
+                        name="clientCategoryChoice"
+                        value={cat.value}
+                        checked={selectedCategory === cat.value}
+                        onChange={() => setSelectedCategory(cat.value)}
+                        disabled={isSavingCategory}
+                      />
+                      <div className="category-radio-content">
+                        <div className="category-radio-header">
+                          {renderCategoryBadge(cat.value)}
+                        </div>
+                        <span className="category-radio-desc">{cat.desc}</span>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="category-modal-footer">
+              <button
+                type="button"
+                className="btn-export-cancel"
+                onClick={() => setTargetCategoryClient(null)}
+                disabled={isSavingCategory}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-export-submit"
+                onClick={handleSaveCategory}
+                disabled={isSavingCategory}
+              >
+                {isSavingCategory ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Save Changes...</span>
+                  </>
+                ) : (
+                  <span>Save Changes</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppLayout>
   );
 };
 
 export default Clients;
+

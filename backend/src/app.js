@@ -22,9 +22,17 @@ const groupRoutes = require("./routes/group.routes");
 const adminAuditLogRoutes = require("./routes/adminAuditLog.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
 const sitemapRoutes = require("./routes/sitemap.routes");
+const helmet = require("helmet");
 const errorHandler = require("./middleware/error.middleware");
 
 const app = express();
+
+app.use(
+  helmet({
+    contentSecurityPolicy: false, // Disable default CSP to allow React app styles & inline assets during development
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+);
 
 const allowedOrigins = [
   process.env.CLIENT_URL,

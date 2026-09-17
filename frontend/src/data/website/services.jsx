@@ -1,4 +1,5 @@
 import React from 'react';
+import Service3DIcon from '../../components/website/services/Service3DIcon';
 
 import dematImg from '../../assets/website/services/DEMAT-services.png';
 import mutualFundImg from '../../assets/website/services/MUTUAL-FUND.png';
@@ -16,15 +17,11 @@ export const servicesData = [
     id: 'demat',
     slug: 'demat',
     title: 'Demat Services',
+    categoryPill: 'DEMAT & DEPOSITORY',
     description: 'Secure Electronic Storage & Securities Management',
     intro: 'A Demat (Dematerialized) account provides a secure, electronic repository to hold equity shares, mutual fund units, government bonds, and Sovereign Gold Bonds (SGBs) under NSDL/CDSL depositories.',
     image: dematImg,
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="5" width="20" height="14" rx="2" />
-        <line x1="2" y1="10" x2="22" y2="10" />
-      </svg>
-    ),
+    icon: <Service3DIcon slug="demat" size={28} />,
     overviewHeading: 'Manage & Safeguard Your Securities Digitally',
     overviewParagraphs: [
       'Dematerialization converts physical paper share certificates into electronic book-entry format maintained with national depositories NSDL and CDSL. This completely eliminates the risks of paper certificate loss, theft, forgery, or transit damage.',
@@ -36,6 +33,12 @@ export const servicesData = [
       { title: 'Automated Credit', desc: 'Instant credit of corporate benefits like bonus shares, stock splits, and dividend entitlements.' },
       { title: 'Nomination & Joint Access', desc: 'Simplified online nomination additions and joint holder management for full legal security.' },
       { title: 'Consolidated Tracking', desc: 'One unified statement providing complete clarity across all asset classes.' },
+    ],
+    whatWeOffer: [
+      { title: 'New Demat Account Opening', desc: 'Assistance with NSDL/CDSL account setup for individuals, HUFs, NRIs, and corporate entities.' },
+      { title: 'Paper Share Dematerialization', desc: 'End-to-end processing to convert physical share certificates into electronic book-entry holdings.' },
+      { title: 'Account Consolidation & Updates', desc: 'Merging fragmented folios, updating KYC, address changes, and registering nominee details.' },
+      { title: 'Transmission & Joint Holder Support', desc: 'Handling share transmission for legal heirs and updating joint holder additions or deletions.' },
     ],
     whoItIsFor: [
       'Individual Investors',
@@ -55,20 +58,26 @@ export const servicesData = [
       'Nomination details must be registered to ensure seamless transmission to legal nominees.',
       'Periodic KYC updates are required in compliance with SEBI and Depository regulations.',
     ],
+    faqs: [
+      { question: 'What is a Demat account and why is it mandatory?', answer: 'A Demat (Dematerialized) account holds shares and securities in an electronic format instead of physical paper certificates. Under SEBI regulations, a Demat account is mandatory for holding, trading, or transferring equity shares on Indian stock exchanges.' },
+      { question: 'Which depositories manage Demat accounts in India?', answer: 'Demat accounts in India are maintained by two central depositories: National Securities Depository Limited (NSDL) and Central Depository Services (India) Limited (CDSL). Parshwa Consultancy provides guidance for accounts registered under DP frameworks.' },
+      { question: 'Can I convert my physical share certificates into Demat form?', answer: 'Yes, physical paper share certificates can be converted into electronic Demat holdings through the Dematerialization Request Form (DRF) process. We audit your physical certificates and assist with complete RTA submission.' },
+      { question: 'What documents are required to open a Demat account?', answer: 'The essential documents include a valid PAN card, Aadhaar card for address verification, proof of an active bank account (cancelled cheque or bank statement), and recent passport-size photographs.' },
+      { question: 'Is nomination compulsory for Demat accounts?', answer: 'Yes, SEBI has made nomination mandatory for all individual Demat accounts to ensure hassle-free transfer of holdings to legal nominees in case of unforeseen events.' },
+    ],
+    ctaHeading: 'Need Help Setting Up or Managing Your Demat Account?',
+    ctaSubtext: 'Get in touch with our depository desk for assistance with account opening, paper share dematerialization, or folio updates.',
+    ctaButtonText: 'Contact Our Demat Desk',
   },
   {
     id: 'mutual-fund',
     slug: 'mutual-fund',
     title: 'Mutual Fund Advisory',
+    categoryPill: 'WEALTH MANAGEMENT',
     description: 'Disciplined Asset Allocation & Goal-Based Wealth Growth',
     intro: 'Mutual fund advisory focuses on building customized, research-backed portfolios across equity, debt, index, and hybrid schemes tailored to your unique financial goals and risk capacity.',
     image: mutualFundImg,
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-        <polyline points="17 6 23 6 23 12" />
-      </svg>
-    ),
+    icon: <Service3DIcon slug="mutual-fund" size={28} />,
     overviewHeading: 'Strategic Wealth Creation Through Professional Asset Management',
     overviewParagraphs: [
       'Mutual funds offer investors access to professionally managed, diversified portfolios across domestic equity, fixed income, debt instruments, and global indices. By spreading risk across multiple asset classes, mutual funds help optimize capital growth while controlling volatility.',
@@ -80,6 +89,12 @@ export const servicesData = [
       { title: 'Disciplined SIP Execution', desc: 'Automated Systematic Investment Plans (SIP) to benefit from rupee-cost averaging.' },
       { title: 'Tax Efficiency (ELSS)', desc: 'Save tax under Section 80C while building long-term equity capital.' },
       { title: 'Periodic Rebalancing', desc: 'Regular performance reviews and tactical adjustments across debt and equity categories.' },
+    ],
+    whatWeOffer: [
+      { title: 'Goal-Based Financial Planning', desc: 'Designing dedicated portfolios for retirement, higher education, home purchase, and wealth creation.' },
+      { title: 'SIP & Lumpsum Structuring', desc: 'Setting up automated monthly SIPs or strategic lumpsum allocations across evaluated AMCs.' },
+      { title: 'Tax-Saving ELSS Advisory', desc: 'Selecting Equity Linked Savings Schemes to optimize Section 80C tax deductions.' },
+      { title: 'Portfolio Review & Rebalancing', desc: 'Periodic evaluation of scheme performance and tactical asset allocation adjustments.' },
     ],
     whoItIsFor: [
       'Salaried Professionals',
@@ -99,21 +114,25 @@ export const servicesData = [
       'Past scheme performance is evaluated for research purposes and does not guarantee future returns.',
       'SIP investments benefit from compounding over longer time horizons of 5 to 7+ years.',
     ],
+    faqs: [
+      { question: 'What is the difference between SIP and Lumpsum investment?', answer: 'A Systematic Investment Plan (SIP) allows you to invest a fixed amount regularly (monthly or quarterly), benefiting from rupee-cost averaging. A Lumpsum investment involves deploying a one-time capital amount into selected schemes.' },
+      { question: 'How does ELSS help in tax saving under Section 80C?', answer: 'Equity Linked Savings Schemes (ELSS) are tax-saving mutual funds offering tax deductions up to ₹1.5 Lakhs under Section 80C of the Income Tax Act, with a mandatory lock-in period of 3 years.' },
+      { question: 'How often should a mutual fund portfolio be reviewed?', answer: 'We recommend reviewing mutual fund portfolios semi-annually or annually to ensure scheme alignment with your long-term financial goals and to rebalance asset allocation if market movements cause shifts.' },
+      { question: 'What are direct vs regular mutual fund plans?', answer: 'Direct plans are purchased directly from the Asset Management Company (AMC) without distribution expense ratios, while regular plans are routed through registered distributors who provide advisory, execution, and portfolio reporting services.' },
+    ],
+    ctaHeading: 'Start Building Your Goal-Aligned Mutual Fund Portfolio Today',
+    ctaSubtext: 'Speak with our wealth advisory team to design a disciplined investment plan tailored to your long-term goals.',
+    ctaButtonText: 'Consult Our Advisory Team',
   },
   {
     id: 'ipo',
     slug: 'ipo',
     title: 'IPO Services',
+    categoryPill: 'PRIMARY MARKET',
     description: 'Primary Market Opportunities & Issue Allocation Guidance',
     intro: 'Initial Public Offering (IPO) services provide timely analysis, quota guidance, and application assistance for upcoming mainboard and SME public issues listing on NSE and BSE.',
     image: ipoImg,
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.71 1.26-1.55 1.5-2.5" />
-        <path d="M15 9l-6 6" />
-        <path d="M9 9h6v6" />
-      </svg>
-    ),
+    icon: <Service3DIcon slug="ipo" size={28} />,
     overviewHeading: 'Early Access to High-Growth Companies Going Public',
     overviewParagraphs: [
       'An Initial Public Offering (IPO) allows investors to apply for shares when a private company expands capital by listing its stock on the primary market. Participating in well-managed IPOs offers early access to emerging industry leaders.',
@@ -125,6 +144,12 @@ export const servicesData = [
       { title: 'ASBA & UPI Guidance', desc: 'Seamless bid submission assistance via net-banking ASBA or UPI handles.' },
       { title: 'Category Strategy', desc: 'Guidance across Retail, HNI (Small/Big HNI), and Shareholder application quotas.' },
       { title: 'Allotment Tracking', desc: 'Real-time tracking of allotment results and direct credit of allocated shares to Demat.' },
+    ],
+    whatWeOffer: [
+      { title: 'Mainboard IPO Analysis', desc: 'In-depth research notes on large-cap and mid-cap companies coming to public listing.' },
+      { title: 'SME Platform Guidance', desc: 'Evaluating high-growth Small & Medium Enterprise (SME) public issues listed on NSE Emerge and BSE SME.' },
+      { title: 'HNI & Retail Quota Structuring', desc: 'Strategic bidding guidance across Retail (RII), Small HNI (bids ₹2L–₹10L), and Big HNI (bids >₹10L) categories.' },
+      { title: 'ASBA Application Support', desc: 'Assistance with bank ASBA blocking and UPI mandate approvals for smooth bid submission.' },
     ],
     whoItIsFor: [
       'Retail Stock Investors',
@@ -143,20 +168,25 @@ export const servicesData = [
       'Funds remain safely blocked in your bank account via ASBA until the allotment process is completed.',
       'IPO investments carry business and market listing risk; thorough prospectus review is essential.',
     ],
+    faqs: [
+      { question: 'What is ASBA in an IPO application?', answer: 'ASBA (Application Supported by Blocked Amount) is a SEBI-mandated facility where your application money remains blocked in your bank account until share allotment is finalized, earning bank interest during the process.' },
+      { question: 'What are the different IPO bidding categories?', answer: 'Key categories include Retail Individual Investors (RII for bids up to ₹2 Lakhs), Non-Institutional Investors (sHNI for ₹2L–₹10L and bHNI for above ₹10L), and Shareholder quota for eligible parent company holders.' },
+      { question: 'How is share allotment decided when an IPO is oversubscribed?', answer: 'In oversubscribed retail categories, allotment is determined via a computerized allotment lottery run by the registrar, ensuring equal chance for all valid applicant PANs.' },
+      { question: 'What happens if I do not get share allotment in an IPO?', answer: 'If no shares are allotted, the blocked ASBA amount in your bank account is unblocked automatically by your bank upon registrar notification.' },
+    ],
+    ctaHeading: 'Looking to Participate in Upcoming Mainboard or SME IPOs?',
+    ctaSubtext: 'Connect with our primary desk for issue analysis, ASBA application guidance, and quota placement strategy.',
+    ctaButtonText: 'Explore Upcoming IPOs',
   },
   {
     id: 'slbm',
     slug: 'slbm',
     title: 'SLBM Services',
+    categoryPill: 'SECURITIES LENDING',
     description: 'Securities Lending & Borrowing Yield Enhancement',
     intro: 'Securities Lending & Borrowing Mechanism (SLBM) is a SEBI-regulated, exchange-cleared platform allowing long-term equity investors to lend idle Demat stocks to earn yield without selling holdings.',
     image: slbmImg,
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M7 16V4M7 4L3 8M7 4L11 8" />
-        <path d="M17 8V20M17 20L21 16M17 20L13 16" />
-      </svg>
-    ),
+    icon: <Service3DIcon slug="slbm" size={28} />,
     overviewHeading: 'Earn Additional Income from Idle Long-Term Stocks',
     overviewParagraphs: [
       'SLBM enables investors who hold long-term equity shares in their Demat account to lend them to market borrowers for specific contract tenures (1 to 12 months) in exchange for a lending fee, boosting overall portfolio yield.',
@@ -168,6 +198,12 @@ export const servicesData = [
       { title: 'Clearing Guarantee', desc: '100% settlement and default protection guaranteed by National Clearing Corporations.' },
       { title: 'Retain Corporate Benefits', desc: 'Lender continues receiving all dividends, bonuses, and rights benefits.' },
       { title: 'Flexible Tenures', desc: 'Select standard monthly contract durations ranging from 1 to 12 months.' },
+    ],
+    whatWeOffer: [
+      { title: 'SLBM Portfolio Audit', desc: 'Evaluating your Demat equity portfolio against SEBI-approved liquid SLBM security lists.' },
+      { title: 'Lending Rate Strategy', desc: 'Formulating optimal lending fee quotes matching prevailing market demand and tenure cycles.' },
+      { title: 'Exchange Execution', desc: 'Placing lending orders on NSE/BSE SLBM platforms through registered clearing members.' },
+      { title: 'Corporate Action Pass-Through', desc: 'Ensuring 100% tracking and credit of corporate benefits (dividends, splits) during lending tenure.' },
     ],
     whoItIsFor: [
       'Long-Term Buy & Hold Investors',
@@ -186,20 +222,25 @@ export const servicesData = [
       'Lending fees earned through SLBM are treated as income and taxed according to applicable IT rules.',
       'Share voting rights during the specific contract tenure rest with the borrower.',
     ],
+    faqs: [
+      { question: 'Is SLBM safe for lending my long-term shares?', answer: 'Yes, SLBM is a SEBI-regulated mechanism operated through exchange clearing corporations (NSCCL/ICCL) that provide 100% settlement and counterparty clearing guarantee.' },
+      { question: 'Do I lose dividend rights when lending shares in SLBM?', answer: 'No, all economic corporate benefits including dividends, bonus shares, and stock splits declared during the lending period are passed on directly to the lender by the exchange.' },
+      { question: 'What is the typical contract duration in SLBM?', answer: 'SLBM contracts operate on monthly settlement cycles, allowing investors to lend shares for tenures ranging from 1 month up to 12 months.' },
+      { question: 'How is the lending fee determined in SLBM?', answer: 'The lending fee is determined dynamically through transparent order matching on the exchange SLBM platform based on market demand and supply.' },
+    ],
+    ctaHeading: 'Unlock Additional Yield From Your Idle Equity Holdings',
+    ctaSubtext: 'Contact our SLBM desk to check which stocks in your Demat portfolio are eligible for securities lending yield.',
+    ctaButtonText: 'Check SLBM Portfolio Eligibility',
   },
   {
     id: 'insurance',
     slug: 'insurance',
     title: 'Insurance Advisory',
+    categoryPill: 'RISK PROTECTION',
     description: 'Comprehensive Term & Health Risk Protection Planning',
     intro: 'Insurance advisory assists families and business owners in evaluating financial risk, calculating human life value, and selecting term life and health insurance coverage to protect family assets.',
     image: insuranceImg,
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-        <path d="M9 12l2 2 4-4" />
-      </svg>
-    ),
+    icon: <Service3DIcon slug="insurance" size={28} />,
     overviewHeading: 'Protecting Family Wealth Against Unforeseen Life & Health Risks',
     overviewParagraphs: [
       'A sound financial plan requires a strong risk-protection foundation. Without adequate term life and health insurance, unexpected medical emergencies or the premature loss of a primary earner can erode years of accumulated savings.',
@@ -211,6 +252,12 @@ export const servicesData = [
       { title: 'Cashless Health Coverage', desc: 'Comprehensive medical coverage with extensive hospital network access and critical illness riders.' },
       { title: 'Unbiased Policy Comparison', desc: 'Transparent evaluation of claim settlement ratios and terms across leading insurers.' },
       { title: 'Dedicated Claim Assistance', desc: 'End-to-end guidance during claim documentation, submission, and annual policy renewals.' },
+    ],
+    whatWeOffer: [
+      { title: 'Pure Term Life Insurance', desc: 'Structuring high sum-assured term life policies to replace income and cover family liabilities.' },
+      { title: 'Comprehensive Health Insurance', desc: 'Family floater and individual health insurance plans offering cashless hospitalization coverage.' },
+      { title: 'Critical Illness & Disability Riders', desc: 'Adding lump-sum payout riders for major health diagnoses and accidental permanent disability.' },
+      { title: 'Claim Settlement Desk', desc: 'Dedicated client support during claim filing, medical dossier submission, and settlement follow-ups.' },
     ],
     whoItIsFor: [
       'Primary Family Breadwinners',
@@ -229,22 +276,25 @@ export const servicesData = [
       'Term insurance provides risk coverage without investment returns, ensuring maximum sum-assured efficiency.',
       'Health insurance policies carry pre-existing disease waiting periods specified in IRDAI guidelines.',
     ],
+    faqs: [
+      { question: 'Why is pure term life insurance recommended over endowment plans?', answer: 'Pure term insurance offers maximum sum-assured coverage at significantly lower premiums, allowing families to secure essential life protection without mixing insurance with investments.' },
+      { question: 'What is Human Life Value (HLV) and how is it calculated?', answer: 'Human Life Value (HLV) measures the financial coverage required to replace a breadwinner income, considering current living expenses, inflation, loans, and future family financial goals.' },
+      { question: 'What does cashless health insurance cover?', answer: 'Cashless health insurance pays hospital bills directly to network hospitals for eligible treatments, subject to policy sum-assured limits, room rent sub-limits, and deductible conditions.' },
+      { question: 'What is Claim Settlement Ratio (CSR)?', answer: 'Claim Settlement Ratio indicates the percentage of claims paid by an insurance company out of total claims received in a financial year, serving as a key indicator of insurer reliability.' },
+    ],
+    ctaHeading: 'Ensure Comprehensive Protection for Your Family Financial Future',
+    ctaSubtext: 'Schedule a risk review with our insurance advisory team to evaluate your life and health coverage needs.',
+    ctaButtonText: 'Schedule Risk Assessment',
   },
   {
     id: 'physical-shares',
     slug: 'physical-shares',
     title: 'Physical Shares Solutions',
+    categoryPill: 'INVESTMENT RECOVERY',
     description: 'Dematerialization, Duplicate Certificate & Legacy Transmission',
     intro: 'Physical share services help investors and legal heirs convert old paper share certificates into modern electronic Demat holdings, handling duplicate issuance, signature mismatches, and RTA transmissions.',
     image: physicalSharesImg,
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-        <polyline points="14 2 14 8 20 8" />
-        <line x1="16" y1="13" x2="8" y2="13" />
-        <line x1="16" y1="17" x2="8" y2="17" />
-      </svg>
-    ),
+    icon: <Service3DIcon slug="physical-shares" size={28} />,
     overviewHeading: 'Transforming Legacy Paper Certificates Into Digital Demat Assets',
     overviewParagraphs: [
       'Many Indian families hold old paper share certificates inherited from parents or purchased decades ago. Under current SEBI regulations, physical paper shares cannot be traded or transferred on stock exchanges without first being dematerialized into electronic form.',
@@ -256,6 +306,12 @@ export const servicesData = [
       { title: 'Duplicate Share Issuance', desc: 'Documentation assistance for lost, misplaced, or damaged paper share certificates.' },
       { title: 'Legal Heir Transmission', desc: 'Handling share transmission in legal heir, joint holder, and probate succession cases.' },
       { title: 'RTA Signature Resolution', desc: 'Resolving signature mismatch, name variations, and address updates with RTAs.' },
+    ],
+    whatWeOffer: [
+      { title: 'Direct Share Dematerialization', desc: 'Auditing paper certificates and submitting Demat Request Forms (DRF) to company RTAs.' },
+      { title: 'Lost Certificate Recovery', desc: 'Drafting indemnity bonds, affidavits, and newspaper notices to obtain duplicate share certificates.' },
+      { title: 'Legal Transmission Handling', desc: 'Managing share transmission dossiers for deceased holders with succession certificates or wills.' },
+      { title: 'Name & Signature Mismatch Correction', desc: 'Liaising with corporate RTAs to rectify signature variations, name spelling errors, and old address records.' },
     ],
     whoItIsFor: [
       'Senior Citizens Holding Paper Certificates',
@@ -274,20 +330,25 @@ export const servicesData = [
       'Transmission cases require succession certificates, legal heir affidavits, or probated wills as per RTA norms.',
       'Public advertisement notices may be required for issuing duplicate certificates above prescribed market value thresholds.',
     ],
+    faqs: [
+      { question: 'Can I sell physical paper share certificates directly without Demat?', answer: 'No, SEBI regulations prohibit physical share trading on stock exchanges. Physical shares must be dematerialized into an active Demat account before they can be sold or transferred.' },
+      { question: 'What should I do if physical share certificates are lost or misplaced?', answer: 'For lost shares, a duplicate certificate issuance process is followed involving an FIR, RTA notification, legal indemnity bonds, affidavits, and newspaper public notices if required.' },
+      { question: 'How are physical shares transferred after the registered holder passes away?', answer: 'Inherited physical shares undergo legal transmission requiring death certificate verification, legal heir affidavits, indemnity forms, and succession certificates depending on total portfolio value.' },
+      { question: 'Why do RTA signature mismatch rejections happen?', answer: 'Signature mismatches occur when the signature on current DRF forms differs from old RTA specimen records signed decades ago. Bank manager verification (Form ISR-2) is required to update signatures.' },
+    ],
+    ctaHeading: 'Have Old Paper Share Certificates That Need Dematerialization or Recovery?',
+    ctaSubtext: 'Our legal and RTA desk specializes in resolving paper certificate issues, signature mismatches, and ancestral share transmissions.',
+    ctaButtonText: 'Recover Your Physical Shares',
   },
   {
     id: 'iepf',
     slug: 'iepf',
     title: 'IEPF Services',
+    categoryPill: 'CAPITAL RECOVERY',
     description: 'Reclaiming Unclaimed Dividends & Transferred IEPF Shares',
     intro: 'IEPF claim services assist original shareholders and legal heirs in recovering shares and unclaimed dividends transferred to the Investor Education and Protection Fund (IEPF) Authority under Section 124(6).',
     image: iepfImg,
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-      </svg>
-    ),
+    icon: <Service3DIcon slug="iepf" size={28} />,
     overviewHeading: 'Restoring Unclaimed Family Shares & Dividends From IEPF',
     overviewParagraphs: [
       'Under Section 124(6) of the Companies Act, if dividends on a equity share folio remain unclaimed or unpaid for seven consecutive years, the company is legally required to transfer both the unclaimed dividend amount and the underlying shares to the IEPF Authority under the Ministry of Corporate Affairs (MCA).',
@@ -299,6 +360,12 @@ export const servicesData = [
       { title: 'IEPF-5 E-Filing Support', desc: 'Precise online submission of e-form IEPF-5 on the Ministry of Corporate Affairs portal.' },
       { title: 'Nodal Officer Coordination', desc: 'Filing physical dossiers and coordinating with company Nodal Officers and RTAs.' },
       { title: 'Direct Share & Dividend Credit', desc: 'Direct credit of recovered electronic shares to Demat and dividends to linked bank account.' },
+    ],
+    whatWeOffer: [
+      { title: 'IEPF Folio & Entitlement Search', desc: 'Tracing transferred company shares and total accumulated dividend amounts across MCA databases.' },
+      { title: 'Form IEPF-5 Electronic Filing', desc: 'Preparing and e-filing official Form IEPF-5 on the Ministry of Corporate Affairs portal.' },
+      { title: 'Physical Dossier Verification', desc: 'Compiling legal verification dossiers, indemnity bonds, and affidavits for company Nodal Officers.' },
+      { title: 'Deceased Holder IEPF Claims', desc: 'Managing IEPF recovery for legal heirs incorporating share transmission and MCA approval.' },
     ],
     whoItIsFor: [
       'Shareholders with Long-Pending Unclaimed Dividends',
@@ -317,21 +384,25 @@ export const servicesData = [
       'In joint holder or deceased holder cases, share transmission documentation must precede IEPF filing.',
       'The IEPF Authority approves claims after verification report approval by company Nodal Officers.',
     ],
+    faqs: [
+      { question: 'Why are shares transferred to the IEPF Authority?', answer: 'Under Section 124(6) of the Companies Act, 2013, if dividends on a share folio remain unclaimed for seven consecutive years, the company must transfer the shares and unpaid dividends to IEPF.' },
+      { question: 'How can I check if my shares are transferred to IEPF?', answer: 'You can check IEPF status using your folio number or DP ID/Client ID on the official MCA IEPF portal, or our desk can perform a comprehensive folio entitlement search for you.' },
+      { question: 'What is Form IEPF-5?', answer: 'Form IEPF-5 is the legal online application form filed on the Ministry of Corporate Affairs portal by shareholders or legal heirs to claim back shares and dividends from the IEPF Authority.' },
+      { question: 'How long does the IEPF claim recovery process take?', answer: 'IEPF recovery typically takes 3 to 6 months depending on document verification by the company Nodal Officer and final processing approval by the MCA IEPF Authority.' },
+    ],
+    ctaHeading: 'Reclaim Your Unclaimed Shares & Dividends From IEPF',
+    ctaSubtext: 'Let our experienced IEPF claim specialists search MCA records, prepare your claim dossier, and guide your recovery.',
+    ctaButtonText: 'Start IEPF Claim Recovery',
   },
   {
     id: 'trading',
     slug: 'trading',
     title: 'Trading Account Services',
+    categoryPill: 'EXCHANGE TRADING',
     description: 'Multi-Asset Exchange Access & Executive Desk Execution',
     intro: 'Trading account services provide active investors with seamless access to equity cash, futures & options (F&O), and currency trading platforms backed by real-time streaming data and relationship desk support.',
     image: tradingImg,
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="18" y1="20" x2="18" y2="10" />
-        <line x1="12" y1="20" x2="12" y2="4" />
-        <line x1="6" y1="20" x2="6" y2="14" />
-      </svg>
-    ),
+    icon: <Service3DIcon slug="trading" size={28} />,
     overviewHeading: 'Direct Exchange Access & Intraday Trading Capabilities',
     overviewParagraphs: [
       'A trading account acts as the transaction bridge between your bank account and stock exchanges (NSE / BSE). It allows investors to place buy and sell orders across cash equity, stock futures, index options, and currency pairs.',
@@ -343,6 +414,12 @@ export const servicesData = [
       { title: 'Advanced Trading Platforms', desc: 'Feature-rich web portals, mobile apps, streaming charts, and technical indicators.' },
       { title: 'Instant Fund Transfers', desc: 'Seamless fund pay-in and pay-out linked directly with your primary bank account.' },
       { title: 'Executive Desk Execution', desc: 'Dedicated phone order placement assistance and margin management support.' },
+    ],
+    whatWeOffer: [
+      { title: 'Equity Cash & Intraday Desk', desc: 'Access to intraday leverage, delivery trading, and real-time streaming price charts.' },
+      { title: 'Futures & Options (F&O) Trading', desc: 'Index and stock derivative trading with hedging, option chain analytics, and margin benefits.' },
+      { title: 'Currency Derivatives Desk', desc: 'Trading USD-INR and key currency pairs on exchange platforms.' },
+      { title: 'Call & Trade Relationship Desk', desc: 'Dedicated phone execution desk for active traders needing direct order placement support.' },
     ],
     whoItIsFor: [
       'Intraday & Swing Equity Traders',
@@ -361,20 +438,25 @@ export const servicesData = [
       'Intraday trades require strict stop-loss discipline and awareness of square-off timings.',
       'Statutory charges including STT, Stamp Duty, Exchange Turnover Fees, and GST apply to trades.',
     ],
+    faqs: [
+      { question: 'What is the difference between a Demat account and a Trading account?', answer: 'A Trading account is used to place buy and sell orders on stock exchanges, while a Demat account holds the purchased securities in digital format.' },
+      { question: 'Which exchange segments can I trade through the account?', answer: 'You can trade across NSE and BSE Equity Cash (delivery & intraday), Stock Futures & Options, Index Derivatives (Nifty/Bank Nifty), and Currency Derivatives.' },
+      { question: 'What documents are required to activate Derivative (F&O) trading?', answer: 'To activate F&O segments, SEBI mandates submitting income proof such as 6-month bank statements, recent salary slips, ITR acknowledgment, or Demat holding statements.' },
+      { question: 'How do fund transfers work in a trading account?', answer: 'Funds can be transferred instantly into your trading account using UPI or Netbanking. Withdrawals are processed back to your registered bank account per standard settlement schedules.' },
+    ],
+    ctaHeading: 'Ready to Open Your Trading Account With Dedicated Desk Support?',
+    ctaSubtext: 'Get in touch with our trading desk for account activation, platform walkthroughs, and margin guidance.',
+    ctaButtonText: 'Open Trading Account',
   },
   {
     id: 'pms',
     slug: 'pms',
     title: 'Portfolio Management Services (PMS)',
+    categoryPill: 'PORTFOLIO MANAGEMENT',
     description: 'Customized Equity Portfolio Management for High Net Worth Investors',
     intro: 'Portfolio Management Services (PMS) provide professional, customized equity portfolio management for High Net Worth Individuals, offering direct stock ownership in the client’s individual Demat account.',
     image: pmsImg,
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-      </svg>
-    ),
+    icon: <Service3DIcon slug="pms" size={28} />,
     overviewHeading: 'Direct Stock Ownership with Focused Equity Strategies',
     overviewParagraphs: [
       'Portfolio Management Services (PMS) offer customized equity management by professional fund managers tailored specifically for HNIs and family offices. Unlike mutual funds, equity shares in a PMS strategy are held directly in your individual Demat account.',
@@ -386,6 +468,12 @@ export const servicesData = [
       { title: 'High-Conviction Portfolios', desc: 'Focused, research-backed stock selection across mid-cap, small-cap, and multi-cap themes.' },
       { title: 'Complete Transparency', desc: 'Real-time visibility into individual stock trades, costs, and holding reports.' },
       { title: 'Professional Fund Management', desc: 'SEBI-registered portfolio managers actively managing portfolio risk and asset allocation.' },
+    ],
+    whatWeOffer: [
+      { title: 'Discretionary PMS Strategies', desc: 'Full portfolio management where SEBI-registered portfolio managers execute research strategies independently.' },
+      { title: 'Non-Discretionary & Advisory PMS', desc: 'Customized portfolio advice where trade execution takes place upon client mandate approval.' },
+      { title: 'Multi-Cap & Mid-Cap Growth Themes', desc: 'Concentrated stock strategies focused on fundamental growth, capital efficiency, and market expansion.' },
+      { title: 'Dedicated HNI Desk & Audits', desc: 'Direct access to fund management teams, monthly NAV statements, and audited tax reports.' },
     ],
     whoItIsFor: [
       'High Net Worth Individuals (HNIs)',
@@ -404,21 +492,25 @@ export const servicesData = [
       'Concentrated equity portfolios carry higher stock-specific volatility compared to broad mutual fund schemes.',
       'Capital gains tax applies directly to transactions executed within your individual Demat account.',
     ],
+    faqs: [
+      { question: 'What is the minimum investment required for PMS in India?', answer: 'Under SEBI (Portfolio Managers) Regulations, the mandatory minimum investment amount for subscribing to a Portfolio Management Service (PMS) is ₹50 Lakhs per client.' },
+      { question: 'How is PMS different from Mutual Funds?', answer: 'In PMS, stocks are held directly in your individual Demat account in a concentrated portfolio (15-30 stocks), whereas Mutual Funds pool capital from many investors into unitized holding funds.' },
+      { question: 'What is the difference between Discretionary and Non-Discretionary PMS?', answer: 'In Discretionary PMS, the fund manager makes buy/sell decisions independently per strategy mandate. In Non-Discretionary PMS, the manager suggests trades but requires client approval before execution.' },
+      { question: 'How are capital gains taxed in a PMS account?', answer: 'Since stocks are bought and sold directly in your individual Demat account, capital gains taxes (STCG and LTCG) apply to each transaction and are reported in your annual tax statement.' },
+    ],
+    ctaHeading: 'Explore Research-Driven Portfolio Management Services',
+    ctaSubtext: 'Schedule a private strategy discussion with our PMS desk to evaluate high-conviction equity portfolios for your capital.',
+    ctaButtonText: 'Request PMS Consultation',
   },
   {
     id: 'aif',
     slug: 'aif',
     title: 'Alternative Investment Funds (AIF)',
+    categoryPill: 'ALTERNATIVE INVESTMENTS',
     description: 'Private Equity, Venture Capital & Non-Correlated Asset Exposure',
     intro: 'Alternative Investment Funds (AIFs) are privately pooled investment vehicles catering to sophisticated investors seeking exposure to unlisted growth equity, private debt, real estate, and hedge fund strategies.',
     image: aifImg,
-    icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polygon points="12 2 2 7 12 12 22 7 12 2" />
-        <polyline points="2 17 12 22 22 17" />
-        <polyline points="2 12 12 17 22 12" />
-      </svg>
-    ),
+    icon: <Service3DIcon slug="aif" size={28} />,
     overviewHeading: 'Institutional-Grade Access to Private Markets & Structured Assets',
     overviewParagraphs: [
       'Alternative Investment Funds (AIFs) represent pooled investment funds regulated by SEBI under Category I, II, and III mandates. They allow eligible investors to access asset classes beyond public stock exchanges.',
@@ -430,6 +522,12 @@ export const servicesData = [
       { title: 'Non-Correlated Returns', desc: 'Sophisticated investment mandates designed to generate returns independent of public equity cycles.' },
       { title: 'SEBI Regulated Governance', desc: 'Institutional fund management governed by SEBI (Alternative Investment Funds) Regulations.' },
       { title: 'Strategic Diversification', desc: 'Portfolio allocation across structured credit, real estate assets, and private growth equity.' },
+    ],
+    whatWeOffer: [
+      { title: 'Category I AIF (Venture & Infra)', desc: 'Investment access to early-stage venture capital, angel funds, social ventures, and SME infrastructure.' },
+      { title: 'Category II AIF (Private Equity & Debt)', desc: 'Exposure to private equity growth funds, venture debt, real estate funds, and corporate credit.' },
+      { title: 'Category III AIF (Hedge Funds)', desc: 'Long-short strategies, derivative trading, and quantitative hedge funds aiming for absolute returns.' },
+      { title: 'PPM Due Diligence & Reporting', desc: 'Thorough evaluation of Private Placement Memorandum (PPM) terms, lock-in structures, and quarterly NAV audits.' },
     ],
     whoItIsFor: [
       'Ultra High Net Worth Individuals (UHNIs)',
@@ -448,6 +546,15 @@ export const servicesData = [
       'Category I and II AIFs typically have lock-in periods of 3 to 7 years with limited early redemption liquidity.',
       'Private Placement Memorandum (PPM) documents must be thoroughly reviewed prior to capital subscription.',
     ],
+    faqs: [
+      { question: 'What is the minimum investment ticket size for AIF in India?', answer: 'Per SEBI (Alternative Investment Funds) Regulations, the mandatory minimum investment threshold for an investor in an AIF is ₹1 Crore (₹25 Lakhs for employees/directors of the AIF).' },
+      { question: 'What are Category I, II, and III AIFs?', answer: 'Category I funds invest in start-ups, venture capital, and infra; Category II covers private equity and private debt funds; Category III includes hedge funds using complex derivative strategies.' },
+      { question: 'What is a Private Placement Memorandum (PPM)?', answer: 'A PPM is the legal disclosure document issued by an AIF detailing investment strategy, risk factors, fee structures, management team track record, and fund tenure terms.' },
+      { question: 'Are AIF investments liquid?', answer: 'Category I and II AIFs are close-ended funds with tenure lock-in periods of 3 to 7 years where capital is returned as exits occur. Category III AIFs may offer open-ended or periodic liquidity.' },
+    ],
+    ctaHeading: 'Explore Private Market Opportunities Through Regulated AIFs',
+    ctaSubtext: 'Connect with our institutional desk to evaluate Category I, II, and III AIF strategies for your portfolio.',
+    ctaButtonText: 'Schedule AIF Strategy Meeting',
   },
 ];
 

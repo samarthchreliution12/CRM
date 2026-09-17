@@ -298,6 +298,26 @@ function App() {
             }
           />
           <Route
+            path="/settings/groups"
+            element={
+              <ProtectedRoute>
+                <AdminRoute>
+                  <UserAccess />
+                </AdminRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/permissions"
+            element={
+              <ProtectedRoute>
+                <AdminRoute>
+                  <UserAccess />
+                </AdminRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/settings/client-configuration/types"
             element={
               <ProtectedRoute>

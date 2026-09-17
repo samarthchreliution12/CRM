@@ -214,6 +214,22 @@ class DashboardService {
         )
     `);
 
+    // 3. No Term Insurance Count
+    const opp3Res = await pool.query(`
+      SELECT COUNT(DISTINCT c.id) AS count
+      FROM clients c
+      WHERE c.status = 'active' AND c.client_status = 'CLIENT'
+        AND NOT (
+          EXISTS (
+            SELECT 1 FROM client_service_assignments csa
+            JOIN client_services cs ON cs.id = csa.service_id
+            WHERE csa.client_id = c.id
+              AND (LOWER(cs.name) LIKE '%insurance%' OR LOWER(cs.name) LIKE '%term%')
+          )
+          OR (c.services IS NOT NULL AND (c.services::text ILIKE '%insurance%' OR c.services::text ILIKE '%term%'))
+        )
+    `);
+
     return {
       equityWithoutMutualFund: {
         count: parseInt(opp1Res.rows[0].count, 10) || 0,
@@ -221,8 +237,112 @@ class DashboardService {
       mutualFundWithoutEquity: {
         count: parseInt(opp2Res.rows[0].count, 10) || 0,
       },
+      noTermInsurance: {
+        count: parseInt(opp3Res.rows[0].count, 10) || 0,
+      },
+    };
+  }
+
+
+  /**
+   * Get pending client follow-ups with real PostgreSQL data.
+   * Scoped by client relationship (related_client_id IS NOT NULL, related_lead_id IS NULL)
+   * and non-final status (status NOT IN ('COMPLETED', 'CANCELLED')).
+   */
+  static async getPendingFollowups(userContext = {}) {
+    const { userId, roleName } = userContext;
+    const isAdmin = roleName === "Admin" || roleName === "admin";
+
+    let whereConditions = [
+      `t.related_client_id IS NOT NULL`,
+      `t.related_lead_id IS NULL`,
+      `t.status NOT IN ('COMPLETED', 'CANCELLED')`
+    ];
+    let params = [];
+
+    if (!isAdmin && userId) {
+      params.push(parseInt(userId, 10));
+      whereConditions.push(`(t.assigned_to = $${params.length} OR t.created_by = $${params.length})`);
+    }
+
+    const whereClause = `WHERE ${whereConditions.join(" AND ")}`;
+
+    const query = `
+      SELECT
+        t.id, t.title, t.description, t.task_type, t.priority, t.status,
+        t.due_date, t.due_time, t.completed_at, t.created_at, t.updated_at,
+        t.related_client_id, t.assigned_to,
+        c.id AS client_id, c.name AS client_name, c.ucc_no AS client_ucc,
+        au.id AS assigned_to_id, au.name AS assigned_to_name, au.email AS assigned_to_email
+      FROM tasks t
+      INNER JOIN clients c ON c.id = t.related_client_id
+      INNER JOIN users au ON au.id = t.assigned_to
+      ${whereClause}
+      ORDER BY
+        CASE
+          WHEN t.due_date < CURRENT_DATE THEN 1
+          WHEN t.due_date = CURRENT_DATE THEN 2
+          ELSE 3
+        END ASC,
+        CASE UPPER(t.priority)
+          WHEN 'HIGH' THEN 1
+          WHEN 'MEDIUM' THEN 2
+          WHEN 'LOW' THEN 3
+          ELSE 4
+        END ASC,
+        t.due_date ASC,
+        t.due_time ASC NULLS LAST,
+        t.id DESC
+      LIMIT 50
+    `;
+
+    const result = await pool.query(query, params);
+
+    const tasks = result.rows.map((row) => {
+      let formattedDueDate = null;
+      if (row.due_date) {
+        if (row.due_date instanceof Date) {
+          const yyyy = row.due_date.getFullYear();
+          const mm = String(row.due_date.getMonth() + 1).padStart(2, "0");
+          const dd = String(row.due_date.getDate()).padStart(2, "0");
+          formattedDueDate = `${yyyy}-${mm}-${dd}`;
+        } else {
+          formattedDueDate = String(row.due_date).split("T")[0];
+        }
+      }
+
+      return {
+        id: row.id,
+        title: row.title,
+        description: row.description || null,
+        task_type: row.task_type,
+        priority: row.priority,
+        status: row.status,
+        due_date: formattedDueDate,
+        due_time: row.due_time || null,
+        related_client_id: row.related_client_id,
+        client: {
+          id: row.client_id,
+          name: row.client_name,
+          full_name: row.client_name,
+          ucc_no: row.client_ucc,
+        },
+        assigned_to: row.assigned_to,
+        assigned_user: {
+          id: row.assigned_to_id,
+          name: row.assigned_to_name,
+          full_name: row.assigned_to_name,
+          email: row.assigned_to_email,
+        },
+      };
+    });
+
+    return {
+      total: tasks.length,
+      tasks,
     };
   }
 }
 
 module.exports = DashboardService;
+

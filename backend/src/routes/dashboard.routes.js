@@ -23,4 +23,11 @@ router.get(
   DashboardController.getCrossSelling
 );
 
+router.get(
+  "/pending-followups",
+  requirePermission(["client.view", "task.view", "task.read"]),
+  DashboardController.getPendingFollowups
+);
+
 module.exports = router;
+
