@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Search, Bell, HelpCircle, Menu, FileText, BellOff, ArrowRight, MessageSquare, Hash, CheckSquare, X, Loader2 } from "lucide-react";
+import { Search, Bell, HelpCircle, Menu, FileText, BellOff, ArrowRight, MessageSquare, CheckSquare, X, Loader2 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import useAuth from "../../../hooks/useAuth";
 import ClientService from "../../../services/client.service";
@@ -511,18 +511,16 @@ const Header = ({ title = "Dashboard", onToggleSidebar }) => {
                         className="notif-item unread"
                         onClick={() => {
                           setNotifDropdownOpen(false);
-                          navigate(`/communication?convId=${conv.id}&type=${conv.type}`);
+                          navigate(`/communication?convId=${conv.id}`);
                         }}
                       >
-                        <div className={`notif-item-icon-wrapper ${conv.type === "channel" ? "channel" : "direct"}`}>
-                          {conv.type === "channel" ? <Hash size={18} /> : <MessageSquare size={18} />}
+                        <div className="notif-item-icon-wrapper direct">
+                          <MessageSquare size={18} />
                         </div>
                         <div className="notif-item-content">
                           <div className="notif-item-header">
                             <span className="notif-item-title">
-                              {conv.type === "direct"
-                                ? `${conv.unread_count} new message${conv.unread_count > 1 ? "s" : ""} from ${conv.name}`
-                                : `${conv.unread_count} new message${conv.unread_count > 1 ? "s" : ""} in ${conv.name}`}
+                              {conv.unread_count} new message{conv.unread_count > 1 ? "s" : ""} from {conv.name}
                               <span className="notif-unread-dot" title="Unread" />
                             </span>
                             <span className="notif-item-time">{formatTimeAgo(conv.last_message_at)}</span>

@@ -47,6 +47,7 @@ class CommunicationModel {
       ) lm ON true
       LEFT JOIN users sender_u 
         ON lm.sender_id = sender_u.id
+      WHERE ic.type = 'direct'
       ORDER BY COALESCE(lm.created_at, ic.updated_at) DESC, ic.id DESC
     `;
 
