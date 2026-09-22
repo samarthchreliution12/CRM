@@ -39,6 +39,13 @@ async function authenticate(req, res, next) {
       return sendError(res, 403, "Your account is inactive. Please contact an administrator.");
     }
 
+    // Check token version to enforce immediate session invalidation upon password change or force logout
+    if (decoded.token_version !== undefined && user.token_version !== undefined) {
+      if (decoded.token_version !== user.token_version) {
+        return sendError(res, 401, "Session has expired or was terminated. Please log in again.");
+      }
+    }
+
     req.user = user;
     next();
   } catch (error) {

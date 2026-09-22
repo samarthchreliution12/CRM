@@ -124,7 +124,8 @@ class AuthController {
    */
   static async forgotPassword(req, res, next) {
     try {
-      const result = await AuthService.forgotPassword(req.body.email);
+      const clientOrigin = req.headers.origin || (req.headers.referer ? new URL(req.headers.referer).origin : null);
+      const result = await AuthService.forgotPassword(req.body.email, clientOrigin);
       return sendSuccess(res, 200, result.message, result);
     } catch (error) {
       next(error);
@@ -137,6 +138,43 @@ class AuthController {
   static async resetPassword(req, res, next) {
     try {
       const result = await AuthService.resetPassword(req.body);
+      return sendSuccess(res, 200, result.message);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * PUT /api/auth/change-password
+   */
+  static async changePassword(req, res, next) {
+    try {
+      const { oldPassword, currentPassword, newPassword } = req.body;
+      const currentPwd = oldPassword || currentPassword;
+      const ipAddress = req.ip || req.headers["x-forwarded-for"];
+
+      const result = await AuthService.changePassword(req.user.id, currentPwd, newPassword, ipAddress);
+      
+      // Clear refresh cookie since sessions are revoked
+      res.clearCookie("refreshToken", { path: "/api/auth" });
+
+      return sendSuccess(res, 200, result.message);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * POST /api/auth/logout-all
+   */
+  static async logoutAllDevices(req, res, next) {
+    try {
+      const ipAddress = req.ip || req.headers["x-forwarded-for"];
+      const result = await AuthService.logoutAllDevices(req.user.id, ipAddress);
+
+      res.clearCookie("refreshToken", { path: "/api/auth" });
+      res.clearCookie("token", { path: "/api/auth" });
+
       return sendSuccess(res, 200, result.message);
     } catch (error) {
       next(error);

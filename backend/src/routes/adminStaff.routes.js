@@ -27,8 +27,15 @@ router.get("/", AdminStaffController.listStaff);
  */
 router.get("/:id", validateStaffIdParam, AdminStaffController.getStaffById);
 
-// Require Admin authorization for account management mutation operations (create, update, status toggle, delete)
+// Require Admin authorization for account management mutation operations (create, update, status toggle, delete, reset password, force logout)
 router.use(requireRole("Admin"));
+
+/**
+ * @route   POST /api/admin/staff/logout-all
+ * @desc    Admin forces logout for all other users in the system
+ * @access  Private (Admin Only)
+ */
+router.post("/logout-all", AdminStaffController.logoutAll);
 
 /**
  * @route   POST /api/admin/staff
@@ -50,6 +57,20 @@ router.patch("/:id", validateStaffIdParam, validateUpdateStaffInput, AdminStaffC
  * @access  Private (Admin Only)
  */
 router.patch("/:id/status", validateStaffIdParam, validateUpdateStaffStatusInput, AdminStaffController.updateStaffStatus);
+
+/**
+ * @route   POST /api/admin/staff/:id/reset-password
+ * @desc    Admin resets password for a Staff user account
+ * @access  Private (Admin Only)
+ */
+router.post("/:id/reset-password", validateStaffIdParam, AdminStaffController.resetPassword);
+
+/**
+ * @route   POST /api/admin/staff/:id/force-logout
+ * @desc    Admin forces logout on all devices for a Staff user account
+ * @access  Private (Admin Only)
+ */
+router.post("/:id/force-logout", validateStaffIdParam, AdminStaffController.forceLogout);
 
 /**
  * @route   DELETE /api/admin/staff/:id

@@ -36,8 +36,10 @@ import WhatsAppTemplates from "./pages/communication/WhatsAppTemplates";
 import WhatsAppSettings from "./pages/communication/WhatsAppSettings";
 import Settings from "./pages/settings/Settings";
 import UserAccess from "./pages/settings/users/UserAccess";
+import ClientConfiguration from "./pages/settings/clientConfiguration/ClientConfiguration";
 import ClientTypes from "./pages/settings/clientConfiguration/ClientTypes";
 import ClientServices from "./pages/settings/clientConfiguration/ClientServices";
+import Security from "./pages/settings/security/Security";
 import AuditLogs from "./pages/settings/auditLogs/AuditLogs";
 
 import "./styles/global.css";
@@ -288,6 +290,16 @@ function App() {
             }
           />
           <Route
+            path="/settings/user-access"
+            element={
+              <ProtectedRoute>
+                <AdminRoute>
+                  <UserAccess />
+                </AdminRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/settings/users"
             element={
               <ProtectedRoute>
@@ -318,6 +330,26 @@ function App() {
             }
           />
           <Route
+            path="/settings/client-configuration"
+            element={
+              <ProtectedRoute>
+                <AdminRoute>
+                  <ClientConfiguration />
+                </AdminRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/client-configuration/client-types"
+            element={
+              <ProtectedRoute>
+                <AdminRoute>
+                  <ClientTypes />
+                </AdminRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/settings/client-configuration/types"
             element={
               <ProtectedRoute>
@@ -328,11 +360,31 @@ function App() {
             }
           />
           <Route
+            path="/settings/client-configuration/client-services"
+            element={
+              <ProtectedRoute>
+                <AdminRoute>
+                  <ClientServices />
+                </AdminRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/settings/client-configuration/services"
             element={
               <ProtectedRoute>
                 <AdminRoute>
                   <ClientServices />
+                </AdminRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings/security"
+            element={
+              <ProtectedRoute>
+                <AdminRoute>
+                  <Security />
                 </AdminRoute>
               </ProtectedRoute>
             }

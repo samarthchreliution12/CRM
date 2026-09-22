@@ -71,9 +71,38 @@ const ForgotPassword = () => {
       )}
 
       {successInfo && (
-        <div className="auth-alert auth-alert-success">
-          <CheckCircle2 size={18} />
-          <span>{successInfo.message || "If an account with that email exists, a password reset link has been created."}</span>
+        <div style={{ marginBottom: "1.25rem" }}>
+          <div className="auth-alert auth-alert-success">
+            <CheckCircle2 size={18} />
+            <span>{successInfo.message || "If an account with that email exists, a password reset link has been created."}</span>
+          </div>
+
+          {successInfo.reset_link && (
+            <div
+              style={{
+                marginTop: "0.75rem",
+                padding: "0.875rem 1rem",
+                background: "#f0f9ff",
+                border: "1px solid #bae6fd",
+                borderRadius: "8px",
+                fontSize: "0.875rem",
+                color: "#0369a1",
+              }}
+            >
+              <div style={{ fontWeight: "600", marginBottom: "0.25rem" }}>Reset Link Generated:</div>
+              <a
+                href={successInfo.reset_link}
+                style={{
+                  color: "#0284c7",
+                  wordBreak: "break-all",
+                  textDecoration: "underline",
+                  fontWeight: "500",
+                }}
+              >
+                Click here to reset your password →
+              </a>
+            </div>
+          )}
         </div>
       )}
 

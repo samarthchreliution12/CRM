@@ -205,11 +205,14 @@ const ClientTypes = () => {
             <button
               type="button"
               className="btn-back-settings"
-              onClick={() => navigate("/settings")}
+              onClick={() => navigate("/settings/client-configuration")}
             >
               <ArrowLeft size={16} />
-              <span>Back to Settings</span>
+              <span>Back to Client Configuration</span>
             </button>
+            <div style={{ fontSize: "0.825rem", color: "#64748b", fontWeight: "500", marginTop: "0.25rem" }}>
+              <span>Settings</span> / <span>Client Configuration</span> / <span style={{ color: "#0f172a", fontWeight: "600" }}>Client Types</span>
+            </div>
             <h2 className="client-config-title">Client Types</h2>
             <p className="client-config-desc">
               Manage the types available when creating client profiles.

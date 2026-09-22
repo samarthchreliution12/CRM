@@ -69,4 +69,18 @@ router.post("/forgot-password", passwordResetLimiter, validateForgotPasswordInpu
  */
 router.post("/reset-password", passwordResetLimiter, validateResetPasswordInput, AuthController.resetPassword);
 
+/**
+ * @route   PUT /api/auth/change-password
+ * @desc    Authenticated user changes password
+ * @access  Private
+ */
+router.put("/change-password", authenticate, AuthController.changePassword);
+
+/**
+ * @route   POST /api/auth/logout-all
+ * @desc    Terminate all active sessions/devices for authenticated user
+ * @access  Private
+ */
+router.post("/logout-all", authenticate, AuthController.logoutAllDevices);
+
 module.exports = router;

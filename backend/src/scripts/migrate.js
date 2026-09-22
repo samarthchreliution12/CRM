@@ -416,6 +416,29 @@ async function runMigrations() {
       CREATE INDEX IF NOT EXISTS idx_notifications_recipient_created ON notifications(recipient_user_id, created_at DESC);
       CREATE INDEX IF NOT EXISTS idx_notifications_recipient_unread ON notifications(recipient_user_id, is_read);
       CREATE INDEX IF NOT EXISTS idx_notifications_entity ON notifications(entity_type, entity_id);
+
+      -- Migration step 15: Ensure MFA, token versioning, and lockout columns on users table
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_enabled BOOLEAN DEFAULT FALSE NOT NULL;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_secret VARCHAR(255);
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS mfa_step1_timestep VARCHAR(50);
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version INTEGER DEFAULT 1 NOT NULL;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER DEFAULT 0 NOT NULL;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS lock_until TIMESTAMP WITH TIME ZONE;
+
+      -- Migration step 16: Ensure system_settings table exists and seed defaults
+      CREATE TABLE IF NOT EXISTS system_settings (
+        key VARCHAR(100) PRIMARY KEY,
+        value TEXT NOT NULL,
+        description TEXT,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+      );
+
+      INSERT INTO system_settings (key, value, description)
+      VALUES 
+        ('session_timeout_minutes', '180', 'Inactivity timeout in minutes before automatically signing users out'),
+        ('mfa_enforced', 'false', 'Require Multi-Factor Authentication for all administrative accounts'),
+        ('lockout_attempts', '5', 'Number of failed password attempts before locking an account temporarily')
+      ON CONFLICT (key) DO NOTHING;
     `);
 
     console.log("Database migrations completed successfully.");

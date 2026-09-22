@@ -1,5 +1,5 @@
 import React from "react";
-import { Trash2, UserCheck, UserX, X } from "lucide-react";
+import { Trash2, UserCheck, UserX, LogOut, X } from "lucide-react";
 import "./StaffConfirmModal.css";
 
 const StaffConfirmModal = ({ isOpen, onClose, onConfirm, type = "deactivate", staffUser = null, isSubmitting = false }) => {
@@ -8,6 +8,7 @@ const StaffConfirmModal = ({ isOpen, onClose, onConfirm, type = "deactivate", st
   const isDelete = type === "delete";
   const isDeactivate = type === "deactivate";
   const isActivate = type === "activate";
+  const isForceLogout = type === "force-logout";
 
   let title = `Deactivate ${staffUser.name}?`;
   let description = "This user will no longer be able to log in to the CRM.";
@@ -27,6 +28,12 @@ const StaffConfirmModal = ({ isOpen, onClose, onConfirm, type = "deactivate", st
     confirmBtnText = "Activate";
     iconClass = "success";
     Icon = UserCheck;
+  } else if (isForceLogout) {
+    title = `Terminate All Sessions for ${staffUser.name}?`;
+    description = "This will immediately revoke all active tokens and log this user out across all devices.";
+    confirmBtnText = "Terminate Sessions";
+    iconClass = "danger";
+    Icon = LogOut;
   }
 
   return (
@@ -58,9 +65,9 @@ const StaffConfirmModal = ({ isOpen, onClose, onConfirm, type = "deactivate", st
           </button>
           <button
             type="button"
-            className={isDelete ? "btn-cancel-profile" : "btn-edit-profile"}
+            className={isDelete || isForceLogout ? "btn-cancel-profile" : "btn-edit-profile"}
             style={
-              isDelete
+              isDelete || isForceLogout
                 ? { backgroundColor: "#dc2626", color: "#ffffff", border: "none" }
                 : isDeactivate
                 ? { backgroundColor: "#d97706", color: "#ffffff", border: "none" }
@@ -72,6 +79,8 @@ const StaffConfirmModal = ({ isOpen, onClose, onConfirm, type = "deactivate", st
             {isSubmitting
               ? isDelete
                 ? "Deleting..."
+                : isForceLogout
+                ? "Terminating..."
                 : isDeactivate
                 ? "Deactivating..."
                 : "Activating..."

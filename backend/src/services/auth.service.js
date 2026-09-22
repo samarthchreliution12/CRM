@@ -4,6 +4,7 @@ const crypto = require("crypto");
 const UserModel = require("../models/user.model");
 const RoleModel = require("../models/role.model");
 const RefreshSessionModel = require("../models/refreshSession.model");
+const SystemSettingModel = require("../models/systemSetting.model");
 const AuditService = require("./audit.service");
 const config = require("../config/env");
 
@@ -36,9 +37,48 @@ class AuthService {
       throw error;
     }
 
+    // Check brute force account lockout
+    if (user.lock_until && new Date(user.lock_until) > new Date()) {
+      const remainingMinutes = Math.ceil((new Date(user.lock_until) - new Date()) / 60000);
+      const error = new Error(`Account is temporarily locked due to consecutive failed attempts. Please try again in ${remainingMinutes} minute(s).`);
+      error.statusCode = 403;
+      throw error;
+    }
+
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
+      // Record failed login attempt and enforce static default threshold (5 failed attempts -> 15 min lockout)
+      const maxAttempts = 5;
+      const nextAttempts = (user.failed_login_attempts || 0) + 1;
+
+      let lockUntil = null;
+      if (nextAttempts >= maxAttempts) {
+        lockUntil = new Date(Date.now() + 15 * 60 * 1000); // 15-minute lock
+      }
+
+      await UserModel.recordFailedLogin(user.id, nextAttempts, lockUntil);
+
+      if (lockUntil) {
+        const error = new Error("Too many failed password attempts. Your account has been locked for 15 minutes.");
+        error.statusCode = 403;
+        throw error;
+      }
+
       throw genericError;
+    }
+
+    // Reset failed login attempts upon successful password verification
+    if (user.failed_login_attempts > 0 || user.lock_until) {
+      await UserModel.resetFailedLogins(user.id);
+    }
+
+    // If MFA is enabled on this account, pause and request 6-digit TOTP passcode
+    if (user.mfa_enabled && user.mfa_secret) {
+      return {
+        mfaRequired: true,
+        userId: user.id,
+        email: user.email,
+      };
     }
 
     // Update last login timestamp in PostgreSQL database
@@ -47,13 +87,14 @@ class AuthService {
     // Fetch sanitized profile with assigned permissions
     const userProfile = await UserModel.findByIdWithRoleAndPermissions(user.id);
 
-    // 1. Sign short-lived 30-minute Access Token
+    // 1. Sign short-lived 30-minute Access Token with token_version
     const accessToken = jwt.sign(
       {
         id: userProfile.id,
         user_id: userProfile.id,
         role_id: userProfile.role.id,
         email: userProfile.email,
+        token_version: userProfile.token_version || 1,
       },
       config.jwtSecret,
       { expiresIn: config.jwtExpiresIn }
@@ -277,11 +318,12 @@ class AuthService {
   /**
    * Generates a password reset token and link for a valid user.
    */
-  static async forgotPassword(email) {
+  static async forgotPassword(email, clientOrigin = null) {
     const user = await UserModel.findByEmail(email.trim());
     const genericMessage = "If an account with that email exists, a password reset link has been created.";
 
     if (!user || user.status !== "active") {
+      console.log(`\n[AUTH] Password reset requested for non-existent or inactive email: ${email}\n`);
       return { message: genericMessage };
     }
 
@@ -295,7 +337,14 @@ class AuthService {
       expiresIn: "15m",
     });
 
-    const resetLink = `${config.clientUrl}/reset-password?token=${resetToken}`;
+    const baseUrl = (clientOrigin && clientOrigin !== "null") ? clientOrigin.replace(/\/$/, "") : config.clientUrl.replace(/\/$/, "");
+    const resetLink = `${baseUrl}/reset-password?token=${resetToken}`;
+
+    console.log(`\n======================================================================`);
+    console.log(`🔑 PASSWORD RESET LINK GENERATED (Expires in 15 mins):`);
+    console.log(`User:       ${user.name} (${user.email})`);
+    console.log(`Reset URL:  ${resetLink}`);
+    console.log(`======================================================================\n`);
 
     return {
       message: genericMessage,
@@ -347,6 +396,76 @@ class AuthService {
     return {
       message: "Password has been reset successfully. You can now log in with your new password.",
     };
+  }
+
+  /**
+   * Authenticated user changes their own password with old password verification.
+   */
+  static async changePassword(userId, oldPassword, newPassword, ipAddress) {
+    if (!oldPassword || !newPassword) {
+      const error = new Error("Both current password and new password are required");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    if (newPassword.length < 6) {
+      const error = new Error("New password must be at least 6 characters long");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const user = await UserModel.findByEmail(
+      (await UserModel.findById(userId))?.email || ""
+    );
+
+    if (!user) {
+      const error = new Error("User account not found");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password_hash);
+    if (!isMatch) {
+      const error = new Error("Current password entered is incorrect");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const newHash = await bcrypt.hash(newPassword, 10);
+    await UserModel.updatePassword(userId, newHash);
+    await RefreshSessionModel.revokeAllUserSessions(userId);
+
+    await AuditService.log({
+      userId,
+      action: "PASSWORD_CHANGE",
+      module: "AUTH",
+      entityType: "USER",
+      entityId: userId,
+      description: `User changed password: ${user.email}`,
+      ipAddress,
+    });
+
+    return { message: "Password updated successfully. Please log in with your new password." };
+  }
+
+  /**
+   * Terminate all sessions for currently logged in user across all devices.
+   */
+  static async logoutAllDevices(userId, ipAddress) {
+    await UserModel.incrementTokenVersion(userId);
+    await RefreshSessionModel.revokeAllUserSessions(userId);
+
+    await AuditService.log({
+      userId,
+      action: "LOGOUT_ALL_DEVICES",
+      module: "AUTH",
+      entityType: "USER",
+      entityId: userId,
+      description: `User terminated all device sessions`,
+      ipAddress,
+    });
+
+    return { message: "Successfully logged out from all devices." };
   }
 }
 

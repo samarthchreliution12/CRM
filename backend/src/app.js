@@ -20,6 +20,8 @@ const adminDocumentRoutes = require("./routes/adminDocument.routes");
 const communicationRoutes = require("./routes/communication.routes");
 const groupRoutes = require("./routes/group.routes");
 const adminAuditLogRoutes = require("./routes/adminAuditLog.routes");
+const systemSettingRoutes = require("./routes/systemSetting.routes");
+const mfaRoutes = require("./routes/mfa.routes");
 const dashboardRoutes = require("./routes/dashboard.routes");
 const sitemapRoutes = require("./routes/sitemap.routes");
 const helmet = require("helmet");
@@ -27,12 +29,41 @@ const errorHandler = require("./middleware/error.middleware");
 
 const app = express();
 
-// Request logging middleware to print incoming requests in the terminal
+// Request logging middleware to print incoming requests cleanly without polling noise
 app.use((req, res, next) => {
+  const url = req.originalUrl || req.url;
+  
+  // Suppress repetitive polling and static file logs
+  const isPollingOrStatic =
+    url.startsWith("/api/notifications") ||
+    url.startsWith("/api/communication/conversations") ||
+    url.startsWith("/api/admin/documents") ||
+    url.startsWith("/api/health") ||
+    url.startsWith("/static") ||
+    url === "/favicon.ico" ||
+    url === "/manifest.json" ||
+    url.endsWith(".js") ||
+    url.endsWith(".css") ||
+    url.endsWith(".png") ||
+    url.endsWith(".jpg") ||
+    url.endsWith(".svg") ||
+    url.endsWith(".ico") ||
+    url.endsWith(".json");
+
   const start = Date.now();
   res.on("finish", () => {
     const duration = Date.now() - start;
-    console.log(`[${new Date().toLocaleTimeString()}] ${req.method} ${req.originalUrl} - ${res.statusCode} (${duration}ms)`);
+    // Log if it's not background polling/static, or if it resulted in an error (>=400), or if it's a data mutation
+    if (
+      process.env.VERBOSE_LOGGING === "true" ||
+      !isPollingOrStatic ||
+      res.statusCode >= 400 ||
+      req.method !== "GET"
+    ) {
+      console.log(
+        `[${new Date().toLocaleTimeString()}] ${req.method} ${url} - ${res.statusCode} (${duration}ms)`
+      );
+    }
   });
   next();
 });
@@ -91,6 +122,7 @@ app.get("/api/health", (req, res) => {
 
 // Authentication Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/auth/mfa", mfaRoutes);
 
 // Group Management Routes
 app.use("/api/roles/groups", groupRoutes);
@@ -101,6 +133,7 @@ app.use("/api/staff", adminStaffRoutes);
 app.use("/api/admin/staff", adminStaffRoutes);
 app.use("/api/admin/permissions", permissionRoutes);
 app.use("/api/admin/roles", rolePermissionRoutes);
+app.use("/api/admin/settings", systemSettingRoutes);
 app.use("/api/admin/client-types", adminClientTypeRoutes);
 app.use("/api/admin/client-services", adminClientServiceRoutes);
 app.use("/api/admin/documents", adminDocumentRoutes);

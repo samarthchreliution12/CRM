@@ -198,7 +198,7 @@ const InternalChat = () => {
     fetchMessages(activeConv.id, false);
     const interval = setInterval(() => {
       fetchMessages(activeConv.id, true);
-    }, 3000);
+    }, 6000);
 
     return () => clearInterval(interval);
   }, [isOpen, activeConv, fetchMessages]);

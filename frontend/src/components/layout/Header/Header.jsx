@@ -200,7 +200,7 @@ const Header = ({ title = "Dashboard", onToggleSidebar }) => {
     } catch (e) {
       // Ignore fetch errors
     }
-  }, [token, user]);
+  }, [token, user?.id]);
 
   // Polling & Location Change Refresher
   useEffect(() => {
@@ -212,7 +212,7 @@ const Header = ({ title = "Dashboard", onToggleSidebar }) => {
       fetchPendingDocCount();
       fetchCommNotifications();
       fetchDbNotifications();
-    }, 15000);
+    }, 30000);
     return () => clearInterval(interval);
   }, [fetchPendingDocCount, fetchCommNotifications, fetchDbNotifications, location.pathname]);
 

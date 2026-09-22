@@ -42,7 +42,7 @@ class RefreshSessionModel {
   }
 
   /**
-   * Revoke all active refresh sessions for a specific user (e.g. security breach / token reuse detection).
+   * Revoke all active refresh sessions for a specific user.
    */
   static async revokeAllUserSessions(userId) {
     const query = `
@@ -51,6 +51,18 @@ class RefreshSessionModel {
       WHERE user_id = $1 AND revoked_at IS NULL;
     `;
     await pool.query(query, [userId]);
+  }
+
+  /**
+   * Revoke all active refresh sessions for all other users (global force logout).
+   */
+  static async revokeAllOtherUsersSessions(currentUserId) {
+    const query = `
+      UPDATE refresh_sessions
+      SET revoked_at = CURRENT_TIMESTAMP
+      WHERE user_id != $1 AND revoked_at IS NULL;
+    `;
+    await pool.query(query, [currentUserId]);
   }
 
   /**

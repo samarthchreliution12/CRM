@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const UserModel = require("../models/user.model");
 const RoleModel = require("../models/role.model");
+const RefreshSessionModel = require("../models/refreshSession.model");
 const AuditService = require("./audit.service");
 
 class AdminStaffService {
@@ -192,6 +193,86 @@ class AdminStaffService {
     });
 
     return { message: "User deleted successfully" };
+  }
+
+  /**
+   * Admin resets password for a staff user.
+   */
+  static async resetStaffPassword(id, newPassword, adminUserId, context = {}) {
+    const targetStaff = await UserModel.findStaffById(id);
+    if (!targetStaff) {
+      const error = new Error("Staff user not found");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+      const error = new Error("Password must be at least 6 characters long");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const password_hash = await bcrypt.hash(newPassword, 10);
+    await UserModel.updatePassword(id, password_hash);
+    await RefreshSessionModel.revokeAllUserSessions(id);
+
+    await AuditService.log({
+      userId: adminUserId,
+      action: "ADMIN_RESET_PASSWORD",
+      module: "USERS",
+      entityType: "USER",
+      entityId: targetStaff.id,
+      description: `Admin reset password for user: ${targetStaff.name} (${targetStaff.email})`,
+      ipAddress: context.ipAddress,
+    });
+
+    return { message: `Password reset successfully for ${targetStaff.name}.` };
+  }
+
+  /**
+   * Admin terminates all active sessions for a staff user.
+   */
+  static async forceLogoutStaff(id, adminUserId, context = {}) {
+    const targetStaff = await UserModel.findStaffById(id);
+    if (!targetStaff) {
+      const error = new Error("Staff user not found");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    await UserModel.incrementTokenVersion(id);
+    await RefreshSessionModel.revokeAllUserSessions(id);
+
+    await AuditService.log({
+      userId: adminUserId,
+      action: "FORCE_LOGOUT_USER",
+      module: "USERS",
+      entityType: "USER",
+      entityId: targetStaff.id,
+      description: `Admin terminated all active sessions for user: ${targetStaff.name} (${targetStaff.email})`,
+      ipAddress: context.ipAddress,
+    });
+
+    return { message: `All active sessions terminated for ${targetStaff.name}.` };
+  }
+
+  /**
+   * Admin terminates sessions for ALL other users in the system.
+   */
+  static async logoutAllOtherUsers(adminUserId, context = {}) {
+    await UserModel.incrementAllOtherTokenVersions(adminUserId);
+    await RefreshSessionModel.revokeAllOtherUsersSessions(adminUserId);
+
+    await AuditService.log({
+      userId: adminUserId,
+      action: "LOGOUT_ALL_USERS",
+      module: "USERS",
+      entityType: "USER",
+      description: `Admin initiated global force logout of all other users.`,
+      ipAddress: context.ipAddress,
+    });
+
+    return { message: "All other active user sessions have been terminated." };
   }
 }
 

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import { MoreVertical, Eye, Edit2, UserCheck, UserX, Trash2 } from "lucide-react";
+import { MoreVertical, Eye, Edit2, UserCheck, UserX, Trash2, KeyRound, LogOut } from "lucide-react";
 import "./StaffTable.css";
 
-const StaffTable = ({ staffList, onView, onEdit, onToggleStatus, onDelete }) => {
+const StaffTable = ({ staffList, onView, onEdit, onToggleStatus, onDelete, onResetPassword, onForceLogout }) => {
   const [activeMenuId, setActiveMenuId] = useState(null);
   const menuRef = useRef(null);
 
@@ -112,6 +112,34 @@ const StaffTable = ({ staffList, onView, onEdit, onToggleStatus, onDelete }) => 
                             <span>Edit Staff</span>
                           </button>
 
+                          {onResetPassword && (
+                            <button
+                              type="button"
+                              className="action-menu-item"
+                              onClick={() => {
+                                setActiveMenuId(null);
+                                onResetPassword(user);
+                              }}
+                            >
+                              <KeyRound size={15} color="#0284c7" />
+                              <span>Reset Password</span>
+                            </button>
+                          )}
+
+                          {onForceLogout && (
+                            <button
+                              type="button"
+                              className="action-menu-item"
+                              onClick={() => {
+                                setActiveMenuId(null);
+                                onForceLogout(user);
+                              }}
+                            >
+                              <LogOut size={15} color="#d97706" />
+                              <span>Terminate Sessions</span>
+                            </button>
+                          )}
+
                           <button
                             type="button"
                             className="action-menu-item"
@@ -206,6 +234,32 @@ const StaffTable = ({ staffList, onView, onEdit, onToggleStatus, onDelete }) => 
                         <Edit2 size={15} color="#475569" />
                         <span>Edit Staff</span>
                       </button>
+                      {onResetPassword && (
+                        <button
+                          type="button"
+                          className="action-menu-item"
+                          onClick={() => {
+                            setActiveMenuId(null);
+                            onResetPassword(user);
+                          }}
+                        >
+                          <KeyRound size={15} color="#0284c7" />
+                          <span>Reset Password</span>
+                        </button>
+                      )}
+                      {onForceLogout && (
+                        <button
+                          type="button"
+                          className="action-menu-item"
+                          onClick={() => {
+                            setActiveMenuId(null);
+                            onForceLogout(user);
+                          }}
+                        >
+                          <LogOut size={15} color="#d97706" />
+                          <span>Terminate Sessions</span>
+                        </button>
+                      )}
                       <button
                         type="button"
                         className="action-menu-item"

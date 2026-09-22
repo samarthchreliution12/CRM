@@ -81,6 +81,47 @@ class AdminStaffController {
       next(error);
     }
   }
+
+  /**
+   * POST /api/admin/staff/:id/reset-password
+   */
+  static async resetPassword(req, res, next) {
+    try {
+      const { password, newPassword } = req.body;
+      const targetPassword = password || newPassword;
+      const context = { userId: req.user?.id, ipAddress: req.ip || req.headers["x-forwarded-for"] };
+      const result = await AdminStaffService.resetStaffPassword(req.params.id, targetPassword, req.user.id, context);
+      return sendSuccess(res, 200, result.message);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * POST /api/admin/staff/:id/force-logout
+   */
+  static async forceLogout(req, res, next) {
+    try {
+      const context = { userId: req.user?.id, ipAddress: req.ip || req.headers["x-forwarded-for"] };
+      const result = await AdminStaffService.forceLogoutStaff(req.params.id, req.user.id, context);
+      return sendSuccess(res, 200, result.message);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * POST /api/admin/staff/logout-all
+   */
+  static async logoutAll(req, res, next) {
+    try {
+      const context = { userId: req.user?.id, ipAddress: req.ip || req.headers["x-forwarded-for"] };
+      const result = await AdminStaffService.logoutAllOtherUsers(req.user.id, context);
+      return sendSuccess(res, 200, result.message);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = AdminStaffController;

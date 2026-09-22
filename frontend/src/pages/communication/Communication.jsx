@@ -156,7 +156,7 @@ const Communication = () => {
     fetchConversations();
     fetchStaffUsers();
 
-    const convInterval = setInterval(fetchConversations, 4000);
+    const convInterval = setInterval(fetchConversations, 8000);
     return () => clearInterval(convInterval);
   }, [fetchConversations, fetchStaffUsers]);
 
@@ -187,7 +187,7 @@ const Communication = () => {
 
     const msgInterval = setInterval(() => {
       fetchMessages(activeConvId, true);
-    }, 3000);
+    }, 5000);
 
     return () => clearInterval(msgInterval);
   }, [activeConvId, fetchMessages, markAsRead]);

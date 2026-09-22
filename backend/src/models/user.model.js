@@ -2,11 +2,13 @@ const pool = require("../config/database");
 
 class UserModel {
   /**
-   * Find user by email including password_hash for authentication.
+   * Find user by email including password_hash and security fields for authentication.
    */
   static async findByEmail(email) {
     const query = `
-      SELECT u.id, u.name, u.email, u.password_hash, u.mobile, u.role_id, u.status, u.last_login, u.created_at, u.updated_at,
+      SELECT u.id, u.name, u.email, u.password_hash, u.mobile, u.role_id, u.status, u.last_login,
+             u.mfa_enabled, u.mfa_secret, u.token_version, u.failed_login_attempts, u.lock_until,
+             u.created_at, u.updated_at,
              r.name AS role_name
       FROM users u
       LEFT JOIN roles r ON r.id = u.role_id
@@ -24,11 +26,13 @@ class UserModel {
   }
 
   /**
-   * Find user by ID with role name and assigned permissions (excluding password_hash).
+   * Find user by ID with role name, assigned permissions, and security metadata (excluding password_hash).
    */
   static async findByIdWithRoleAndPermissions(id) {
     const userQuery = `
-      SELECT u.id, u.name, u.email, u.mobile, u.role_id, u.status, u.last_login, u.created_at, u.updated_at,
+      SELECT u.id, u.name, u.email, u.mobile, u.role_id, u.status, u.last_login,
+             u.mfa_enabled, u.token_version, u.failed_login_attempts, u.lock_until,
+             u.created_at, u.updated_at,
              r.name AS role_name, r.description AS role_description
       FROM users u
       LEFT JOIN roles r ON r.id = u.role_id
@@ -265,11 +269,136 @@ class UserModel {
   static async updatePassword(id, password_hash) {
     const query = `
       UPDATE users
-      SET password_hash = $1, updated_at = CURRENT_TIMESTAMP
+      SET password_hash = $1, token_version = token_version + 1, updated_at = CURRENT_TIMESTAMP
       WHERE id = $2
       RETURNING id, name, email, updated_at
     `;
     const result = await pool.query(query, [password_hash, id]);
+    return result.rows[0];
+  }
+
+  /**
+   * Set temporary MFA secret on user record.
+   */
+  static async setMfaSecret(id, secret) {
+    const query = `
+      UPDATE users
+      SET mfa_secret = $1, mfa_enabled = FALSE, mfa_step1_timestep = NULL, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      RETURNING id, email, mfa_enabled
+    `;
+    const result = await pool.query(query, [secret, id]);
+    return result.rows[0];
+  }
+
+  /**
+   * Save step 1 verified timestep for MFA.
+   */
+  static async setMfaStep1Timestep(id, timestep) {
+    const query = `
+      UPDATE users
+      SET mfa_step1_timestep = $1, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      RETURNING id, mfa_step1_timestep
+    `;
+    const result = await pool.query(query, [String(timestep), id]);
+    return result.rows[0];
+  }
+
+  /**
+   * Activate MFA on user record.
+   */
+  static async activateMfa(id) {
+    const query = `
+      UPDATE users
+      SET mfa_enabled = TRUE, mfa_step1_timestep = NULL, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING id, email, mfa_enabled
+    `;
+    const result = await pool.query(query, [id]);
+    return result.rows[0];
+  }
+
+  /**
+   * Disable MFA on user record.
+   */
+  static async disableMfa(id) {
+    const query = `
+      UPDATE users
+      SET mfa_enabled = FALSE, mfa_secret = NULL, mfa_step1_timestep = NULL, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING id, email, mfa_enabled
+    `;
+    const result = await pool.query(query, [id]);
+    return result.rows[0];
+  }
+
+  /**
+   * Get MFA setup details for verification (secret and step 1 timestep).
+   */
+  static async getMfaDetails(id) {
+    const query = `
+      SELECT id, name, email, mfa_secret, mfa_enabled, mfa_step1_timestep
+      FROM users
+      WHERE id = $1
+    `;
+    const result = await pool.query(query, [id]);
+    return result.rows[0] || null;
+  }
+
+  /**
+   * Increment token_version for single user (force logout from all devices).
+   */
+  static async incrementTokenVersion(id) {
+    const query = `
+      UPDATE users
+      SET token_version = token_version + 1, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING id, token_version
+    `;
+    const result = await pool.query(query, [id]);
+    return result.rows[0];
+  }
+
+  /**
+   * Increment token_version for all other users (force logout all other users).
+   */
+  static async incrementAllOtherTokenVersions(currentUserId) {
+    const query = `
+      UPDATE users
+      SET token_version = token_version + 1, updated_at = CURRENT_TIMESTAMP
+      WHERE id != $1
+      RETURNING id
+    `;
+    const result = await pool.query(query, [currentUserId]);
+    return result.rowCount;
+  }
+
+  /**
+   * Increment failed login attempts and optionally set lockout.
+   */
+  static async recordFailedLogin(id, attempts, lockUntil = null) {
+    const query = `
+      UPDATE users
+      SET failed_login_attempts = $1, lock_until = $2, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $3
+      RETURNING id, failed_login_attempts, lock_until
+    `;
+    const result = await pool.query(query, [attempts, lockUntil, id]);
+    return result.rows[0];
+  }
+
+  /**
+   * Reset failed login attempts and unlock account.
+   */
+  static async resetFailedLogins(id) {
+    const query = `
+      UPDATE users
+      SET failed_login_attempts = 0, lock_until = NULL, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING id
+    `;
+    const result = await pool.query(query, [id]);
     return result.rows[0];
   }
 

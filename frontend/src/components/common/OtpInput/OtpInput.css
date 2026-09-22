@@ -1,0 +1,74 @@
+.otp-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 0.5rem 0 1rem 0;
+}
+
+.otp-slots-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.otp-slot {
+  width: 48px;
+  height: 54px;
+  border-radius: 10px;
+  border: 1.5px solid #d1d5db;
+  background-color: #f9fafb;
+  color: #111827;
+  font-size: 1.35rem;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.otp-slot:hover:not(:disabled) {
+  border-color: #9ca3af;
+  background-color: #ffffff;
+}
+
+.otp-slot:focus {
+  border-color: #8b231d;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3.5px rgba(139, 35, 29, 0.12);
+  transform: translateY(-1px);
+}
+
+.otp-slot.filled {
+  border-color: #8b231d;
+  background-color: #ffffff;
+}
+
+.otp-slot:disabled {
+  background-color: #f3f4f6;
+  border-color: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.otp-divider {
+  color: #9ca3af;
+  font-weight: 600;
+  font-size: 1.1rem;
+  user-select: none;
+}
+
+@media (max-width: 480px) {
+  .otp-slots-row {
+    gap: 0.35rem;
+  }
+  .otp-slot {
+    width: 42px;
+    height: 48px;
+    font-size: 1.2rem;
+    border-radius: 8px;
+  }
+}

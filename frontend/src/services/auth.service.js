@@ -78,7 +78,7 @@ class AuthService {
   }
 
   /**
-   * Reset password with reset token.
+   * Reset password using reset token.
    */
   static async resetPassword(token, password, confirmPassword) {
     return apiFetch("/auth/reset-password", {
@@ -88,6 +88,37 @@ class AuthService {
         password,
         confirm_password: confirmPassword,
       }),
+    });
+  }
+
+  /**
+   * Verify TOTP code during login MFA challenge
+   */
+  static async verifyLoginMfa(userId, code) {
+    return apiFetch("/auth/mfa/login-verify", {
+      method: "POST",
+      body: JSON.stringify({ userId, code }),
+    });
+  }
+
+  /**
+   * Authenticated user changes their own password
+   */
+  static async changePassword(oldPassword, newPassword, token) {
+    return apiFetch("/auth/change-password", {
+      method: "PUT",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: JSON.stringify({ oldPassword, newPassword }),
+    });
+  }
+
+  /**
+   * Terminate all active sessions across all devices for current user
+   */
+  static async logoutAllDevices(token) {
+    return apiFetch("/auth/logout-all", {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
   }
 }

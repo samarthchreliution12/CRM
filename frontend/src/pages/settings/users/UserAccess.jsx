@@ -3,13 +3,15 @@ import { useLocation, useNavigate } from "react-router-dom";
 import AppLayout from "../../../components/layout/AppLayout/AppLayout";
 import useAuth from "../../../hooks/useAuth";
 import StaffService from "../../../services/staff.service";
+import SettingsService from "../../../services/settings.service";
 import StaffTable from "../../../components/settings/staff/StaffTable/StaffTable";
 import StaffFormModal from "../../../components/settings/staff/StaffFormModal/StaffFormModal";
 import StaffDetailModal from "../../../components/settings/staff/StaffDetailModal/StaffDetailModal";
 import StaffConfirmModal from "../../../components/settings/staff/StaffConfirmModal/StaffConfirmModal";
+import StaffResetPasswordModal from "../../../components/settings/staff/StaffResetPasswordModal/StaffResetPasswordModal";
 import GroupsTab from "../../../components/settings/groups/GroupsTab";
 import Permissions from "./permissions/Permissions";
-import { Plus, Search, Users as UsersIcon, FolderGit2, KeyRound, AlertCircle, CheckCircle2, RefreshCw } from "lucide-react";
+import { ArrowLeft, Plus, Search, Users as UsersIcon, FolderGit2, KeyRound, AlertCircle, CheckCircle2, RefreshCw } from "lucide-react";
 import "./UserAccess.css";
 
 const UserAccess = () => {
@@ -46,6 +48,9 @@ const UserAccess = () => {
   const [confirmType, setConfirmType] = useState("deactivate");
   const [targetStaff, setTargetStaff] = useState(null);
   const [isActionSubmitting, setIsActionSubmitting] = useState(false);
+
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [resetStaffTarget, setResetStaffTarget] = useState(null);
 
   const fetchStaff = useCallback(async () => {
     setIsLoading(true);
@@ -129,7 +134,42 @@ const UserAccess = () => {
     setSuccessMessage("");
   };
 
+  const handleOpenResetPasswordModal = (staffUser) => {
+    setResetStaffTarget(staffUser);
+    setIsResetModalOpen(true);
+    setGlobalError("");
+    setSuccessMessage("");
+  };
+
+  const handleOpenForceLogoutModal = (staffUser) => {
+    setTargetStaff(staffUser);
+    setConfirmType("force-logout");
+    setIsConfirmModalOpen(true);
+    setGlobalError("");
+    setSuccessMessage("");
+  };
+
   // Submit Handlers
+  const handleResetPasswordSubmit = async (userId, newPassword) => {
+    setIsActionSubmitting(true);
+    setGlobalError("");
+    setSuccessMessage("");
+
+    try {
+      const response = await SettingsService.resetStaffPassword(userId, newPassword, token);
+      if (response && response.success) {
+        setSuccessMessage(response.message || "User password reset successfully.");
+        setIsResetModalOpen(false);
+      } else {
+        setGlobalError(response.message || "Failed to reset password.");
+      }
+    } catch (err) {
+      setGlobalError(err.message || "An error occurred while resetting password.");
+    } finally {
+      setIsActionSubmitting(false);
+    }
+  };
+
   const handleFormSubmit = async (formData) => {
     setIsActionSubmitting(true);
     setGlobalError("");
@@ -179,6 +219,14 @@ const UserAccess = () => {
         } else {
           setGlobalError(response.message || "Failed to delete user.");
         }
+      } else if (confirmType === "force-logout") {
+        const response = await SettingsService.forceLogoutStaff(targetStaff.id, token);
+        if (response && response.success) {
+          setSuccessMessage(response.message || `All active sessions terminated for "${targetStaff.name}".`);
+          setIsConfirmModalOpen(false);
+        } else {
+          setGlobalError(response.message || "Failed to terminate sessions.");
+        }
       } else {
         const nextStatus = confirmType === "activate" ? "active" : "inactive";
         const response = await StaffService.updateStaffStatus(targetStaff.id, nextStatus, token);
@@ -200,6 +248,35 @@ const UserAccess = () => {
   return (
     <AppLayout title="User & Access">
       <div className="user-access-container">
+        {/* Navigation & Header */}
+        <div style={{ marginBottom: "0.5rem" }}>
+          <button
+            type="button"
+            className="btn-back-settings"
+            onClick={() => navigate("/settings")}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.375rem",
+              padding: "0.35rem 0.75rem",
+              fontSize: "0.825rem",
+              fontWeight: "600",
+              color: "#475569",
+              backgroundColor: "#f1f5f9",
+              border: "1px solid #e2e8f0",
+              borderRadius: "6px",
+              cursor: "pointer",
+              marginBottom: "0.25rem",
+            }}
+          >
+            <ArrowLeft size={16} />
+            <span>Back to Settings</span>
+          </button>
+          <div style={{ fontSize: "0.825rem", color: "#64748b", fontWeight: "500" }}>
+            <span>Settings</span> / <span style={{ color: "#0f172a", fontWeight: "600" }}>User & Access</span>
+          </div>
+        </div>
+
         {/* Main Navigation Tabs: Users | Groups | Permissions */}
         <div className="main-navigation-tabs">
           <button
@@ -332,6 +409,8 @@ const UserAccess = () => {
                   onEdit={handleOpenEditModal}
                   onToggleStatus={handleOpenToggleStatusModal}
                   onDelete={handleOpenDeleteModal}
+                  onResetPassword={handleOpenResetPasswordModal}
+                  onForceLogout={handleOpenForceLogoutModal}
                 />
               )}
             </div>
@@ -357,6 +436,14 @@ const UserAccess = () => {
               onConfirm={handleConfirmSubmit}
               type={confirmType}
               staffUser={targetStaff}
+              isSubmitting={isActionSubmitting}
+            />
+
+            <StaffResetPasswordModal
+              isOpen={isResetModalOpen}
+              onClose={() => setIsResetModalOpen(false)}
+              onReset={handleResetPasswordSubmit}
+              staffUser={resetStaffTarget}
               isSubmitting={isActionSubmitting}
             />
           </>

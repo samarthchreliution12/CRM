@@ -160,6 +160,9 @@ const AuditLogs = () => {
               <ArrowLeft size={16} />
               <span>Back to Settings</span>
             </button>
+            <div style={{ fontSize: "0.825rem", color: "#64748b", fontWeight: "500", marginTop: "0.25rem" }}>
+              <span>Settings</span> / <span style={{ color: "#0f172a", fontWeight: "600" }}>Audit Logs</span>
+            </div>
             <h2 className="audit-page-title">Audit Logs</h2>
             <p className="audit-page-desc">
               Track important activities, security events, and data changes across the CRM.

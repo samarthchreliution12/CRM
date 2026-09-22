@@ -178,6 +178,14 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password, rememberMe = false) => {
     const response = await AuthService.login(email, password);
     if (response && response.success && response.data) {
+      if (response.data.mfaRequired) {
+        return {
+          mfaRequired: true,
+          userId: response.data.userId,
+          email: response.data.email,
+        };
+      }
+
       const { token: newToken, user: userData } = response.data;
       
       localStorage.setItem("crm_token", newToken);
@@ -190,6 +198,42 @@ export const AuthProvider = ({ children }) => {
       return userData;
     }
     throw new Error(response.message || "Login failed");
+  };
+
+  // Verify TOTP MFA during Login
+  const verifyLoginMfa = async (userId, code) => {
+    const response = await AuthService.verifyLoginMfa(userId, code);
+    if (response && response.success && response.data) {
+      const { token: newToken, user: userData } = response.data;
+
+      localStorage.setItem("crm_token", newToken);
+      sessionStorage.removeItem("crm_token");
+
+      setToken(newToken);
+      setUser(userData);
+      lastActivityRef.current = Date.now();
+      setShowWarningModal(false);
+      return userData;
+    }
+    throw new Error(response.message || "MFA verification failed");
+  };
+
+  // Change Password
+  const changePassword = async (oldPassword, newPassword) => {
+    const response = await AuthService.changePassword(oldPassword, newPassword, token);
+    await logout();
+    return response;
+  };
+
+  // Logout from all devices
+  const logoutAllDevices = async () => {
+    try {
+      await AuthService.logoutAllDevices(token);
+    } catch (e) {
+      console.warn("Logout all devices notice:", e.message);
+    } finally {
+      await logout();
+    }
   };
 
   // Stay Logged In button handler inside warning modal
@@ -221,6 +265,9 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: Boolean(user && token),
     isLoading,
     login,
+    verifyLoginMfa,
+    changePassword,
+    logoutAllDevices,
     logout,
     setUser,
     updateUserProfile,

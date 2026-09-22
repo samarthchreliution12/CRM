@@ -42,7 +42,21 @@ CREATE TABLE IF NOT EXISTS users (
   role_id INTEGER NOT NULL REFERENCES roles(id),
   status VARCHAR(20) DEFAULT 'active' NOT NULL,
   last_login TIMESTAMP WITH TIME ZONE,
+  mfa_enabled BOOLEAN DEFAULT FALSE NOT NULL,
+  mfa_secret VARCHAR(255),
+  mfa_step1_timestep VARCHAR(50),
+  token_version INTEGER DEFAULT 1 NOT NULL,
+  failed_login_attempts INTEGER DEFAULT 0 NOT NULL,
+  lock_until TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+-- System Settings Table (Security & Admin Preferences)
+CREATE TABLE IF NOT EXISTS system_settings (
+  key VARCHAR(100) PRIMARY KEY,
+  value TEXT NOT NULL,
+  description TEXT,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
