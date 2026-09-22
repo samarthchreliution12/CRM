@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import AppLayout from "../../components/layout/AppLayout/AppLayout";
 import ClientService from "../../services/client.service";
@@ -148,6 +149,8 @@ const Clients = () => {
 
   // Actions Dropdown & Delete Confirmation Modal State
   const [openActionsMenuId, setOpenActionsMenuId] = useState(null);
+  const [activeMenuClient, setActiveMenuClient] = useState(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const [clientToDelete, setClientToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -179,14 +182,73 @@ const Clients = () => {
   const [clientTypes, setClientTypes] = useState([]);
   const [clientServices, setClientServices] = useState([]);
 
+  // Toggle Actions Menu with smart viewport positioning
+  const handleToggleActionsMenu = (e, client) => {
+    e.stopPropagation();
+    if (openActionsMenuId === client.id) {
+      setOpenActionsMenuId(null);
+      setActiveMenuClient(null);
+    } else {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const menuWidth = 180;
+      const menuHeight = 210;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      let top;
+      if (spaceBelow < menuHeight + 12 && rect.top > spaceBelow) {
+        top = Math.max(8, rect.top - menuHeight - 4);
+      } else {
+        top = rect.bottom + 4;
+      }
+      if (top + menuHeight > window.innerHeight - 8) {
+        top = Math.max(8, window.innerHeight - menuHeight - 8);
+      }
+      let left = rect.right - menuWidth;
+      left = Math.max(8, Math.min(left, window.innerWidth - menuWidth - 8));
+
+      setMenuPosition({ top, left });
+      setOpenActionsMenuId(client.id);
+      setActiveMenuClient(client);
+    }
+  };
+
+  // Close 3-dot actions menu on window/container scroll or window resize or Escape key
+  useEffect(() => {
+    if (!openActionsMenuId) return;
+    const handleScrollOrResize = (event) => {
+      if (event.target && event.target.closest && event.target.closest(".actions-dropdown-menu")) {
+        return;
+      }
+      setOpenActionsMenuId(null);
+      setActiveMenuClient(null);
+    };
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setOpenActionsMenuId(null);
+        setActiveMenuClient(null);
+      }
+    };
+    window.addEventListener("scroll", handleScrollOrResize, true);
+    window.addEventListener("resize", handleScrollOrResize);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("scroll", handleScrollOrResize, true);
+      window.removeEventListener("resize", handleScrollOrResize);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [openActionsMenuId]);
+
   // Click Outside listener to close Import / Export and Actions dropdowns
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsImpExpOpen(false);
       }
-      if (!event.target.closest(".actions-dropdown-wrapper")) {
+      if (
+        !event.target.closest(".actions-dropdown-menu") &&
+        !event.target.closest(".btn-actions-trigger")
+      ) {
         setOpenActionsMenuId(null);
+        setActiveMenuClient(null);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -918,10 +980,7 @@ const Clients = () => {
                             <button
                               type="button"
                               className={`btn-actions-trigger ${openActionsMenuId === client.id ? "active" : ""}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setOpenActionsMenuId((prev) => (prev === client.id ? null : client.id));
-                              }}
+                              onClick={(e) => handleToggleActionsMenu(e, client)}
                               aria-haspopup="true"
                               aria-expanded={openActionsMenuId === client.id}
                               title="Actions"
@@ -929,99 +988,6 @@ const Clients = () => {
                             >
                               <MoreVertical size={16} />
                             </button>
-
-                            {openActionsMenuId === client.id && (
-                              <div className={`actions-dropdown-menu ${index >= clients.length - 2 && clients.length > 2 ? "drop-up" : ""}`}>
-                                <button
-                                  type="button"
-                                  className="actions-menu-item"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setOpenActionsMenuId(null);
-                                    navigate(`/clients/${client.id}`);
-                                  }}
-                                >
-                                  <Eye size={14} className="menu-action-icon" />
-                                  <span>View</span>
-                                </button>
-
-                                <button
-                                  type="button"
-                                  className="actions-menu-item"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setOpenActionsMenuId(null);
-                                    if (!canEdit) {
-                                      triggerPermissionToast("You do not have permission to edit clients.");
-                                      return;
-                                    }
-                                    navigate(`/clients/${client.id}/edit`);
-                                  }}
-                                >
-                                  <Edit size={14} className="menu-action-icon" />
-                                  <span>Edit</span>
-                                </button>
-
-                                <button
-                                  type="button"
-                                  className="actions-menu-item"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setOpenActionsMenuId(null);
-                                    if (!canEdit) {
-                                      triggerPermissionToast("You do not have permission to edit clients.");
-                                      return;
-                                    }
-                                    setCategoryError("");
-                                    setTargetCategoryClient(client);
-                                    setSelectedCategory((client.client_category || "BRONZE").toUpperCase());
-                                  }}
-                                >
-                                  <Award size={14} className="menu-action-icon" />
-                                  <span>Change Category</span>
-                                </button>
-
-                                <button
-                                  type="button"
-                                  className="actions-menu-item"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setOpenActionsMenuId(null);
-                                    handleToggleStatus(client);
-                                  }}
-                                >
-                                  {client.status === "inactive" ? (
-                                    <>
-                                      <UserCheck size={14} className="menu-action-icon status-active-icon" />
-                                      <span>Activate Client</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <UserX size={14} className="menu-action-icon status-inactive-icon" />
-                                      <span>Deactivate Client</span>
-                                    </>
-                                  )}
-                                </button>
-
-
-                                <button
-                                  type="button"
-                                  className="actions-menu-item delete-item"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setOpenActionsMenuId(null);
-                                    if (!canDelete) {
-                                      triggerPermissionToast("You do not have permission to delete clients.");
-                                      return;
-                                    }
-                                    setClientToDelete(client);
-                                  }}
-                                >
-                                  <Trash2 size={14} className="menu-action-icon delete-icon" />
-                                  <span>Delete Client</span>
-                                </button>
-                              </div>
-                            )}
                           </div>
                         </td>
                       </tr>
@@ -1368,6 +1334,116 @@ const Clients = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Floating Actions Menu Portal */}
+      {openActionsMenuId && activeMenuClient && createPortal(
+        <div
+          className="actions-dropdown-menu"
+          style={{
+            top: `${menuPosition.top}px`,
+            left: `${menuPosition.left}px`,
+          }}
+        >
+          <button
+            type="button"
+            className="actions-menu-item"
+            onClick={(e) => {
+              e.stopPropagation();
+              const c = activeMenuClient;
+              setOpenActionsMenuId(null);
+              setActiveMenuClient(null);
+              navigate(`/clients/${c.id}`);
+            }}
+          >
+            <Eye size={14} className="menu-action-icon" />
+            <span>View</span>
+          </button>
+
+          <button
+            type="button"
+            className="actions-menu-item"
+            onClick={(e) => {
+              e.stopPropagation();
+              const c = activeMenuClient;
+              setOpenActionsMenuId(null);
+              setActiveMenuClient(null);
+              if (!canEdit) {
+                triggerPermissionToast("You do not have permission to edit clients.");
+                return;
+              }
+              navigate(`/clients/${c.id}/edit`);
+            }}
+          >
+            <Edit size={14} className="menu-action-icon" />
+            <span>Edit</span>
+          </button>
+
+          <button
+            type="button"
+            className="actions-menu-item"
+            onClick={(e) => {
+              e.stopPropagation();
+              const c = activeMenuClient;
+              setOpenActionsMenuId(null);
+              setActiveMenuClient(null);
+              if (!canEdit) {
+                triggerPermissionToast("You do not have permission to edit clients.");
+                return;
+              }
+              setCategoryError("");
+              setTargetCategoryClient(c);
+              setSelectedCategory((c.client_category || "BRONZE").toUpperCase());
+            }}
+          >
+            <Award size={14} className="menu-action-icon" />
+            <span>Change Category</span>
+          </button>
+
+          <button
+            type="button"
+            className="actions-menu-item"
+            onClick={(e) => {
+              e.stopPropagation();
+              const c = activeMenuClient;
+              setOpenActionsMenuId(null);
+              setActiveMenuClient(null);
+              handleToggleStatus(c);
+            }}
+          >
+            {activeMenuClient.status === "inactive" ? (
+              <>
+                <UserCheck size={14} className="menu-action-icon status-active-icon" />
+                <span>Activate Client</span>
+              </>
+            ) : (
+              <>
+                <UserX size={14} className="menu-action-icon status-inactive-icon" />
+                <span>Deactivate Client</span>
+              </>
+            )}
+          </button>
+
+          <button
+            type="button"
+            className="actions-menu-item delete-item"
+            onClick={(e) => {
+              e.stopPropagation();
+              const c = activeMenuClient;
+              setOpenActionsMenuId(null);
+              setActiveMenuClient(null);
+              if (!canDelete) {
+                triggerPermissionToast("You do not have permission to delete clients.");
+                return;
+              }
+              setClientToDelete(c);
+            }}
+          >
+            <Trash2 size={14} className="menu-action-icon delete-icon" />
+            <span>Delete Client</span>
+          </button>
+        </div>,
+        document.body
       )}
     </AppLayout>
   );
