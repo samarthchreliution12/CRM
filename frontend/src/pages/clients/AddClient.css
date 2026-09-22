@@ -136,6 +136,31 @@
   font-weight: 500;
 }
 
+.form-group-full {
+  grid-column: 1 / -1;
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.5;
+}
+
+.form-textarea:focus {
+  border-color: #9E241E;
+  box-shadow: 0 0 0 3px rgba(158, 36, 30, 0.15);
+}
+
 /* Segmented Control for Client Status */
 .segmented-control {
   display: inline-flex;

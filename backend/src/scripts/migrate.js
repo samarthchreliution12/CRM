@@ -386,6 +386,9 @@ async function runMigrations() {
       CREATE INDEX IF NOT EXISTS idx_refresh_sessions_user ON refresh_sessions(user_id);
       CREATE INDEX IF NOT EXISTS idx_refresh_sessions_hash ON refresh_sessions(token_hash);
       CREATE INDEX IF NOT EXISTS idx_refresh_sessions_expires ON refresh_sessions(expires_at);
+
+      -- Migration step 12: Ensure address column exists on clients table
+      ALTER TABLE clients ADD COLUMN IF NOT EXISTS address TEXT;
     `);
 
     console.log("Database migrations completed successfully.");

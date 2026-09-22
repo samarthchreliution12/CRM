@@ -344,6 +344,10 @@
   gap: 0.25rem;
 }
 
+.info-kv-item-full {
+  grid-column: 1 / -1;
+}
+
 .info-kv-label {
   font-size: 0.725rem;
   font-weight: 700;

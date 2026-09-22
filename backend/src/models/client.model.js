@@ -160,7 +160,7 @@ class ClientModel {
     const dataParams = [...params, limit, offset];
     const dataQuery = `
       SELECT
-        c.id, c.ucc_no, c.name, c.business_name, c.mobile_no, c.whatsapp_no, c.email, c.pan, c.dob, c.gender, c.occupation,
+        c.id, c.ucc_no, c.name, c.business_name, c.mobile_no, c.whatsapp_no, c.email, c.pan, c.dob, c.gender, c.occupation, c.address,
         c.client_type_id, ct.name AS client_type_name,
         c.status, c.client_status, c.client_category,
         c.created_at, c.updated_at,
@@ -195,6 +195,7 @@ class ClientModel {
       dob: row.dob,
       gender: row.gender,
       occupation: row.occupation,
+      address: row.address || null,
       client_type: {
         id: row.client_type_id,
         name: row.client_type_name,
@@ -224,7 +225,7 @@ class ClientModel {
   static async findById(id) {
     const clientQuery = `
       SELECT
-        c.id, c.ucc_no, c.name, c.business_name, c.mobile_no, c.whatsapp_no, c.email, c.pan, c.dob, c.gender, c.occupation,
+        c.id, c.ucc_no, c.name, c.business_name, c.mobile_no, c.whatsapp_no, c.email, c.pan, c.dob, c.gender, c.occupation, c.address,
         c.client_type_id, ct.name AS client_type_name, ct.description AS client_type_desc,
         c.status, c.client_status, c.client_category,
         c.created_at, c.updated_at,
@@ -267,6 +268,7 @@ class ClientModel {
       dob: row.dob,
       gender: row.gender,
       occupation: row.occupation,
+      address: row.address || null,
       client_type: {
         id: row.client_type_id,
         name: row.client_type_name,
@@ -300,6 +302,7 @@ class ClientModel {
     dob,
     gender,
     occupation,
+    address,
     client_type_id = 1,
     status = "active",
     client_status,
@@ -328,10 +331,10 @@ class ClientModel {
 
       const query = `
         INSERT INTO clients (
-          ucc_no, name, business_name, mobile_no, whatsapp_no, email, pan, dob, gender, occupation,
+          ucc_no, name, business_name, mobile_no, whatsapp_no, email, pan, dob, gender, occupation, address,
           client_type_id, status, client_status, client_category, services
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15::jsonb)
-        RETURNING id, ucc_no, name, business_name, mobile_no, whatsapp_no, email, pan, dob, gender, occupation,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16::jsonb)
+        RETURNING id, ucc_no, name, business_name, mobile_no, whatsapp_no, email, pan, dob, gender, occupation, address,
                   client_type_id, status, client_status, client_category, created_at, updated_at
       `;
       const values = [
@@ -345,6 +348,7 @@ class ClientModel {
         dob || null,
         gender ? gender.trim() : null,
         occupation ? occupation.trim() : null,
+        address ? address.trim() : null,
         effectiveClientTypeId,
         status ? status.trim().toLowerCase() : "active",
         normClientStatus,
@@ -388,6 +392,7 @@ class ClientModel {
       dob,
       gender,
       occupation,
+      address,
       client_type_id,
       status,
       client_status,
@@ -449,6 +454,10 @@ class ClientModel {
     if (occupation !== undefined) {
       fields.push(`occupation = $${idx++}`);
       values.push(occupation ? occupation.trim() : null);
+    }
+    if (address !== undefined) {
+      fields.push(`address = $${idx++}`);
+      values.push(address ? address.trim() : null);
     }
     if (client_type_id !== undefined) {
       fields.push(`client_type_id = $${idx++}`);
@@ -627,6 +636,7 @@ class ClientModel {
         c.dob,
         c.gender,
         c.occupation,
+        c.address,
         c.status,
         c.client_status,
         c.client_category,
@@ -666,9 +676,9 @@ class ClientModel {
       for (const item of validClients) {
         const query = `
           INSERT INTO clients (
-            ucc_no, name, business_name, mobile_no, whatsapp_no, email, pan, dob, gender, occupation,
+            ucc_no, name, business_name, mobile_no, whatsapp_no, email, pan, dob, gender, occupation, address,
             client_type_id, status, client_status, client_category, services
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15::jsonb)
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16::jsonb)
           RETURNING id
         `;
 
@@ -683,6 +693,7 @@ class ClientModel {
           item.dob || null,
           item.gender ? item.gender.trim() : null,
           item.occupation ? item.occupation.trim() : null,
+          item.address ? item.address.trim() : null,
           item.client_type_id,
           item.status ? item.status.trim().toLowerCase() : "active",
           item.client_status && item.client_status.toString().trim() ? item.client_status.toString().trim().toUpperCase() : "CLIENT",

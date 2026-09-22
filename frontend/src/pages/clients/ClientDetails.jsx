@@ -751,6 +751,12 @@ const ClientDetails = () => {
                       <span className="info-kv-label">UCC No</span>
                       <span className="info-kv-value">{client.ucc_no}</span>
                     </div>
+                    <div className="info-kv-item info-kv-item-full">
+                      <span className="info-kv-label">Address</span>
+                      <span className="info-kv-value" style={{ whiteSpace: "pre-wrap" }}>
+                        {client.address || "N/A"}
+                      </span>
+                    </div>
                   </div>
                 </div>
 

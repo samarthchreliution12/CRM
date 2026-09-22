@@ -131,6 +131,11 @@ function validateCreateClientInput(data) {
     }
   }
 
+  // 13. Address (Optional)
+  if (data.address !== undefined && data.address !== null && typeof data.address !== "string") {
+    errors.push({ field: "address", message: "Address must be a string" });
+  }
+
   return {
     isValid: errors.length === 0,
     errors,
@@ -240,6 +245,10 @@ function validateUpdateClientInput(data) {
     if (!validCategories.includes(data.client_category.toString().trim().toLowerCase())) {
       errors.push({ field: "client_category", message: "Client category must be 'BRONZE', 'SILVER', 'GOLD', or 'PLATINUM'" });
     }
+  }
+
+  if (data.address !== undefined && data.address !== null && typeof data.address !== "string") {
+    errors.push({ field: "address", message: "Address must be a string" });
   }
 
   return {

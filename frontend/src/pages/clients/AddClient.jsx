@@ -40,6 +40,7 @@ const AddClient = () => {
     dob: "",
     gender: "",
     occupation: "",
+    address: "",
     is_client: true,
     status: "active",
     client_category: "",
@@ -118,6 +119,7 @@ const AddClient = () => {
             dob: dobFormatted,
             gender: c.gender || "",
             occupation: c.occupation || "",
+            address: c.address || "",
             is_client: c.is_client !== undefined ? Boolean(c.is_client) : (c.client_status === "NON_CLIENT" ? false : true),
             status: c.status || "active",
             client_category: c.client_category || "",
@@ -329,6 +331,7 @@ const AddClient = () => {
         dob: formData.dob || null,
         gender: formData.gender || null,
         occupation: formData.occupation.trim() || null,
+        address: formData.address ? formData.address.trim() : null,
         is_client: formData.is_client,
         client_status: formData.is_client ? "CLIENT" : "NON_CLIENT",
         status: formData.status || "active",
@@ -617,6 +620,20 @@ const AddClient = () => {
                   onChange={handleChange}
                   onBlur={handleBlur}
                   className="form-input"
+                />
+              </div>
+
+              {/* Address */}
+              <div className="form-group form-group-full">
+                <label className="form-label">Address</label>
+                <textarea
+                  name="address"
+                  placeholder="Enter client residential / office address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  rows={3}
+                  className="form-textarea"
                 />
               </div>
             </div>
