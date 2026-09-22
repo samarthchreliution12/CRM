@@ -335,13 +335,13 @@ class CommunicationModel {
     return result.rows[0] || null;
   }
 
-  // Find staff users available to chat (excluding logged in user)
+  // Find all users available to chat (excluding logged in user)
   static async findStaffUsers(currentUserId, search = "") {
     let query = `
-      SELECT u.id, u.name, u.email, r.name AS role_name
+      SELECT u.id, u.name, u.email, COALESCE(r.name, 'User') AS role_name
       FROM users u
-      INNER JOIN roles r ON u.role_id = r.id
-      WHERE r.name IN ('Admin', 'Staff') AND u.id != $1 AND u.status = 'active'
+      LEFT JOIN roles r ON u.role_id = r.id
+      WHERE u.id != $1 AND u.status = 'active'
     `;
     const params = [currentUserId];
 

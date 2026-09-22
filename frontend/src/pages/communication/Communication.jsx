@@ -330,7 +330,7 @@ const Communication = () => {
                 <Search size={14} className="chat-search-icon" />
                 <input
                   type="text"
-                  placeholder="Search staff messages..."
+                  placeholder="Search messages..."
                   className="chat-search-input"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -353,7 +353,7 @@ const Communication = () => {
                 </div>
                 <h4 className="comm-empty-title">No conversations yet</h4>
                 <p className="comm-empty-desc">
-                  Click '+' to start a direct message with a staff member.
+                  Click '+' to start a message with a user.
                 </p>
               </div>
             ) : (
@@ -414,7 +414,7 @@ const Communication = () => {
               </p>
               <div className="comm-security-badge">
                 <ShieldAlert size={13} />
-                <span>Encrypted Staff Communication</span>
+                <span>Encrypted Communication</span>
               </div>
             </div>
           ) : (
@@ -594,7 +594,7 @@ const Communication = () => {
                     <Search size={14} className="chat-search-icon" />
                     <input
                       type="text"
-                      placeholder="Search staff members by name or email..."
+                      placeholder="Search users by name or email..."
                       className="chat-search-input"
                       value={composeSearch}
                       onChange={(e) => {
@@ -609,7 +609,7 @@ const Communication = () => {
                 <div className="comm-staff-list-modal">
                   {staffUsers.length === 0 ? (
                     <p style={{ color: "#64748b", fontSize: "0.875rem", textAlign: "center", padding: "20px" }}>
-                      No active staff users found.
+                      No active users found.
                     </p>
                   ) : (
                     staffUsers.map((st) => (
@@ -625,7 +625,6 @@ const Communication = () => {
                           <span className="comm-staff-name">{st.name}</span>
                           <span className="comm-staff-email">{st.email}</span>
                         </div>
-                        <span className="comm-staff-role-badge">{st.role_name}</span>
                       </div>
                     ))
                   )}

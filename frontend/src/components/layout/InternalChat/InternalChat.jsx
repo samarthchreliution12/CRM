@@ -414,10 +414,10 @@ const InternalChat = () => {
                       </div>
                     )}
 
-                    {/* Staff Direct Chat Section */}
+                    {/* User Direct Chat Section */}
                     {staffUsers.length > 0 && (
                       <div className="chat-section">
-                        <span className="chat-section-label">Start Chat with Staff</span>
+                        <span className="chat-section-label">Start Chat with Users</span>
                         {staffUsers
                           .filter((st) => !searchQuery || st.name.toLowerCase().includes(searchQuery.toLowerCase()) || st.email.toLowerCase().includes(searchQuery.toLowerCase()))
                           .map((st) => (
@@ -431,7 +431,7 @@ const InternalChat = () => {
                               </div>
                               <div className="chat-item-info">
                                 <span className="chat-item-name">{st.name}</span>
-                                <span className="chat-item-preview">{st.role_name} • {st.email}</span>
+                                <span className="chat-item-preview">{st.email}</span>
                               </div>
                             </div>
                           ))}
