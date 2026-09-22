@@ -239,11 +239,13 @@ const Clients = () => {
       setLoading(true);
       setError("");
 
+      const isNonClient = statusFilter === "non_client";
       const params = {
         page: pagination.page,
         limit: pagination.limit,
         search: search.trim(),
-        status: statusFilter !== "all" ? statusFilter : "",
+        status: statusFilter !== "all" && !isNonClient ? statusFilter : "",
+        client_status: isNonClient ? "NON_CLIENT" : "",
         client_type_id: typeFilter !== "all" ? typeFilter : "",
         service_id: serviceFilter !== "all" ? serviceFilter : "",
         cross_sell: crossSellParam,
@@ -398,9 +400,11 @@ const Clients = () => {
       if (exportScope === "selected") {
         payload.client_ids = selectedClientIds;
       } else if (exportScope === "filtered") {
+        const isNonClient = statusFilter === "non_client";
         payload.filters = {
           search: search.trim(),
-          status: statusFilter !== "all" ? statusFilter : "",
+          status: statusFilter !== "all" && !isNonClient ? statusFilter : "",
+          client_status: isNonClient ? "NON_CLIENT" : "",
           client_type_id: typeFilter !== "all" ? typeFilter : "",
           service_id: serviceFilter !== "all" ? serviceFilter : "",
         };
@@ -727,6 +731,7 @@ const Clients = () => {
               <option value="all">Status</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
+              <option value="non_client">Non-Client</option>
             </select>
 
             {(search || statusFilter !== "all" || typeFilter !== "all" || serviceFilter !== "all") && (
@@ -890,16 +895,23 @@ const Clients = () => {
                           </div>
                         </td>
                         <td>
-                          <span
-                            className={`status-badge ${client.status ? client.status.toLowerCase() : "active"}`}
-                          >
-                            <span className="status-dot">
-                              {client.status === "inactive" ? "○" : "●"}
+                          {client.client_status === "NON_CLIENT" ? (
+                            <span className="status-badge non_client">
+                              <span className="status-dot">●</span>
+                              <span>Non-Client</span>
                             </span>
-                            <span style={{ textTransform: "capitalize" }}>
-                              {client.status || "active"}
+                          ) : (
+                            <span
+                              className={`status-badge ${client.status ? client.status.toLowerCase() : "active"}`}
+                            >
+                              <span className="status-dot">
+                                {client.status === "inactive" ? "○" : "●"}
+                              </span>
+                              <span style={{ textTransform: "capitalize" }}>
+                                {client.status || "active"}
+                              </span>
                             </span>
-                          </span>
+                          )}
                         </td>
                         <td style={{ width: "80px", textAlign: "center", position: "relative" }} onClick={(e) => e.stopPropagation()}>
                           <div className="actions-dropdown-wrapper">

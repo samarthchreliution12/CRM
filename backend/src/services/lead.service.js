@@ -281,10 +281,20 @@ class LeadService {
       throw err;
     }
 
+    let normCategory = null;
+    if (options.client_category && options.client_category.toString().trim()) {
+      const catVal = options.client_category.toString().trim().toUpperCase();
+      const validCategories = ["BRONZE", "SILVER", "GOLD", "PLATINUM"];
+      if (validCategories.includes(catVal)) {
+        normCategory = catVal;
+      }
+    }
+
     const sanitizedOptions = {
       ...options,
       dob: dobDate.toISOString().split("T")[0],
       pan: cleanPan,
+      client_category: normCategory,
     };
 
     const result = await LeadModel.convertLeadToClient(id, sanitizedOptions, context.userId);

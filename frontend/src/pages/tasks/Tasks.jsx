@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import AppLayout from "../../components/layout/AppLayout/AppLayout";
 import TaskService from "../../services/task.service";
@@ -137,6 +138,8 @@ const Tasks = ({ isMyTasksMode = false, autoOpenCreate = false }) => {
 
   // Modals & Menu States
   const [openActionsMenuId, setOpenActionsMenuId] = useState(null);
+  const [activeMenuTask, setActiveMenuTask] = useState(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const [showFormModal, setShowFormModal] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -144,11 +147,62 @@ const Tasks = ({ isMyTasksMode = false, autoOpenCreate = false }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
+  // Toggle Actions Menu with smart viewport positioning
+  const handleToggleActionsMenu = (e, task) => {
+    e.stopPropagation();
+    if (openActionsMenuId === task.id) {
+      setOpenActionsMenuId(null);
+      setActiveMenuTask(null);
+    } else {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const menuWidth = 150;
+      const menuHeight = 135;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      let top;
+      if (spaceBelow < menuHeight + 12 && rect.top > spaceBelow) {
+        top = Math.max(8, rect.top - menuHeight - 4);
+      } else {
+        top = rect.bottom + 4;
+      }
+      if (top + menuHeight > window.innerHeight - 8) {
+        top = Math.max(8, window.innerHeight - menuHeight - 8);
+      }
+      let left = rect.right - menuWidth;
+      left = Math.max(8, Math.min(left, window.innerWidth - menuWidth - 8));
+
+      setMenuPosition({ top, left });
+      setOpenActionsMenuId(task.id);
+      setActiveMenuTask(task);
+    }
+  };
+
+  // Close 3-dot actions menu on window/container scroll or window resize
+  useEffect(() => {
+    if (!openActionsMenuId) return;
+    const handleScrollOrResize = (event) => {
+      if (event.target && event.target.closest && event.target.closest(".actions-menu")) {
+        return;
+      }
+      setOpenActionsMenuId(null);
+      setActiveMenuTask(null);
+    };
+    window.addEventListener("scroll", handleScrollOrResize, true);
+    window.addEventListener("resize", handleScrollOrResize);
+    return () => {
+      window.removeEventListener("scroll", handleScrollOrResize, true);
+      window.removeEventListener("resize", handleScrollOrResize);
+    };
+  }, [openActionsMenuId]);
+
   // Click Outside listener for 3-dot actions menu
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (!event.target.closest(".actions-dropdown-wrapper")) {
+      if (
+        !event.target.closest(".actions-menu") &&
+        !event.target.closest(".btn-action-trigger")
+      ) {
         setOpenActionsMenuId(null);
+        setActiveMenuTask(null);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -345,6 +399,7 @@ const Tasks = ({ isMyTasksMode = false, autoOpenCreate = false }) => {
   // Open Edit Modal with Permission Check
   const handleOpenEdit = (task) => {
     setOpenActionsMenuId(null);
+    setActiveMenuTask(null);
     if (!canEdit) {
       triggerPermissionToast("You do not have permission to edit tasks.");
       return;
@@ -356,6 +411,7 @@ const Tasks = ({ isMyTasksMode = false, autoOpenCreate = false }) => {
   // Open Delete Modal with Permission Check
   const handleOpenDelete = (task) => {
     setOpenActionsMenuId(null);
+    setActiveMenuTask(null);
     if (!canDelete) {
       triggerPermissionToast("You do not have permission to delete tasks.");
       return;
@@ -526,15 +582,15 @@ const Tasks = ({ isMyTasksMode = false, autoOpenCreate = false }) => {
               <table className="tasks-table">
                 <thead>
                   <tr>
-                    <th>Task</th>
-                    <th>Type</th>
-                    <th>Related To</th>
-                    <th>Assigned To</th>
-                    <th>Priority</th>
-                    <th>Due Date & Time</th>
-                    <th>Status</th>
-                    <th>Reminder</th>
-                    <th style={{ textAlign: "right" }}>Actions</th>
+                    <th className="th-task">Task</th>
+                    <th className="th-type">Type</th>
+                    <th className="th-related">Related To</th>
+                    <th className="th-assigned">Assigned To</th>
+                    <th className="th-priority">Priority</th>
+                    <th className="th-duedate">Due Date</th>
+                    <th className="th-status">Status</th>
+                    <th className="th-reminder">Reminder</th>
+                    <th className="th-actions" style={{ textAlign: "right" }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -543,17 +599,17 @@ const Tasks = ({ isMyTasksMode = false, autoOpenCreate = false }) => {
                     return (
                       <tr key={t.id} className={overdue ? "row-overdue" : ""}>
                         {/* Task Title & snippet */}
-                        <td>
+                        <td className="td-task">
                           <div className="task-title-cell">
                             <span
                               className="task-title-text"
                               onClick={() => setSelectedTask(t)}
-                              title="Click to view details"
+                              title={t.title || "Click to view details"}
                             >
                               {t.title}
                             </span>
                             {t.description && (
-                              <span className="task-desc-snippet">
+                              <span className="task-desc-snippet" title={t.description}>
                                 {t.description.length > 55
                                   ? `${t.description.substring(0, 55)}...`
                                   : t.description}
@@ -563,14 +619,14 @@ const Tasks = ({ isMyTasksMode = false, autoOpenCreate = false }) => {
                         </td>
 
                         {/* Task Type */}
-                        <td>
+                        <td className="td-type">
                           <span className={`task-type-pill type-${(t.task_type || "OTHER").toLowerCase()}`}>
                             {t.task_type || "OTHER"}
                           </span>
                         </td>
 
                         {/* Related To (Client / Lead) */}
-                        <td>
+                        <td className="td-related">
                           {(() => {
                             const clientObj =
                               t.client ||
@@ -592,7 +648,7 @@ const Tasks = ({ isMyTasksMode = false, autoOpenCreate = false }) => {
                                 clientObj.business_name ||
                                 `Client #${clientObj.id}`;
                               return (
-                                <span className="related-badge client-badge">
+                                <span className="related-badge client-badge" title={clientName}>
                                   <UserCheck size={12} />
                                   <span>{clientName}</span>
                                 </span>
@@ -606,7 +662,7 @@ const Tasks = ({ isMyTasksMode = false, autoOpenCreate = false }) => {
                                 leadObj.company_name ||
                                 `Lead #${leadObj.id}`;
                               return (
-                                <span className="related-badge lead-badge">
+                                <span className="related-badge lead-badge" title={leadName}>
                                   <Users size={12} />
                                   <span>{leadName}</span>
                                 </span>
@@ -618,14 +674,14 @@ const Tasks = ({ isMyTasksMode = false, autoOpenCreate = false }) => {
                         </td>
 
                         {/* Assigned To */}
-                        <td>
+                        <td className="td-assigned">
                           {(() => {
                             const assigned = t.assigned_user || t.assignedTo || t.assigned_to_user;
                             const staffName = assigned
                               ? assigned.name || assigned.full_name || assigned.email || `Staff #${assigned.id}`
                               : null;
                             return staffName ? (
-                              <div className="assignee-cell">
+                              <div className="assignee-cell" title={staffName}>
                                 <User size={14} className="assignee-icon" />
                                 <span>{staffName}</span>
                               </div>
@@ -636,12 +692,12 @@ const Tasks = ({ isMyTasksMode = false, autoOpenCreate = false }) => {
                         </td>
 
                         {/* Priority */}
-                        <td>
+                        <td className="td-priority">
                           <TaskPriorityBadge priority={t.priority} />
                         </td>
 
                         {/* Due Date & Time */}
-                        <td>
+                        <td className="td-duedate">
                           <div className={`due-date-cell ${overdue ? "overdue" : ""}`}>
                             <Calendar size={13} />
                             <span>{formatDateTime(t.due_date)}</span>
@@ -654,7 +710,7 @@ const Tasks = ({ isMyTasksMode = false, autoOpenCreate = false }) => {
                         </td>
 
                         {/* Status + Dropdown for quick update */}
-                        <td>
+                        <td className="td-status">
                           <div className="status-select-wrapper">
                             <TaskStatusBadge status={t.status} />
                             {canEdit && (
@@ -675,7 +731,7 @@ const Tasks = ({ isMyTasksMode = false, autoOpenCreate = false }) => {
                         </td>
 
                         {/* Reminder */}
-                        <td>
+                        <td className="td-reminder">
                           {t.reminder_datetime ? (
                             <span className="reminder-pill" title={`Reminder: ${formatDateTime(t.reminder_datetime)}`}>
                               <Bell size={12} />
@@ -687,49 +743,16 @@ const Tasks = ({ isMyTasksMode = false, autoOpenCreate = false }) => {
                         </td>
 
                         {/* Actions 3-Dot Menu */}
-                        <td style={{ textAlign: "right" }}>
+                        <td className="td-actions" style={{ textAlign: "right" }}>
                           <div className="actions-dropdown-wrapper">
                             <button
                               type="button"
                               className="btn-action-trigger"
-                              onClick={() => setOpenActionsMenuId(openActionsMenuId === t.id ? null : t.id)}
+                              onClick={(e) => handleToggleActionsMenu(e, t)}
+                              aria-label="Task actions"
                             >
                               <MoreVertical size={16} />
                             </button>
-
-                            {openActionsMenuId === t.id && (
-                              <div className="actions-menu">
-                                <button
-                                  type="button"
-                                  className="action-item"
-                                  onClick={() => {
-                                    setOpenActionsMenuId(null);
-                                    setSelectedTask(t);
-                                  }}
-                                >
-                                  <Eye size={14} />
-                                  <span>View</span>
-                                </button>
-
-                                <button
-                                  type="button"
-                                  className="action-item"
-                                  onClick={() => handleOpenEdit(t)}
-                                >
-                                  <Edit size={14} />
-                                  <span>Edit</span>
-                                </button>
-
-                                <button
-                                  type="button"
-                                  className="action-item action-item-danger"
-                                  onClick={() => handleOpenDelete(t)}
-                                >
-                                  <Trash2 size={14} />
-                                  <span>Delete</span>
-                                </button>
-                              </div>
-                            )}
                           </div>
                         </td>
                       </tr>
@@ -827,6 +850,60 @@ const Tasks = ({ isMyTasksMode = false, autoOpenCreate = false }) => {
           isDeleting={isDeleting}
           error={deleteError}
         />
+      )}
+
+      {/* Floating Actions Menu Portal */}
+      {openActionsMenuId && activeMenuTask && createPortal(
+        <div
+          className="actions-menu"
+          style={{
+            top: `${menuPosition.top}px`,
+            left: `${menuPosition.left}px`,
+          }}
+        >
+          <button
+            type="button"
+            className="action-item"
+            onClick={() => {
+              const t = activeMenuTask;
+              setOpenActionsMenuId(null);
+              setActiveMenuTask(null);
+              setSelectedTask(t);
+            }}
+          >
+            <Eye size={14} />
+            <span>View</span>
+          </button>
+
+          <button
+            type="button"
+            className="action-item"
+            onClick={() => {
+              const t = activeMenuTask;
+              setOpenActionsMenuId(null);
+              setActiveMenuTask(null);
+              handleOpenEdit(t);
+            }}
+          >
+            <Edit size={14} />
+            <span>Edit</span>
+          </button>
+
+          <button
+            type="button"
+            className="action-item action-item-danger"
+            onClick={() => {
+              const t = activeMenuTask;
+              setOpenActionsMenuId(null);
+              setActiveMenuTask(null);
+              handleOpenDelete(t);
+            }}
+          >
+            <Trash2 size={14} />
+            <span>Delete</span>
+          </button>
+        </div>,
+        document.body
       )}
     </AppLayout>
   );

@@ -115,15 +115,18 @@ CREATE TABLE IF NOT EXISTS client_service_assignments (
 CREATE TABLE IF NOT EXISTS client_family_members (
   id SERIAL PRIMARY KEY,
   client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  member_client_id INTEGER REFERENCES clients(id) ON DELETE CASCADE,
   relationship VARCHAR(50) NOT NULL,
-  name VARCHAR(150) NOT NULL,
+  name VARCHAR(150),
   email VARCHAR(150),
   mobile_no VARCHAR(20),
   pan_no VARCHAR(20),
   dob DATE,
   gender VARCHAR(20),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  CONSTRAINT unique_client_family_link UNIQUE (client_id, member_client_id),
+  CONSTRAINT check_client_not_self CHECK (client_id <> member_client_id)
 );
 
 -- 10. WhatsApp Templates Table
@@ -238,7 +241,9 @@ CREATE INDEX IF NOT EXISTS idx_clients_client_type_id ON clients(client_type_id)
 CREATE INDEX IF NOT EXISTS idx_clients_status ON clients(status);
 CREATE INDEX IF NOT EXISTS idx_clients_client_status ON clients(client_status);
 CREATE INDEX IF NOT EXISTS idx_clients_client_category ON clients(client_category);
+ALTER TABLE client_family_members ADD COLUMN IF NOT EXISTS member_client_id INTEGER REFERENCES clients(id) ON DELETE CASCADE;
 CREATE INDEX IF NOT EXISTS idx_family_members_client_id ON client_family_members(client_id);
+CREATE INDEX IF NOT EXISTS idx_family_members_member_client_id ON client_family_members(member_client_id);
 CREATE INDEX IF NOT EXISTS idx_family_members_pan_no ON client_family_members(pan_no);
 CREATE INDEX IF NOT EXISTS idx_family_members_mobile_no ON client_family_members(mobile_no);
 
@@ -290,4 +295,24 @@ CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
 CREATE INDEX IF NOT EXISTS idx_tasks_priority ON tasks(priority);
 CREATE INDEX IF NOT EXISTS idx_tasks_task_type ON tasks(task_type);
 CREATE INDEX IF NOT EXISTS idx_tasks_assigned_status_due ON tasks(assigned_to, status, due_date);
+
+-- 15. Notifications Table
+CREATE TABLE IF NOT EXISTS notifications (
+  id SERIAL PRIMARY KEY,
+  recipient_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type VARCHAR(50) NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  message TEXT NOT NULL,
+  entity_type VARCHAR(50),
+  entity_id INTEGER,
+  is_read BOOLEAN DEFAULT FALSE NOT NULL,
+  read_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+-- Notifications Indexes
+CREATE INDEX IF NOT EXISTS idx_notifications_recipient_created ON notifications(recipient_user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_recipient_unread ON notifications(recipient_user_id, is_read);
+CREATE INDEX IF NOT EXISTS idx_notifications_entity ON notifications(entity_type, entity_id);
+
 

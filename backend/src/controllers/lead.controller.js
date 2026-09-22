@@ -102,6 +102,7 @@ class LeadController {
         pan: req.body.pan,
         ucc_no: req.body.ucc_no,
         client_type_id: req.body.client_type_id,
+        client_category: req.body.client_category,
       };
       const context = {
         userId: req.user.id,

@@ -12,19 +12,19 @@ const CLIENT_TYPES = [
   { name: "Individual", description: "Single individual client", status: "active" },
   { name: "HUF", description: "Hindu Undivided Family", status: "active" },
   { name: "Company", description: "Corporate or Private Limited Company", status: "active" },
-  { name: "Partnership", description: "Partnership firm", status: "active" },
   { name: "Trust", description: "Registered Trust or Society", status: "active" },
+  { name: "NRI", description: "Non-Resident Indian client", status: "active" },
 ];
 
 const CLIENT_SERVICES = [
   { name: "Demat", description: "Demat account services", status: "active" },
   { name: "Trading", description: "Equity & F&O trading account", status: "active" },
+  { name: "IPO", description: "Initial Public Offering application", status: "active" },
+  { name: "SLBM", description: "Securities Lending and Borrowing Mechanism", status: "active" },
   { name: "Mutual Fund", description: "Mutual fund distribution and advisory", status: "active" },
   { name: "Insurance", description: "Life and Health insurance", status: "active" },
-  { name: "PMS", description: "Portfolio Management Services", status: "active" },
-  { name: "AIF", description: "Alternative Investment Funds", status: "active" },
-  { name: "Bonds", description: "Government and corporate bonds", status: "active" },
-  { name: "Fixed Deposit", description: "Corporate and bank fixed deposits", status: "active" },
+  { name: "Physical Shares", description: "Physical share certificate services", status: "active" },
+  { name: "IEPF", description: "Investor Education and Protection Fund recovery", status: "active" },
 ];
 
 const PERMISSIONS = [
@@ -174,8 +174,8 @@ async function seedDatabase() {
 
     // 6. Seed default admin account
     const adminRoleId = roleMap["Admin"] || 1;
-    const adminEmail = process.env.SEED_ADMIN_EMAIL || "admin@crm.com";
-    const adminPassword = process.env.SEED_ADMIN_PASSWORD || "password123";
+    const adminEmail = process.env.SEED_ADMIN_EMAIL || "admin@gmail.com";
+    const adminPassword = process.env.SEED_ADMIN_PASSWORD || "admin123";
     const passwordHash = await bcrypt.hash(adminPassword, 10);
     await client.query(
       `INSERT INTO users (name, email, password_hash, role_id, status)

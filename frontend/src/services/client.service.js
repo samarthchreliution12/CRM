@@ -153,10 +153,11 @@ class ClientService {
   /**
    * Fetch paginated Clients list with optional search and filters.
    */
-  static async getClients({ search = "", status = "", client_type_id = "", service_id = "", cross_sell = "", page = 1, limit = 10 } = {}, token) {
+  static async getClients({ search = "", status = "", client_status = "", client_type_id = "", service_id = "", cross_sell = "", page = 1, limit = 10 } = {}, token) {
     const params = new URLSearchParams();
     if (search) params.append("search", search.trim());
     if (status && status !== "all") params.append("status", status.trim());
+    if (client_status && client_status !== "all") params.append("client_status", client_status.trim());
     if (client_type_id && client_type_id !== "all") params.append("client_type_id", client_type_id);
     if (service_id && service_id !== "all") params.append("service_id", service_id);
     if (cross_sell) params.append("cross_sell", cross_sell.trim());

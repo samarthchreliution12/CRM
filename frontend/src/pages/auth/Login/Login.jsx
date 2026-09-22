@@ -48,7 +48,7 @@ const Login = () => {
   const validateForm = () => {
     const errors = {};
     if (!formData.email || !formData.email.trim()) {
-      errors.email = "Please enter your email or mobile number.";
+      errors.email = "Please enter your email address.";
     }
 
     if (!formData.password || !formData.password.trim()) {
@@ -106,12 +106,12 @@ const Login = () => {
 
       <form className="auth-form" onSubmit={handleSubmit} noValidate>
         <AuthInput
-          label="Email or Mobile Number"
+          label="Email Address"
           name="email"
-          type="text"
+          type="email"
           value={formData.email}
           onChange={handleChange}
-          placeholder="Enter your email or mobile"
+          placeholder="Enter your email (e.g. admin@gmail.com)"
           error={fieldErrors.email}
           disabled={isSubmitting}
           required

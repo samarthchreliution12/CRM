@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import LeadService from "../../services/lead.service";
-import { X, CheckCircle2, AlertCircle, Loader2, UserCheck, Calendar, CreditCard, Tag } from "lucide-react";
+import { X, CheckCircle2, AlertCircle, Loader2, UserCheck, Calendar, CreditCard, Award, Crown, Gem } from "lucide-react";
 
-const LeadConvertModal = ({ show, lead, onClose, onSuccess, clientTypes = [], token }) => {
-  const [selectedTypeId, setSelectedTypeId] = useState("");
+const LeadConvertModal = ({ show, lead, onClose, onSuccess, token }) => {
   const [dob, setDob] = useState("");
   const [pan, setPan] = useState("");
+  const [clientCategory, setClientCategory] = useState("BRONZE");
 
   const [fieldErrors, setFieldErrors] = useState({});
   const [errorBanner, setErrorBanner] = useState("");
@@ -13,15 +13,13 @@ const LeadConvertModal = ({ show, lead, onClose, onSuccess, clientTypes = [], to
 
   useEffect(() => {
     if (lead) {
-      setSelectedTypeId(
-        lead.client_type_id || lead.client_type?.id || (clientTypes[0] ? clientTypes[0].id : "")
-      );
       setDob("");
       setPan("");
+      setClientCategory("BRONZE");
       setFieldErrors({});
       setErrorBanner("");
     }
-  }, [lead, clientTypes, show]);
+  }, [lead, show]);
 
   if (!show || !lead) return null;
 
@@ -55,9 +53,9 @@ const LeadConvertModal = ({ show, lead, onClose, onSuccess, clientTypes = [], to
       }
     }
 
-    // 3. Client Type Validation
-    if (!selectedTypeId) {
-      errs.client_type_id = "Client Type is required";
+    // 3. Client Category Validation
+    if (!clientCategory) {
+      errs.client_category = "Please select a client category";
     }
 
     setFieldErrors(errs);
@@ -91,7 +89,7 @@ const LeadConvertModal = ({ show, lead, onClose, onSuccess, clientTypes = [], to
       const payload = {
         dob: dob.trim(),
         pan: pan.trim().toUpperCase(),
-        client_type_id: selectedTypeId ? parseInt(selectedTypeId, 10) : undefined,
+        client_category: clientCategory,
       };
 
       const res = await LeadService.convertLeadToClient(lead.id, payload, token);
@@ -111,7 +109,7 @@ const LeadConvertModal = ({ show, lead, onClose, onSuccess, clientTypes = [], to
 
   return (
     <div className="modal-backdrop">
-      <div className="modal-container" style={{ maxWidth: "520px" }}>
+      <div className="modal-container" style={{ maxWidth: "620px" }}>
         {/* Modal Header */}
         <div className="modal-header">
           <div className="flex-center-gap" style={{ gap: "0.5rem" }}>
@@ -181,6 +179,18 @@ const LeadConvertModal = ({ show, lead, onClose, onSuccess, clientTypes = [], to
                     <span style={{ color: "#0f172a" }}>{lead.email}</span>
                   </div>
                 )}
+                <div>
+                  <span style={{ color: "#64748b" }}>Client Type: </span>
+                  <span style={{ fontWeight: 600, color: "#0f172a" }}>
+                    {lead.client_type?.name || lead.client_type_name || "Standard"}
+                  </span>
+                </div>
+                {lead.service?.name && (
+                  <div>
+                    <span style={{ color: "#64748b" }}>Service: </span>
+                    <span style={{ color: "#0f172a" }}>{lead.service.name}</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -234,24 +244,56 @@ const LeadConvertModal = ({ show, lead, onClose, onSuccess, clientTypes = [], to
               )}
             </div>
 
-            {/* Client Type Select */}
+            {/* Client Category (Single-Select Checkboxes) */}
             <div className="form-group">
-              <label className="form-label">Client Type Account</label>
-              <div className="input-with-icon">
-                <Tag size={16} className="input-icon" />
-                <select
-                  className="form-select"
-                  value={selectedTypeId}
-                  onChange={(e) => setSelectedTypeId(e.target.value)}
-                  disabled={converting}
-                >
-                  {clientTypes.map((ct) => (
-                    <option key={ct.id} value={ct.id}>
-                      {ct.name}
-                    </option>
-                  ))}
-                </select>
+              <label className="form-label" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span>
+                  Client Category <span className="required-star">*</span>
+                </span>
+                <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 400 }}>(Select one tier)</span>
+              </label>
+              <div className="category-checkbox-grid">
+                {[
+                  { value: "BRONZE", label: "Bronze", icon: Award, cls: "cat-bronze" },
+                  { value: "SILVER", label: "Silver", icon: Award, cls: "cat-silver" },
+                  { value: "GOLD", label: "Gold", icon: Crown, cls: "cat-gold" },
+                  { value: "PLATINUM", label: "Platinum", icon: Gem, cls: "cat-platinum" },
+                ].map((cat) => {
+                  const isSelected = clientCategory === cat.value;
+                  const IconComp = cat.icon;
+                  return (
+                    <label
+                      key={cat.value}
+                      className={`category-checkbox-card ${cat.cls} ${isSelected ? "selected" : ""}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setClientCategory(cat.value);
+                        if (fieldErrors.client_category) {
+                          setFieldErrors((prev) => ({ ...prev, client_category: "" }));
+                        }
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        name="client_category"
+                        value={cat.value}
+                        checked={isSelected}
+                        onChange={() => {}}
+                        className="category-checkbox-input"
+                      />
+                      <div className="category-card-inner">
+                        <span className="category-card-icon">
+                          <IconComp size={16} />
+                        </span>
+                        <span className="category-card-text">{cat.label}</span>
+                      </div>
+                    </label>
+                  );
+                })}
               </div>
+              {fieldErrors.client_category && (
+                <span className="field-error-text">{fieldErrors.client_category}</span>
+              )}
             </div>
           </div>
 

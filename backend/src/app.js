@@ -27,6 +27,16 @@ const errorHandler = require("./middleware/error.middleware");
 
 const app = express();
 
+// Request logging middleware to print incoming requests in the terminal
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+    console.log(`[${new Date().toLocaleTimeString()}] ${req.method} ${req.originalUrl} - ${res.statusCode} (${duration}ms)`);
+  });
+  next();
+});
+
 app.use(
   helmet({
     contentSecurityPolicy: false, // Disable default CSP to allow React app styles & inline assets during development
@@ -119,6 +129,11 @@ app.use("/api/dashboard", dashboardRoutes);
 const taskRoutes = require("./routes/task.routes");
 app.use("/api/tasks", taskRoutes);
 app.use("/api/task", taskRoutes);
+
+// Notifications Module Routes
+const notificationRoutes = require("./routes/notification.routes");
+app.use("/api/notifications", notificationRoutes);
+
 
 // Static file serving for pre-rendered frontend public pages & assets
 const fs = require("fs");

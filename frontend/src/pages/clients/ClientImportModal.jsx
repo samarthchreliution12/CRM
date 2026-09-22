@@ -75,7 +75,6 @@ const ClientImportModal = ({ show, onClose, onSuccess, token }) => {
 
   const handleDownloadSampleCSV = () => {
     const sampleHeaders = [
-      "ucc_no",
       "name",
       "business_name",
       "mobile_no",
@@ -88,38 +87,42 @@ const ClientImportModal = ({ show, onClose, onSuccess, token }) => {
       "client_type",
       "services",
       "status",
+      "client_status",
+      "client_category",
     ];
 
     const sampleRows = [
       [
-        "CLT1001",
         "Rahul Sharma",
         "Rahul Tech",
         "9876543210",
         "9876543210",
         "rahul@example.com",
-        "ABCDE1234F",
-        "1990-05-15",
+        "CYZPC1015Q",
+        "2003-09-12",
         "Male",
-        "Engineer",
+        "Business",
         "Individual",
-        "Demat|Trading",
+        "Demat",
         "active",
+        "CLIENT",
+        "BRONZE",
       ],
       [
-        "CLT1002",
+        "Ankit Patel",
         "Ankit Enterprises",
-        "Ankit Corp",
         "9876500000",
         "9876500000",
         "ankit@example.com",
-        "ABCDE5678G",
-        "1985-11-20",
+        "ABCDE1234F",
+        "1995-05-20",
         "Male",
-        "Business",
-        "Company",
-        "Mutual Fund|IPO",
+        "Engineer",
+        "Individual",
+        "Trading|Mutual Fund",
         "active",
+        "CLIENT",
+        "SILVER",
       ],
     ];
 
@@ -247,9 +250,9 @@ const ClientImportModal = ({ show, onClose, onSuccess, token }) => {
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-              <Info size={18} color="#2563eb" />
+              <Info size={18} color="#2563eb" style={{ flexShrink: 0 }} />
               <span style={{ fontSize: "0.825rem", color: "#334155" }}>
-                Make sure your CSV contains required columns: <strong>ucc_no, name, pan, dob, client_type</strong>.
+                UCC Number is automatically generated from PAN and Date of Birth. Do not include UCC in your CSV file. Required columns: <strong>name, pan, dob, mobile_no, whatsapp_no, email, client_type</strong>.
               </span>
             </div>
             <button
@@ -416,7 +419,7 @@ const ClientImportModal = ({ show, onClose, onSuccess, token }) => {
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.775rem" }}>
                   <thead>
                     <tr style={{ backgroundColor: "#f1f5f9", textAlign: "left", color: "#475569" }}>
-                      <th style={{ padding: "0.4rem 0.65rem" }}>UCC</th>
+                      <th style={{ padding: "0.4rem 0.65rem" }}>Auto-Generated UCC</th>
                       <th style={{ padding: "0.4rem 0.65rem" }}>Name</th>
                       <th style={{ padding: "0.4rem 0.65rem" }}>PAN</th>
                       <th style={{ padding: "0.4rem 0.65rem" }}>DOB</th>

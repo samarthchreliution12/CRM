@@ -22,6 +22,10 @@ import {
   Award,
   Crown,
   Gem,
+  Search,
+  ExternalLink,
+  UserPlus,
+  Link as LinkIcon,
 } from "lucide-react";
 import DocumentUploadModal from "../documents/DocumentUploadModal";
 import DocumentReviewDrawer from "../documents/DocumentReviewDrawer";
@@ -222,17 +226,35 @@ const ClientDetails = () => {
   const [isDeletingClient, setIsDeletingClient] = useState(false);
 
   const [showAddFamilyModal, setShowAddFamilyModal] = useState(false);
+  const [familyModalTab, setFamilyModalTab] = useState("link"); // "link" | "create"
   const [isAddingFamily, setIsAddingFamily] = useState(false);
-  const [familyFormData, setFamilyFormData] = useState({
+  const [familyFormError, setFamilyFormError] = useState("");
+
+  // Tab 1: Link Existing Client State
+  const [linkSearchQuery, setLinkSearchQuery] = useState("");
+  const [linkSearchResults, setLinkSearchResults] = useState([]);
+  const [isSearchingClients, setIsSearchingClients] = useState(false);
+  const [selectedClientToLink, setSelectedClientToLink] = useState(null);
+  const [linkRelationship, setLinkRelationship] = useState("Spouse");
+
+  // Tab 2: Create New Client & Link State
+  const [newClientFormData, setNewClientFormData] = useState({
     relationship: "Spouse",
     name: "",
-    email: "",
+    business_name: "",
     mobile_no: "",
-    pan_no: "",
+    same_as_whatsapp: false,
+    whatsapp_no: "",
+    email: "",
+    pan: "",
     dob: "",
     gender: "Male",
+    occupation: "",
+    address: "",
+    status: "active",
+    client_category: "",
   });
-  const [familyFormError, setFamilyFormError] = useState("");
+  const [newClientErrors, setNewClientErrors] = useState({});
 
   const [deleteFamilyTarget, setDeleteFamilyTarget] = useState(null);
   const [isDeletingFamily, setIsDeletingFamily] = useState(false);
@@ -298,21 +320,72 @@ const ClientDetails = () => {
     }
   };
 
-  // Handle Add Family Member Form Change
-  const handleFamilyChange = (e) => {
-    const { name, value } = e.target;
-    setFamilyFormData((prev) => ({ ...prev, [name]: value }));
-    setFamilyFormError("");
-  };
-
-  // Submit New Family Member
-  const handleAddFamilySubmit = async (e) => {
-    e.preventDefault();
-    if (!familyFormData.name || !familyFormData.name.trim()) {
-      setFamilyFormError("Family member name is required.");
+  // Debounced search for linking existing client
+  useEffect(() => {
+    if (!showAddFamilyModal || familyModalTab !== "link") return;
+    if (!linkSearchQuery || !linkSearchQuery.trim()) {
+      setLinkSearchResults([]);
       return;
     }
-    if (!familyFormData.relationship) {
+
+    const timer = setTimeout(async () => {
+      try {
+        setIsSearchingClients(true);
+        const res = await ClientService.searchClients(linkSearchQuery.trim(), token);
+        if (res && res.data && res.data.clients) {
+          const existingMemberIds = (client?.family_members || [])
+            .map((m) => m.member_client_id)
+            .filter(Boolean);
+          const filtered = res.data.clients.filter(
+            (c) => Number(c.id) !== Number(id) && !existingMemberIds.includes(c.id)
+          );
+          setLinkSearchResults(filtered);
+        } else {
+          setLinkSearchResults([]);
+        }
+      } catch (err) {
+        console.error("Client search error:", err);
+        setLinkSearchResults([]);
+      } finally {
+        setIsSearchingClients(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [linkSearchQuery, showAddFamilyModal, familyModalTab, token, id, client?.family_members]);
+
+  // UCC Auto-generation helper for Tab 2
+  const generateUccForNewMember = (pan, dob) => {
+    if (!pan || !dob) return "";
+    const cleanPan = pan.trim().toUpperCase();
+    const panMatch = cleanPan.match(/^[A-Z]{5}([0-9]{4})[A-Z]{1}$/);
+    if (!panMatch) return "";
+    const panDigits = panMatch[1];
+
+    const dobStr = String(dob).trim();
+    const ymdMatch = dobStr.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+    if (ymdMatch) {
+      const mm = ymdMatch[2].padStart(2, "0");
+      const dd = ymdMatch[3].padStart(2, "0");
+      return `${panDigits}${dd}${mm}`;
+    }
+    const dmyMatch = dobStr.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})/);
+    if (dmyMatch) {
+      const dd = dmyMatch[1].padStart(2, "0");
+      const mm = dmyMatch[2].padStart(2, "0");
+      return `${panDigits}${dd}${mm}`;
+    }
+    return "";
+  };
+
+  // Submit Tab 1: Link Existing Client
+  const handleLinkExistingFamilySubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedClientToLink) {
+      setFamilyFormError("Please search and select an existing client to link.");
+      return;
+    }
+    if (!linkRelationship) {
       setFamilyFormError("Relationship is required.");
       return;
     }
@@ -320,21 +393,119 @@ const ClientDetails = () => {
     try {
       setIsAddingFamily(true);
       setFamilyFormError("");
-      await ClientService.addFamilyMember(id, familyFormData, token);
+      await ClientService.addFamilyMember(
+        id,
+        {
+          member_client_id: selectedClientToLink.id,
+          relationship: linkRelationship,
+        },
+        token
+      );
       setShowAddFamilyModal(false);
-      setFamilyFormData({
-        relationship: "Spouse",
-        name: "",
-        email: "",
-        mobile_no: "",
-        pan_no: "",
-        dob: "",
-        gender: "Male",
-      });
-      // Refresh client data
+      setSelectedClientToLink(null);
+      setLinkSearchQuery("");
+      setLinkSearchResults([]);
       fetchClientDetails();
     } catch (err) {
-      setFamilyFormError(err.message || "Failed to add family member.");
+      setFamilyFormError(err.message || "Failed to link family member.");
+    } finally {
+      setIsAddingFamily(false);
+    }
+  };
+
+  // Submit Tab 2: Create New Client & Link to Family
+  const handleCreateNewClientFamilySubmit = async (e) => {
+    e.preventDefault();
+    setFamilyFormError("");
+
+    const formErrors = {};
+    if (!newClientFormData.name || !newClientFormData.name.trim()) {
+      formErrors.name = "Full name is required";
+    }
+    if (!newClientFormData.mobile_no || !newClientFormData.mobile_no.trim()) {
+      formErrors.mobile_no = "Mobile number is required";
+    } else {
+      const cleanMobile = newClientFormData.mobile_no.trim().replace(/[\s\-()]/g, "");
+      if (!/^[0-9]{10,15}$/.test(cleanMobile)) {
+        formErrors.mobile_no = "Mobile number must be 10-15 digits";
+      }
+    }
+    if (newClientFormData.pan && newClientFormData.pan.trim()) {
+      const cleanPan = newClientFormData.pan.trim().toUpperCase();
+      if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(cleanPan)) {
+        formErrors.pan = "Invalid PAN format (e.g. ABCDE1234F)";
+      }
+    }
+    if (newClientFormData.email && newClientFormData.email.trim()) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newClientFormData.email.trim())) {
+        formErrors.email = "Invalid email format";
+      }
+    }
+
+    if (Object.keys(formErrors).length > 0) {
+      setNewClientErrors(formErrors);
+      setFamilyFormError("Please fill all required fields correctly.");
+      return;
+    }
+
+    try {
+      setIsAddingFamily(true);
+      setFamilyFormError("");
+
+      const autoUcc = generateUccForNewMember(newClientFormData.pan, newClientFormData.dob);
+
+      const createPayload = {
+        name: newClientFormData.name.trim(),
+        business_name: newClientFormData.business_name?.trim() || null,
+        mobile_no: newClientFormData.mobile_no.trim(),
+        whatsapp_no: newClientFormData.whatsapp_no?.trim() || null,
+        email: newClientFormData.email?.trim() || null,
+        pan: newClientFormData.pan?.trim().toUpperCase() || null,
+        dob: newClientFormData.dob || null,
+        gender: newClientFormData.gender || null,
+        occupation: newClientFormData.occupation?.trim() || null,
+        address: newClientFormData.address?.trim() || null,
+        status: newClientFormData.status || "active",
+        client_category: newClientFormData.client_category || null,
+        ...(autoUcc ? { ucc_no: autoUcc } : {}),
+      };
+
+      const createRes = await ClientService.createClient(createPayload, token);
+      const createdClient = createRes?.data?.client;
+      if (!createdClient || !createdClient.id) {
+        throw new Error("Failed to create client.");
+      }
+
+      await ClientService.addFamilyMember(
+        id,
+        {
+          member_client_id: createdClient.id,
+          relationship: newClientFormData.relationship,
+        },
+        token
+      );
+
+      setShowAddFamilyModal(false);
+      setNewClientFormData({
+        relationship: "Spouse",
+        name: "",
+        business_name: "",
+        mobile_no: "",
+        same_as_whatsapp: false,
+        whatsapp_no: "",
+        email: "",
+        pan: "",
+        dob: "",
+        gender: "Male",
+        occupation: "",
+        address: "",
+        status: "active",
+        client_category: "",
+      });
+      setNewClientErrors({});
+      fetchClientDetails();
+    } catch (err) {
+      setFamilyFormError(err.message || "Failed to create and link family member.");
     } finally {
       setIsAddingFamily(false);
     }
@@ -800,67 +971,87 @@ const ClientDetails = () => {
                     <button
                       type="button"
                       className="btn-add-member-sm"
-                      onClick={() => setShowAddFamilyModal(true)}
+                      onClick={() => {
+                        setFamilyModalTab("link");
+                        setLinkSearchQuery("");
+                        setLinkSearchResults([]);
+                        setSelectedClientToLink(null);
+                        setFamilyFormError("");
+                        setShowAddFamilyModal(true);
+                      }}
                     >
                       <Plus size={14} />
                       <span>Add Member</span>
                     </button>
                   </div>
 
+                  {/* Family Head Display in Overview */}
+                  <div className="overview-family-head-banner">
+                    <Crown size={15} className="family-head-icon-mini" />
+                    <span>
+                      Family Head: <strong>{client.family_head ? client.family_head.name : client.name}</strong> ({client.family_head?.ucc_no || client.ucc_no || "No UCC"})
+                    </span>
+                  </div>
+
                   {familyMembers.length === 0 ? (
-                    <p style={{ color: "#64748b", fontSize: "0.85rem", fontStyle: "italic" }}>
+                    <p style={{ color: "#64748b", fontSize: "0.85rem", fontStyle: "italic", marginTop: "0.75rem" }}>
                       No family members added yet.
                     </p>
                   ) : (
-                    <div className="family-members-list">
-                      {familyMembers.map((member) => (
-                        <div key={member.id} className="family-member-card">
-                          <div className="family-member-info">
-                            <span className="family-member-name">{member.name}</span>
-                            <span className="family-member-rel">{member.relationship}</span>
-                            {member.mobile_no && (
-                              <span className="family-member-detail">
-                                {revealedFields[`fm_${member.id}_mobile`]
-                                  ? member.mobile_no
-                                  : maskMobile(member.mobile_no)}
+                    <div className="family-members-list" style={{ marginTop: "0.75rem" }}>
+                      {familyMembers.map((member, idx) => {
+                        const targetClientId = member.member_client_id || (member.is_head ? client.family_head?.id : null);
+                        const isCurrent = member.is_current || Number(targetClientId) === Number(id);
+
+                        return (
+                          <div key={member.id || `overview-fm-${idx}`} className="family-member-card">
+                            <div className="family-member-info">
+                              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                                <span className="family-member-name">{member.name}</span>
+                                {member.is_head && (
+                                  <span className="family-role-badge badge-head">
+                                    <Crown size={10} /> Head
+                                  </span>
+                                )}
+                                {isCurrent && !member.is_head && (
+                                  <span className="family-role-badge badge-current">
+                                    This Client
+                                  </span>
+                                )}
+                              </div>
+                              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.2rem" }}>
+                                <span className="family-member-rel">{member.relationship}</span>
+                                {member.ucc_no && (
+                                  <span className="family-member-ucc-badge">UCC: {member.ucc_no}</span>
+                                )}
+                              </div>
+                            </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                              {targetClientId && (
                                 <button
                                   type="button"
-                                  className="btn-eye-toggle"
-                                  style={{ marginLeft: "0.25rem" }}
-                                  onClick={() => toggleRevealField(`fm_${member.id}_mobile`)}
-                                  title="Toggle contact info"
+                                  className="btn-view-member-action-sm"
+                                  onClick={() => navigate(`/clients/${targetClientId}`)}
+                                  title="View Client Details"
                                 >
-                                  {revealedFields[`fm_${member.id}_mobile`] ? <EyeOff size={11} /> : <Eye size={11} />}
+                                  <Eye size={12} />
+                                  <span>View</span>
                                 </button>
-                              </span>
-                            )}
-                            {member.email && (
-                              <span className="family-member-detail">
-                                {revealedFields[`fm_${member.id}_email`]
-                                  ? member.email
-                                  : maskEmail(member.email)}
+                              )}
+                              {!member.is_head && member.id && (
                                 <button
                                   type="button"
-                                  className="btn-eye-toggle"
-                                  style={{ marginLeft: "0.25rem" }}
-                                  onClick={() => toggleRevealField(`fm_${member.id}_email`)}
-                                  title="Toggle contact info"
+                                  className="btn-remove-family"
+                                  title="Remove Family Member"
+                                  onClick={() => setDeleteFamilyTarget(member)}
                                 >
-                                  {revealedFields[`fm_${member.id}_email`] ? <EyeOff size={11} /> : <Eye size={11} />}
+                                  <Trash2 size={14} />
                                 </button>
-                              </span>
-                            )}
+                              )}
+                            </div>
                           </div>
-                          <button
-                            type="button"
-                            className="btn-remove-family"
-                            title="Remove Family Member"
-                            onClick={() => setDeleteFamilyTarget(member)}
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -1005,12 +1196,45 @@ const ClientDetails = () => {
           {/* 4. FAMILY TAB */}
           {activeTab === "family" && (
             <div className="details-card">
-              <div className="card-header-row">
-                <h3 className="card-title">Family Details</h3>
+              {/* Family Head Card */}
+              <div className="family-head-card">
+                <div className="family-head-info-group">
+                  <Crown size={24} className="family-head-crown-icon" />
+                  <div>
+                    <span className="family-head-subheading">Family Head</span>
+                    <h4 className="family-head-heading">
+                      {client.family_head ? client.family_head.name : client.name}
+                      <span className="family-head-ucc">
+                        ({client.family_head?.ucc_no || client.ucc_no || "No UCC"})
+                      </span>
+                    </h4>
+                  </div>
+                </div>
+                {client.family_head && Number(client.family_head.id) !== Number(client.id) && (
+                  <button
+                    type="button"
+                    className="btn-view-head-link"
+                    onClick={() => navigate(`/clients/${client.family_head.id}`)}
+                  >
+                    <ExternalLink size={14} />
+                    <span>View Head Profile</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="card-header-row" style={{ marginTop: "1.25rem" }}>
+                <h3 className="card-title">Family Members</h3>
                 <button
                   type="button"
                   className="btn-add-member-sm"
-                  onClick={() => setShowAddFamilyModal(true)}
+                  onClick={() => {
+                    setFamilyModalTab("link");
+                    setLinkSearchQuery("");
+                    setLinkSearchResults([]);
+                    setSelectedClientToLink(null);
+                    setFamilyFormError("");
+                    setShowAddFamilyModal(true);
+                  }}
                 >
                   <Plus size={14} />
                   <span>Add Member</span>
@@ -1021,92 +1245,77 @@ const ClientDetails = () => {
                 <table className="clients-table">
                   <thead>
                     <tr>
+                      <th>MEMBER</th>
                       <th>RELATIONSHIP</th>
-                      <th>NAME</th>
-                      <th>MOBILE</th>
-                      <th>EMAIL</th>
-                      <th>PAN</th>
-                      <th>DOB</th>
-                      <th style={{ width: "50px" }}>ACTIONS</th>
+                      <th>UCC</th>
+                      <th style={{ width: "120px", textAlign: "right" }}>ACTION</th>
                     </tr>
                   </thead>
                   <tbody>
                     {familyMembers.length === 0 ? (
                       <tr>
-                        <td colSpan="7" className="empty-state-cell">
+                        <td colSpan="4" className="empty-state-cell">
                           No family members registered.
                         </td>
                       </tr>
                     ) : (
-                      familyMembers.map((fm) => (
-                        <tr key={fm.id}>
-                          <td>
-                            <span className="family-member-rel">{fm.relationship}</span>
-                          </td>
-                          <td style={{ fontWeight: 700 }}>{fm.name}</td>
-                          <td>
-                            {fm.mobile_no ? (
-                              <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem" }}>
-                                {revealedFields[`tab_fm_${fm.id}_mobile`] ? fm.mobile_no : maskMobile(fm.mobile_no)}
-                                <button
-                                  type="button"
-                                  className="btn-eye-toggle"
-                                  onClick={() => toggleRevealField(`tab_fm_${fm.id}_mobile`)}
-                                  title="Toggle mobile number"
-                                >
-                                  {revealedFields[`tab_fm_${fm.id}_mobile`] ? <EyeOff size={12} /> : <Eye size={12} />}
-                                </button>
+                      familyMembers.map((fm, idx) => {
+                        const targetClientId = fm.member_client_id || (fm.is_head ? client.family_head?.id : null);
+                        const isCurrent = fm.is_current || Number(targetClientId) === Number(id);
+
+                        return (
+                          <tr key={fm.id || `head-${idx}`}>
+                            <td>
+                              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                <span style={{ fontWeight: 700, color: "#0f172a" }}>{fm.name}</span>
+                                {fm.is_head && (
+                                  <span className="family-role-badge badge-head">
+                                    <Crown size={11} /> Head
+                                  </span>
+                                )}
+                                {isCurrent && !fm.is_head && (
+                                  <span className="family-role-badge badge-current">
+                                    This Client
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td>
+                              <span className="family-member-rel">{fm.relationship}</span>
+                            </td>
+                            <td>
+                              <span style={{ fontFamily: "monospace", fontWeight: 600 }}>
+                                {fm.ucc_no || "—"}
                               </span>
-                            ) : (
-                              "N/A"
-                            )}
-                          </td>
-                          <td>
-                            {fm.email ? (
-                              <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem" }}>
-                                {revealedFields[`tab_fm_${fm.id}_email`] ? fm.email : maskEmail(fm.email)}
-                                <button
-                                  type="button"
-                                  className="btn-eye-toggle"
-                                  onClick={() => toggleRevealField(`tab_fm_${fm.id}_email`)}
-                                  title="Toggle email address"
-                                >
-                                  {revealedFields[`tab_fm_${fm.id}_email`] ? <EyeOff size={12} /> : <Eye size={12} />}
-                                </button>
-                              </span>
-                            ) : (
-                              "N/A"
-                            )}
-                          </td>
-                          <td>
-                            {fm.pan_no ? (
-                              <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem" }}>
-                                {revealedFields[`tab_fm_${fm.id}_pan`] ? fm.pan_no : maskPan(fm.pan_no)}
-                                <button
-                                  type="button"
-                                  className="btn-eye-toggle"
-                                  onClick={() => toggleRevealField(`tab_fm_${fm.id}_pan`)}
-                                  title="Toggle PAN number"
-                                >
-                                  {revealedFields[`tab_fm_${fm.id}_pan`] ? <EyeOff size={12} /> : <Eye size={12} />}
-                                </button>
-                              </span>
-                            ) : (
-                              "N/A"
-                            )}
-                          </td>
-                          <td>{formatDate(fm.dob)}</td>
-                          <td>
-                            <button
-                              type="button"
-                              className="btn-remove-family"
-                              onClick={() => setDeleteFamilyTarget(fm)}
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </td>
-                        </tr>
-                      ))
+                            </td>
+                            <td style={{ textAlign: "right" }}>
+                              <div style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", justifyContent: "flex-end" }}>
+                                {targetClientId && (
+                                  <button
+                                    type="button"
+                                    className="btn-view-member-action"
+                                    onClick={() => navigate(`/clients/${targetClientId}`)}
+                                    title="View Client Details"
+                                  >
+                                    <Eye size={13} />
+                                    <span>View</span>
+                                  </button>
+                                )}
+                                {!fm.is_head && fm.id && (
+                                  <button
+                                    type="button"
+                                    className="btn-remove-family"
+                                    onClick={() => setDeleteFamilyTarget(fm)}
+                                    title="Remove from Family"
+                                  >
+                                    <Trash2 size={15} />
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
                     )}
                   </tbody>
                 </table>
@@ -1201,9 +1410,11 @@ const ClientDetails = () => {
         {/* MODAL 2: ADD FAMILY MEMBER */}
         {showAddFamilyModal && (
           <div className="modal-backdrop">
-            <div className="modal-container">
+            <div className="modal-container family-modal-container">
               <div className="modal-header">
-                <h3 className="modal-title">Add Family Member</h3>
+                <div className="modal-title-with-tabs">
+                  <h3 className="modal-title">Add Family Member</h3>
+                </div>
                 <button
                   type="button"
                   className="btn-close-modal"
@@ -1212,114 +1423,444 @@ const ClientDetails = () => {
                   <X size={18} />
                 </button>
               </div>
-              <form onSubmit={handleAddFamilySubmit}>
-                <div className="modal-body">
-                  {familyFormError && (
-                    <div className="error-text">{familyFormError}</div>
-                  )}
 
-                  <div className="form-group">
-                    <label className="form-label">
-                      Relationship <span className="required-star">*</span>
-                    </label>
-                    <select
-                      name="relationship"
-                      value={familyFormData.relationship}
-                      onChange={handleFamilyChange}
-                      className="form-select"
+              {/* Modal Tabs */}
+              <div className="family-modal-tab-bar">
+                <button
+                  type="button"
+                  className={`family-modal-tab-btn ${familyModalTab === "link" ? "active" : ""}`}
+                  onClick={() => {
+                    setFamilyModalTab("link");
+                    setFamilyFormError("");
+                  }}
+                >
+                  <LinkIcon size={14} />
+                  <span>Link Existing Client</span>
+                </button>
+                <button
+                  type="button"
+                  className={`family-modal-tab-btn ${familyModalTab === "create" ? "active" : ""}`}
+                  onClick={() => {
+                    setFamilyModalTab("create");
+                    setFamilyFormError("");
+                  }}
+                >
+                  <UserPlus size={14} />
+                  <span>Create New Client</span>
+                </button>
+              </div>
+
+              {familyFormError && (
+                <div className="family-modal-error-alert">
+                  <AlertCircle size={15} />
+                  <span>{familyFormError}</span>
+                </div>
+              )}
+
+              {/* TAB 1: LINK EXISTING CLIENT */}
+              {familyModalTab === "link" && (
+                <form onSubmit={handleLinkExistingFamilySubmit}>
+                  <div className="modal-body">
+                    <div className="form-group">
+                      <label className="form-label">
+                        Search Existing Client <span className="required-star">*</span>
+                      </label>
+                      <div className="family-search-input-wrap">
+                        <Search size={16} className="family-search-icon" />
+                        <input
+                          type="text"
+                          className="form-input family-search-input"
+                          placeholder="Type Name, PAN, UCC, or Mobile to search..."
+                          value={linkSearchQuery}
+                          onChange={(e) => {
+                            setLinkSearchQuery(e.target.value);
+                            if (selectedClientToLink) {
+                              setSelectedClientToLink(null);
+                            }
+                          }}
+                        />
+                        {isSearchingClients && (
+                          <Loader2 size={16} className="animate-spin family-search-loader" />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Search Results List */}
+                    {!selectedClientToLink && linkSearchResults.length > 0 && (
+                      <div className="family-search-results-list">
+                        {linkSearchResults.map((sc) => (
+                          <div
+                            key={sc.id}
+                            className="family-search-result-item"
+                            onClick={() => {
+                              setSelectedClientToLink(sc);
+                              setLinkSearchResults([]);
+                            }}
+                          >
+                            <div className="family-result-info">
+                              <span className="family-result-name">{sc.name}</span>
+                              <div className="family-result-meta">
+                                {sc.ucc_no && <span>UCC: <strong>{sc.ucc_no}</strong></span>}
+                                {sc.pan && <span>PAN: <strong>{sc.pan}</strong></span>}
+                                {sc.mobile_no && <span>Mob: {sc.mobile_no}</span>}
+                              </div>
+                            </div>
+                            <button type="button" className="btn-select-client-tag">
+                              Select
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {!selectedClientToLink && linkSearchQuery.trim() && !isSearchingClients && linkSearchResults.length === 0 && (
+                      <div className="family-search-empty-state">
+                        <span>No existing clients found matching "{linkSearchQuery}".</span>
+                      </div>
+                    )}
+
+                    {/* Selected Client Card */}
+                    {selectedClientToLink && (
+                      <div className="family-selected-card">
+                        <div className="family-selected-card-header">
+                          <span className="family-selected-label">Selected Client</span>
+                          <button
+                            type="button"
+                            className="btn-clear-selected"
+                            onClick={() => setSelectedClientToLink(null)}
+                          >
+                            Change
+                          </button>
+                        </div>
+                        <div className="family-selected-details">
+                          <div className="family-selected-name">{selectedClientToLink.name}</div>
+                          <div className="family-selected-grid">
+                            <div>UCC: <strong>{selectedClientToLink.ucc_no || "N/A"}</strong></div>
+                            <div>PAN: <strong>{selectedClientToLink.pan || "N/A"}</strong></div>
+                            <div>Mobile: <strong>{selectedClientToLink.mobile_no || "N/A"}</strong></div>
+                            <div>Email: <strong>{selectedClientToLink.email || "N/A"}</strong></div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="form-group" style={{ marginTop: "1rem" }}>
+                      <label className="form-label">
+                        Relationship <span className="required-star">*</span>
+                      </label>
+                      <select
+                        name="relationship"
+                        value={linkRelationship}
+                        onChange={(e) => setLinkRelationship(e.target.value)}
+                        className="form-select"
+                      >
+                        <option value="Spouse">Spouse</option>
+                        <option value="Son">Son</option>
+                        <option value="Daughter">Daughter</option>
+                        <option value="Father">Father</option>
+                        <option value="Mother">Mother</option>
+                        <option value="Brother">Brother</option>
+                        <option value="Sister">Sister</option>
+                        <option value="Grandfather">Grandfather</option>
+                        <option value="Grandmother">Grandmother</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+
+                    <div className="family-modal-footer-link-hint">
+                      <span>Client not found? </span>
+                      <button
+                        type="button"
+                        className="btn-text-switch-tab"
+                        onClick={() => {
+                          setFamilyModalTab("create");
+                          setFamilyFormError("");
+                        }}
+                      >
+                        Create New Client
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="modal-footer">
+                    <button
+                      type="button"
+                      className="btn-cancel"
+                      onClick={() => setShowAddFamilyModal(false)}
+                      disabled={isAddingFamily}
                     >
-                      <option value="Spouse">Spouse</option>
-                      <option value="Son">Son</option>
-                      <option value="Daughter">Daughter</option>
-                      <option value="Father">Father</option>
-                      <option value="Mother">Mother</option>
-                      <option value="Brother">Brother</option>
-                      <option value="Sister">Sister</option>
-                      <option value="Other">Other</option>
-                    </select>
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn-save-client"
+                      disabled={isAddingFamily || !selectedClientToLink}
+                    >
+                      {isAddingFamily ? (
+                        <>
+                          <Loader2 size={14} className="animate-spin" />
+                          <span>Linking...</span>
+                        </>
+                      ) : (
+                        "Add to Family"
+                      )}
+                    </button>
                   </div>
+                </form>
+              )}
 
-                  <div className="form-group">
-                    <label className="form-label">
-                      Name <span className="required-star">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      placeholder="Family member full name"
-                      value={familyFormData.name}
-                      onChange={handleFamilyChange}
-                      className="form-input"
-                    />
-                  </div>
-
-                  <div className="form-grid-2">
+              {/* TAB 2: CREATE NEW CLIENT */}
+              {familyModalTab === "create" && (
+                <form onSubmit={handleCreateNewClientFamilySubmit}>
+                  <div className="modal-body family-modal-body-scroll">
                     <div className="form-group">
-                      <label className="form-label">Mobile Number</label>
+                      <label className="form-label">
+                        Relationship <span className="required-star">*</span>
+                      </label>
+                      <select
+                        name="relationship"
+                        value={newClientFormData.relationship}
+                        onChange={(e) =>
+                          setNewClientFormData((prev) => ({ ...prev, relationship: e.target.value }))
+                        }
+                        className="form-select"
+                      >
+                        <option value="Spouse">Spouse</option>
+                        <option value="Son">Son</option>
+                        <option value="Daughter">Daughter</option>
+                        <option value="Father">Father</option>
+                        <option value="Mother">Mother</option>
+                        <option value="Brother">Brother</option>
+                        <option value="Sister">Sister</option>
+                        <option value="Grandfather">Grandfather</option>
+                        <option value="Grandmother">Grandmother</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">
+                        Full Name <span className="required-star">*</span>
+                      </label>
                       <input
                         type="text"
-                        name="mobile_no"
-                        placeholder="10-digit mobile"
-                        value={familyFormData.mobile_no}
-                        onChange={handleFamilyChange}
+                        placeholder="Client full name"
+                        value={newClientFormData.name}
+                        onChange={(e) => {
+                          setNewClientFormData((prev) => ({ ...prev, name: e.target.value }));
+                          if (newClientErrors.name) setNewClientErrors((prev) => ({ ...prev, name: "" }));
+                        }}
+                        className={`form-input ${newClientErrors.name ? "input-error" : ""}`}
+                      />
+                      {newClientErrors.name && <span className="field-error-text">{newClientErrors.name}</span>}
+                    </div>
+
+                    <div className="form-grid-2">
+                      <div className="form-group">
+                        <label className="form-label">PAN Number</label>
+                        <input
+                          type="text"
+                          placeholder="ABCDE1234F"
+                          maxLength={10}
+                          value={newClientFormData.pan}
+                          onChange={(e) => {
+                            const val = e.target.value.toUpperCase();
+                            setNewClientFormData((prev) => ({ ...prev, pan: val }));
+                            if (newClientErrors.pan) setNewClientErrors((prev) => ({ ...prev, pan: "" }));
+                          }}
+                          className={`form-input ${newClientErrors.pan ? "input-error" : ""}`}
+                        />
+                        {newClientErrors.pan && <span className="field-error-text">{newClientErrors.pan}</span>}
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label">Date of Birth</label>
+                        <input
+                          type="date"
+                          value={newClientFormData.dob}
+                          onChange={(e) =>
+                            setNewClientFormData((prev) => ({ ...prev, dob: e.target.value }))
+                          }
+                          className="form-input"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Auto UCC Preview */}
+                    <div className="form-group">
+                      <label className="form-label">
+                        Generated UCC <span style={{ fontSize: "0.75rem", color: "#64748b" }}>(Auto from PAN 4 digits + DOB DDMM)</span>
+                      </label>
+                      <input
+                        type="text"
+                        readOnly
+                        value={generateUccForNewMember(newClientFormData.pan, newClientFormData.dob) || "Auto-generated upon PAN & DOB entry"}
                         className="form-input"
+                        style={{ backgroundColor: "#f8fafc", color: "#334155", fontWeight: 600, fontFamily: "monospace" }}
                       />
                     </div>
+
+                    <div className="form-grid-2">
+                      <div className="form-group">
+                        <label className="form-label">
+                          Mobile Number <span className="required-star">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="10-digit mobile"
+                          maxLength={15}
+                          value={newClientFormData.mobile_no}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setNewClientFormData((prev) => {
+                              const updated = { ...prev, mobile_no: val };
+                              if (prev.same_as_whatsapp) updated.whatsapp_no = val;
+                              return updated;
+                            });
+                            if (newClientErrors.mobile_no) setNewClientErrors((prev) => ({ ...prev, mobile_no: "" }));
+                          }}
+                          className={`form-input ${newClientErrors.mobile_no ? "input-error" : ""}`}
+                        />
+                        {newClientErrors.mobile_no && <span className="field-error-text">{newClientErrors.mobile_no}</span>}
+                      </div>
+
+                      <div className="form-group">
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.35rem" }}>
+                          <label className="form-label" style={{ margin: 0 }}>WhatsApp Number</label>
+                          <label style={{ fontSize: "0.75rem", display: "flex", alignItems: "center", gap: "0.25rem", cursor: "pointer", color: "#475569" }}>
+                            <input
+                              type="checkbox"
+                              checked={newClientFormData.same_as_whatsapp}
+                              onChange={(e) => {
+                                const chk = e.target.checked;
+                                setNewClientFormData((prev) => ({
+                                  ...prev,
+                                  same_as_whatsapp: chk,
+                                  whatsapp_no: chk ? prev.mobile_no : prev.whatsapp_no,
+                                }));
+                              }}
+                            />
+                            Same as mobile
+                          </label>
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="WhatsApp number"
+                          disabled={newClientFormData.same_as_whatsapp}
+                          value={newClientFormData.whatsapp_no}
+                          onChange={(e) =>
+                            setNewClientFormData((prev) => ({ ...prev, whatsapp_no: e.target.value }))
+                          }
+                          className="form-input"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-grid-2">
+                      <div className="form-group">
+                        <label className="form-label">Email</label>
+                        <input
+                          type="email"
+                          placeholder="email@example.com"
+                          value={newClientFormData.email}
+                          onChange={(e) => {
+                            setNewClientFormData((prev) => ({ ...prev, email: e.target.value }));
+                            if (newClientErrors.email) setNewClientErrors((prev) => ({ ...prev, email: "" }));
+                          }}
+                          className={`form-input ${newClientErrors.email ? "input-error" : ""}`}
+                        />
+                        {newClientErrors.email && <span className="field-error-text">{newClientErrors.email}</span>}
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label">Gender</label>
+                        <select
+                          value={newClientFormData.gender}
+                          onChange={(e) =>
+                            setNewClientFormData((prev) => ({ ...prev, gender: e.target.value }))
+                          }
+                          className="form-select"
+                        >
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                          <option value="Other">Other</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="form-grid-2">
+                      <div className="form-group">
+                        <label className="form-label">Occupation</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Business, Professional"
+                          value={newClientFormData.occupation}
+                          onChange={(e) =>
+                            setNewClientFormData((prev) => ({ ...prev, occupation: e.target.value }))
+                          }
+                          className="form-input"
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label">Category</label>
+                        <select
+                          value={newClientFormData.client_category}
+                          onChange={(e) =>
+                            setNewClientFormData((prev) => ({ ...prev, client_category: e.target.value }))
+                          }
+                          className="form-select"
+                        >
+                          <option value="">Select Category</option>
+                          <option value="Bronze">Bronze</option>
+                          <option value="Silver">Silver</option>
+                          <option value="Gold">Gold</option>
+                          <option value="Platinum">Platinum</option>
+                          <option value="Diamond">Diamond</option>
+                        </select>
+                      </div>
+                    </div>
+
                     <div className="form-group">
-                      <label className="form-label">Email</label>
-                      <input
-                        type="email"
-                        name="email"
-                        placeholder="email@example.com"
-                        value={familyFormData.email}
-                        onChange={handleFamilyChange}
+                      <label className="form-label">Address</label>
+                      <textarea
+                        rows={2}
+                        placeholder="Full residential or office address"
+                        value={newClientFormData.address}
+                        onChange={(e) =>
+                          setNewClientFormData((prev) => ({ ...prev, address: e.target.value }))
+                        }
                         className="form-input"
                       />
                     </div>
                   </div>
 
-                  <div className="form-grid-2">
-                    <div className="form-group">
-                      <label className="form-label">PAN Number</label>
-                      <input
-                        type="text"
-                        name="pan_no"
-                        placeholder="ABCDE1234F"
-                        value={familyFormData.pan_no}
-                        onChange={handleFamilyChange}
-                        className="form-input"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Date of Birth</label>
-                      <input
-                        type="date"
-                        name="dob"
-                        value={familyFormData.dob}
-                        onChange={handleFamilyChange}
-                        className="form-input"
-                      />
-                    </div>
+                  <div className="modal-footer">
+                    <button
+                      type="button"
+                      className="btn-cancel"
+                      onClick={() => setShowAddFamilyModal(false)}
+                      disabled={isAddingFamily}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn-save-client"
+                      disabled={isAddingFamily}
+                    >
+                      {isAddingFamily ? (
+                        <>
+                          <Loader2 size={14} className="animate-spin" />
+                          <span>Creating & Linking...</span>
+                        </>
+                      ) : (
+                        "Create & Link to Family"
+                      )}
+                    </button>
                   </div>
-                </div>
-                <div className="modal-footer">
-                  <button
-                    type="button"
-                    className="btn-cancel"
-                    onClick={() => setShowAddFamilyModal(false)}
-                    disabled={isAddingFamily}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn-save-client"
-                    disabled={isAddingFamily}
-                  >
-                    {isAddingFamily ? "Saving..." : "Add Member"}
-                  </button>
-                </div>
-              </form>
+                </form>
+              )}
             </div>
           </div>
         )}

@@ -405,6 +405,71 @@ class TaskModel {
     const result = await pool.query(query, [taskId]);
     return result.rowCount > 0;
   }
+
+  /**
+   * Dynamically derive task assignment and status update notifications for a user.
+   */
+  static async findTaskNotificationsForUser(userId) {
+    const uId = parseInt(userId, 10);
+    if (!uId || isNaN(uId)) return [];
+
+    const query = `
+      -- 1. Task Assignments
+      SELECT 
+        ('assign_' || t.id::text) AS notif_key,
+        t.id AS task_id,
+        t.title AS task_title,
+        'TASK_ASSIGNED' AS type,
+        'New Task Assigned' AS title,
+        ('You have been assigned the task ''' || t.title || ''' by ' || COALESCE(creator.name, 'Admin') || '.') AS message,
+        t.created_at AS created_at
+      FROM tasks t
+      JOIN users creator ON creator.id = t.created_by
+      WHERE t.assigned_to = $1 AND t.created_by != $1
+
+      UNION ALL
+
+      -- 2. Task Status Updates / Completions (from Audit Logs)
+      SELECT 
+        ('status_' || a.id::text) AS notif_key,
+        t.id AS task_id,
+        t.title AS task_title,
+        CASE 
+          WHEN (a.new_values->>'status') = 'COMPLETED' THEN 'TASK_COMPLETED'
+          ELSE 'TASK_STATUS_UPDATED'
+        END AS type,
+        CASE 
+          WHEN (a.new_values->>'status') = 'COMPLETED' THEN 'Task Completed'
+          ELSE 'Task Status Updated'
+        END AS title,
+        CASE 
+          WHEN (a.new_values->>'status') = 'COMPLETED' THEN 
+            (COALESCE(updater.name, 'A user') || ' completed the task ''' || t.title || '''.')
+          ELSE 
+            (COALESCE(updater.name, 'A user') || ' changed ''' || t.title || ''' from ' || 
+              INITCAP(REPLACE(COALESCE(a.old_values->>'status', 'PENDING'), '_', ' ')) || ' to ' || 
+              INITCAP(REPLACE(COALESCE(a.new_values->>'status', 'IN_PROGRESS'), '_', ' ')) || '.')
+        END AS message,
+        a.created_at AS created_at
+      FROM audit_logs a
+      JOIN tasks t ON t.id = a.entity_id
+      JOIN users updater ON updater.id = a.user_id
+      WHERE t.created_by = $1
+        AND a.user_id != $1
+        AND a.module = 'TASKS'
+        AND a.entity_type = 'TASK'
+        AND a.action IN ('UPDATE_STATUS', 'UPDATE')
+        AND a.old_values->>'status' IS NOT NULL
+        AND a.new_values->>'status' IS NOT NULL
+        AND (a.old_values->>'status') != (a.new_values->>'status')
+
+      ORDER BY created_at DESC
+      LIMIT 20
+    `;
+
+    const result = await pool.query(query, [uId]);
+    return result.rows;
+  }
 }
 
 module.exports = {

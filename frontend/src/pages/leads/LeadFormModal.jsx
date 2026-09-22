@@ -25,6 +25,7 @@ const LeadFormModal = ({
   const [formData, setFormData] = useState({
     name: "",
     mobile_no: "",
+    same_as_whatsapp: false,
     whatsapp_no: "",
     email: "",
     company_name: "",
@@ -55,9 +56,15 @@ const LeadFormModal = ({
 
   useEffect(() => {
     if (editingLead) {
+      const isSame = Boolean(
+        editingLead.mobile_no &&
+        editingLead.whatsapp_no &&
+        editingLead.mobile_no === editingLead.whatsapp_no
+      );
       setFormData({
         name: editingLead.name || "",
         mobile_no: editingLead.mobile_no || "",
+        same_as_whatsapp: isSame,
         whatsapp_no: editingLead.whatsapp_no || "",
         email: editingLead.email || "",
         company_name: editingLead.company_name || "",
@@ -73,6 +80,7 @@ const LeadFormModal = ({
       setFormData({
         name: "",
         mobile_no: "",
+        same_as_whatsapp: false,
         whatsapp_no: "",
         email: "",
         company_name: "",
@@ -104,9 +112,26 @@ const LeadFormModal = ({
   };
 
   const handleChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => {
+      const updated = { ...prev, [field]: value };
+
+      if (field === "mobile_no" && prev.same_as_whatsapp) {
+        updated.whatsapp_no = value;
+      }
+      if (field === "same_as_whatsapp") {
+        if (value) {
+          updated.whatsapp_no = prev.mobile_no;
+        }
+      }
+
+      return updated;
+    });
+
     if (fieldErrors[field]) {
       setFieldErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+    if ((field === "mobile_no" || field === "same_as_whatsapp") && fieldErrors.whatsapp_no) {
+      setFieldErrors((prev) => ({ ...prev, whatsapp_no: "" }));
     }
   };
 
@@ -297,6 +322,16 @@ const LeadFormModal = ({
                     onChange={(e) => handleChange("mobile_no", e.target.value)}
                   />
                 </div>
+                <label className="checkbox-inline-wrapper">
+                  <input
+                    type="checkbox"
+                    name="same_as_whatsapp"
+                    checked={formData.same_as_whatsapp}
+                    onChange={(e) => handleChange("same_as_whatsapp", e.target.checked)}
+                    className="checkbox-inline-input"
+                  />
+                  <span className="checkbox-inline-label">Same as WhatsApp Number</span>
+                </label>
                 {fieldErrors.mobile_no && <span className="field-error-text">{fieldErrors.mobile_no}</span>}
               </div>
 
@@ -313,6 +348,7 @@ const LeadFormModal = ({
                     placeholder="e.g. 9876543210"
                     value={formData.whatsapp_no}
                     onChange={(e) => handleChange("whatsapp_no", e.target.value)}
+                    readOnly={formData.same_as_whatsapp}
                   />
                 </div>
                 {fieldErrors.whatsapp_no && <span className="field-error-text">{fieldErrors.whatsapp_no}</span>}

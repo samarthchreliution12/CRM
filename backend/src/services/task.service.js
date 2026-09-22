@@ -8,6 +8,8 @@ const {
 const UserModel = require("../models/user.model");
 const pool = require("../config/database");
 const AuditService = require("./audit.service");
+const NotificationService = require("./notification.service");
+const NotificationModel = require("../models/notification.model");
 
 class TaskService {
   /**
@@ -203,6 +205,24 @@ class TaskService {
       ipAddress: context.ipAddress,
     });
 
+    // Notify assigned user if assigned to someone other than creator
+    if (newTask.assigned_to && parseInt(newTask.assigned_to, 10) !== parseInt(createdBy, 10)) {
+      try {
+        const creator = await UserModel.findById(createdBy);
+        const creatorName = creator ? creator.name : "Admin";
+        await NotificationService.createNotification({
+          recipientUserId: newTask.assigned_to,
+          type: "TASK_ASSIGNED",
+          title: "New Task Assigned",
+          message: `You have been assigned '${newTask.title}' by ${creatorName}.`,
+          entityType: "TASK",
+          entityId: newTask.id,
+        });
+      } catch (notifErr) {
+        console.error("Failed to create task assignment notification:", notifErr);
+      }
+    }
+
     return newTask;
   }
 
@@ -379,6 +399,64 @@ class TaskService {
       });
     }
 
+    const formatStatus = (s) =>
+      s
+        ? s
+            .replace(/_/g, " ")
+            .toLowerCase()
+            .replace(/\b\w/g, (c) => c.toUpperCase())
+        : "";
+
+    // 1. Notify newly assigned user if assignment changed and not assigned to self
+    const newAssignedTo = updatedTask.assigned_to;
+    if (
+      newAssignedTo &&
+      oldAssignedTo &&
+      parseInt(newAssignedTo, 10) !== parseInt(oldAssignedTo, 10) &&
+      parseInt(newAssignedTo, 10) !== parseInt(context.userId, 10)
+    ) {
+      try {
+        const updater = await UserModel.findById(context.userId);
+        const updaterName = updater ? updater.name : "Admin";
+        await NotificationService.createNotification({
+          recipientUserId: newAssignedTo,
+          type: "TASK_ASSIGNED",
+          title: "New Task Assigned",
+          message: `You have been assigned '${updatedTask.title}' by ${updaterName}.`,
+          entityType: "TASK",
+          entityId: updatedTask.id,
+        });
+      } catch (notifErr) {
+        console.error("Failed to create task reassignment notification:", notifErr);
+      }
+    }
+
+    // 2. Notify task creator if status changed and updater is not the creator
+    if (
+      data.status !== undefined &&
+      existingTask.status !== updatedTask.status &&
+      parseInt(existingTask.created_by, 10) !== parseInt(context.userId, 10)
+    ) {
+      try {
+        const updater = await UserModel.findById(context.userId);
+        const updaterName = updater ? updater.name : "A user";
+        const isCompleted = updatedTask.status === "COMPLETED";
+
+        await NotificationService.createNotification({
+          recipientUserId: existingTask.created_by,
+          type: isCompleted ? "TASK_COMPLETED" : "TASK_STATUS_UPDATED",
+          title: isCompleted ? "Task Completed" : "Task Status Updated",
+          message: isCompleted
+            ? `${updaterName} completed the task '${updatedTask.title}'.`
+            : `${updaterName} changed '${updatedTask.title}' from ${formatStatus(existingTask.status)} to ${formatStatus(updatedTask.status)}.`,
+          entityType: "TASK",
+          entityId: updatedTask.id,
+        });
+      } catch (notifErr) {
+        console.error("Failed to create task status update notification:", notifErr);
+      }
+    }
+
     return updatedTask;
   }
 
@@ -415,6 +493,39 @@ class TaskService {
       ipAddress: context.ipAddress,
     });
 
+    const formatStatus = (s) =>
+      s
+        ? s
+            .replace(/_/g, " ")
+            .toLowerCase()
+            .replace(/\b\w/g, (c) => c.toUpperCase())
+        : "";
+
+    // Notify task creator if status changed and updater is not the creator
+    if (
+      existingTask.status !== cleanStatus &&
+      parseInt(existingTask.created_by, 10) !== parseInt(context.userId, 10)
+    ) {
+      try {
+        const updater = await UserModel.findById(context.userId);
+        const updaterName = updater ? updater.name : "A user";
+        const isCompleted = cleanStatus === "COMPLETED";
+
+        await NotificationService.createNotification({
+          recipientUserId: existingTask.created_by,
+          type: isCompleted ? "TASK_COMPLETED" : "TASK_STATUS_UPDATED",
+          title: isCompleted ? "Task Completed" : "Task Status Updated",
+          message: isCompleted
+            ? `${updaterName} completed the task '${updatedTask.title}'.`
+            : `${updaterName} changed '${updatedTask.title}' from ${formatStatus(existingTask.status)} to ${formatStatus(cleanStatus)}.`,
+          entityType: "TASK",
+          entityId: updatedTask.id,
+        });
+      } catch (notifErr) {
+        console.error("Failed to create task status update notification:", notifErr);
+      }
+    }
+
     return updatedTask;
   }
 
@@ -438,6 +549,18 @@ class TaskService {
     });
 
     return true;
+  }
+
+  /**
+   * Fetch task assignment & status notifications for authenticated user.
+   */
+  static async getTaskNotifications(context = {}) {
+    if (!context.userId) return [];
+    const res = await NotificationModel.findAllByUserId(context.userId, {
+      entity_type: "TASK",
+      limit: 20,
+    });
+    return res.notifications || [];
   }
 }
 

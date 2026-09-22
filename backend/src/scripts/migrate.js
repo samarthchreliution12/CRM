@@ -389,6 +389,33 @@ async function runMigrations() {
 
       -- Migration step 12: Ensure address column exists on clients table
       ALTER TABLE clients ADD COLUMN IF NOT EXISTS address TEXT;
+
+      -- Migration step 13: Ensure member_client_id exists on client_family_members
+      ALTER TABLE client_family_members ADD COLUMN IF NOT EXISTS member_client_id INTEGER REFERENCES clients(id) ON DELETE CASCADE;
+      ALTER TABLE client_family_members ALTER COLUMN name DROP NOT NULL;
+      ALTER TABLE client_family_members DROP CONSTRAINT IF EXISTS unique_client_family_link;
+      ALTER TABLE client_family_members ADD CONSTRAINT unique_client_family_link UNIQUE (client_id, member_client_id);
+      ALTER TABLE client_family_members DROP CONSTRAINT IF EXISTS check_client_not_self;
+      ALTER TABLE client_family_members ADD CONSTRAINT check_client_not_self CHECK (client_id <> member_client_id);
+      CREATE INDEX IF NOT EXISTS idx_family_members_member_client_id ON client_family_members(member_client_id);
+
+      -- Migration step 14: Ensure notifications table and indexes exist
+      CREATE TABLE IF NOT EXISTS notifications (
+        id SERIAL PRIMARY KEY,
+        recipient_user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        type VARCHAR(50) NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        message TEXT NOT NULL,
+        entity_type VARCHAR(50),
+        entity_id INTEGER,
+        is_read BOOLEAN DEFAULT FALSE NOT NULL,
+        read_at TIMESTAMP WITH TIME ZONE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_notifications_recipient_created ON notifications(recipient_user_id, created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_notifications_recipient_unread ON notifications(recipient_user_id, is_read);
+      CREATE INDEX IF NOT EXISTS idx_notifications_entity ON notifications(entity_type, entity_id);
     `);
 
     console.log("Database migrations completed successfully.");

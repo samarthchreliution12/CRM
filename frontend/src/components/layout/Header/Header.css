@@ -287,6 +287,12 @@
   border-bottom: 1px solid #e2e8f0;
 }
 
+.notif-dropdown-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .notif-dropdown-title {
   font-size: 0.875rem;
   font-weight: 700;
@@ -300,6 +306,23 @@
   color: #dc2626;
   padding: 2px 8px;
   border-radius: 9999px;
+}
+
+.btn-mark-all-read {
+  background: none;
+  border: none;
+  color: var(--primary, #9E241E);
+  font-size: 0.725rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.btn-mark-all-read:hover {
+  background-color: #fee2e2;
+  text-decoration: underline;
 }
 
 .notif-dropdown-body {
@@ -317,12 +340,22 @@
   border-bottom: 1px solid #f1f5f9;
 }
 
+.notif-item.read {
+  opacity: 0.78;
+  background-color: #fafbfc;
+}
+
+.notif-item.unread {
+  background-color: #ffffff;
+}
+
 .notif-item:last-child {
   border-bottom: none;
 }
 
 .notif-item:hover {
   background-color: #f8fafc;
+  opacity: 1;
 }
 
 .notif-item-icon-wrapper {
@@ -340,6 +373,16 @@
   color: #d97706;
 }
 
+.notif-item-icon-wrapper.completed {
+  background-color: #f0fdf4;
+  color: #16a34a;
+}
+
+.notif-item-icon-wrapper.rejected {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
 .notif-item-icon-wrapper.direct {
   background-color: var(--primary-lighter, #FAF3F2);
   color: var(--primary, #9E241D);
@@ -348,6 +391,16 @@
 .notif-item-icon-wrapper.channel {
   background-color: #f0fdf4;
   color: #16a34a;
+}
+
+.notif-unread-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #dc2626;
+  flex-shrink: 0;
+  display: inline-block;
+  margin-left: 4px;
 }
 
 .notif-item-header {

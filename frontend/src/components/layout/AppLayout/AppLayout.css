@@ -1,6 +1,7 @@
 .app-layout-container {
   min-height: 100vh;
   background-color: #f8fafc;
+  overflow-x: hidden;
 }
 
 .app-main-content {

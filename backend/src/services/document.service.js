@@ -4,6 +4,7 @@ const crypto = require("crypto");
 const DocumentModel = require("../models/document.model");
 const ClientModel = require("../models/client.model");
 const AuditService = require("./audit.service");
+const NotificationService = require("./notification.service");
 const { encryptBuffer, decryptBuffer } = require("../utils/encryption.util");
 const { isValidDocumentType, validateUploadedFile } = require("../utils/fileValidation.util");
 
@@ -437,6 +438,21 @@ class DocumentService {
       newValues: { status: approvedDoc.status },
     });
 
+    if (doc.uploaded_by && parseInt(doc.uploaded_by, 10) !== parseInt(userId, 10)) {
+      try {
+        await NotificationService.createNotification({
+          recipientUserId: doc.uploaded_by,
+          type: "DOCUMENT_APPROVED",
+          title: "Document Approved",
+          message: `Document '${doc.document_type}' for client #${doc.client_id} has been approved.`,
+          entityType: "DOCUMENT",
+          entityId: numericDocId,
+        });
+      } catch (e) {
+        console.error("Failed to notify document approval:", e);
+      }
+    }
+
     return approvedDoc;
   }
 
@@ -486,6 +502,21 @@ class DocumentService {
       oldValues: { status: doc.status },
       newValues: { status: rejectedDoc.status, rejection_reason: reasonStr },
     });
+
+    if (doc.uploaded_by && parseInt(doc.uploaded_by, 10) !== parseInt(userId, 10)) {
+      try {
+        await NotificationService.createNotification({
+          recipientUserId: doc.uploaded_by,
+          type: "DOCUMENT_REJECTED",
+          title: "Document Rejected",
+          message: `Document '${doc.document_type}' for client #${doc.client_id} was rejected: ${reasonStr}`,
+          entityType: "DOCUMENT",
+          entityId: numericDocId,
+        });
+      } catch (e) {
+        console.error("Failed to notify document rejection:", e);
+      }
+    }
 
     return rejectedDoc;
   }

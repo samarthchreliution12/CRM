@@ -6,8 +6,11 @@ class ClientFamilyMemberController {
   static async listFamilyMembers(req, res) {
     try {
       const { clientId } = req.params;
-      const familyMembers = await ClientFamilyMemberService.listFamilyMembers(clientId);
-      return sendSuccess(res, 200, "Family members retrieved successfully", { family_members: familyMembers });
+      const result = await ClientFamilyMemberService.listFamilyMembers(clientId);
+      return sendSuccess(res, 200, "Family members retrieved successfully", {
+        family_head: result.family_head,
+        family_members: result.family_members,
+      });
     } catch (error) {
       return sendError(res, error.statusCode || 500, error.message, error.errors);
     }

@@ -110,6 +110,19 @@ class TaskController {
       next(err);
     }
   }
+
+  /**
+   * GET /api/tasks/notifications - Get task assignment & status notifications for user
+   */
+  static async getTaskNotifications(req, res, next) {
+    try {
+      const context = { userId: req.user.id };
+      const notifications = await TaskService.getTaskNotifications(context);
+      return sendSuccess(res, 200, "Task notifications retrieved successfully", { notifications });
+    } catch (err) {
+      next(err);
+    }
+  }
 }
 
 module.exports = TaskController;

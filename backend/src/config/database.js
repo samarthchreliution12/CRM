@@ -5,8 +5,12 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
+let isConnectedLogged = false;
 pool.on("connect", () => {
-  console.log("PostgreSQL connected");
+  if (!isConnectedLogged) {
+    console.log("PostgreSQL connected");
+    isConnectedLogged = true;
+  }
 });
 
 pool.on("error", (error) => {

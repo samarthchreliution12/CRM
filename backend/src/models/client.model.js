@@ -1,4 +1,5 @@
 const pool = require("../config/database");
+const ClientFamilyMemberModel = require("./clientFamilyMember.model");
 
 class ClientModel {
   /**
@@ -84,13 +85,20 @@ class ClientModel {
       )`);
     }
 
-    if (status && status.trim() && status.toLowerCase() !== "all") {
-      params.push(status.trim().toLowerCase());
+    const cleanStatus = status ? status.trim().toLowerCase() : "";
+    let cleanClientStatus = client_status ? client_status.trim().toUpperCase() : "";
+
+    if (cleanStatus === "non_client" || cleanStatus === "non-client" || cleanStatus === "nonclient") {
+      cleanClientStatus = "NON_CLIENT";
+    } else if (cleanStatus === "client") {
+      cleanClientStatus = "CLIENT";
+    } else if (cleanStatus && cleanStatus !== "all") {
+      params.push(cleanStatus);
       conditions.push(`c.status = $${params.length}`);
     }
 
-    if (client_status && client_status.trim() && client_status.toLowerCase() !== "all") {
-      params.push(client_status.trim().toUpperCase());
+    if (cleanClientStatus && cleanClientStatus !== "ALL") {
+      params.push(cleanClientStatus);
       conditions.push(`c.client_status = $${params.length}`);
     }
 
@@ -247,14 +255,8 @@ class ClientModel {
 
     const row = clientResult.rows[0];
 
-    // Fetch family members
-    const familyQuery = `
-      SELECT id, client_id, relationship, name, email, mobile_no, pan_no, dob, gender, created_at, updated_at
-      FROM client_family_members
-      WHERE client_id = $1
-      ORDER BY id ASC
-    `;
-    const familyResult = await pool.query(familyQuery, [id]);
+    // Fetch family details
+    const familyData = await ClientFamilyMemberModel.findFamilyForClient(id);
 
     return {
       id: row.id,
@@ -279,7 +281,8 @@ class ClientModel {
       is_client: row.client_status !== "NON_CLIENT",
       client_category: row.client_category,
       services: Array.isArray(row.services) ? row.services : [],
-      family_members: familyResult.rows,
+      family_head: familyData.family_head,
+      family_members: familyData.family_members,
       created_at: row.created_at,
       updated_at: row.updated_at,
     };
@@ -537,7 +540,7 @@ class ClientModel {
     try {
       await client.query("BEGIN");
       // Delete family members
-      await client.query("DELETE FROM client_family_members WHERE client_id = $1", [id]);
+      await client.query("DELETE FROM client_family_members WHERE client_id = $1 OR member_client_id = $1", [id]);
       // Delete service assignments
       await client.query("DELETE FROM client_service_assignments WHERE client_id = $1", [id]);
       // Delete client
@@ -585,13 +588,20 @@ class ClientModel {
         )`);
       }
 
-      if (status && typeof status === "string" && status.trim() && status.toLowerCase() !== "all") {
-        params.push(status.trim().toLowerCase());
+      const cleanStatus = status && typeof status === "string" ? status.trim().toLowerCase() : "";
+      let cleanClientStatus = client_status && typeof client_status === "string" ? client_status.trim().toUpperCase() : "";
+
+      if (cleanStatus === "non_client" || cleanStatus === "non-client" || cleanStatus === "nonclient") {
+        cleanClientStatus = "NON_CLIENT";
+      } else if (cleanStatus === "client") {
+        cleanClientStatus = "CLIENT";
+      } else if (cleanStatus && cleanStatus !== "all") {
+        params.push(cleanStatus);
         conditions.push(`c.status = $${params.length}`);
       }
 
-      if (client_status && typeof client_status === "string" && client_status.trim() && client_status.toLowerCase() !== "all") {
-        params.push(client_status.trim().toUpperCase());
+      if (cleanClientStatus && cleanClientStatus !== "ALL") {
+        params.push(cleanClientStatus);
         conditions.push(`c.client_status = $${params.length}`);
       }
 

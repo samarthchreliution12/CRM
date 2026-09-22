@@ -5,8 +5,15 @@ function validateCreateFamilyMemberInput(data) {
     errors.push({ field: "relationship", message: "Relationship is required" });
   }
 
-  if (!data.name || !data.name.trim()) {
-    errors.push({ field: "name", message: "Family member name is required" });
+  if (!data.member_client_id && (!data.name || !data.name.trim())) {
+    errors.push({ field: "member_client_id", message: "Client is required" });
+  }
+
+  if (data.member_client_id) {
+    const memberIdNum = Number(data.member_client_id);
+    if (!Number.isInteger(memberIdNum) || memberIdNum <= 0) {
+      errors.push({ field: "member_client_id", message: "Invalid client ID" });
+    }
   }
 
   if (data.email && data.email.trim()) {

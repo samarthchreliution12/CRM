@@ -20,6 +20,13 @@ router.post(
   TaskController.createTask
 );
 
+// GET /api/tasks/notifications - Get task assignment & status notifications
+router.get(
+  "/notifications",
+  requirePermission(["task.read", "task.view"]),
+  TaskController.getTaskNotifications
+);
+
 // GET /api/tasks/:id - Get single task details
 router.get(
   "/:id",

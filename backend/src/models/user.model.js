@@ -12,7 +12,7 @@ class UserModel {
       LEFT JOIN roles r ON r.id = u.role_id
       WHERE LOWER(u.email) = LOWER($1)
     `;
-    const result = await pool.query(query, [email]);
+    const result = await pool.query(query, [email.trim()]);
     return result.rows[0] || null;
   }
 

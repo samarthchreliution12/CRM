@@ -1,4 +1,5 @@
 const pool = require("../config/database");
+const { generateUccFromPanAndDob } = require("../utils/ucc.util");
 
 const VALID_STATUSES = ["new", "contacted", "interested", "prospect", "converted", "lost"];
 const VALID_PRIORITIES = ["low", "medium", "high"];
@@ -331,7 +332,7 @@ class LeadModel {
    * Creates client, links lead to client, updates lead status to 'converted',
    * all wrapped in a PostgreSQL transaction.
    */
-  static async convertLeadToClient(leadId, { ucc_no, client_type_id, pan, dob } = {}, currentUserId) {
+  static async convertLeadToClient(leadId, { ucc_no, client_type_id, client_category, pan, dob } = {}, currentUserId) {
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
@@ -389,29 +390,33 @@ class LeadModel {
         }
       }
 
-      // 4. Generate unique UCC number if not provided
-      let finalUccNo = ucc_no ? ucc_no.trim().toUpperCase() : null;
+      // 4. Generate unique UCC number
+      let finalUccNo = generateUccFromPanAndDob(cleanPan, dob);
       if (!finalUccNo) {
-        const timestampPart = Date.now().toString().slice(-6);
-        const randomHex = Math.floor(Math.random() * 8999 + 1000);
-        finalUccNo = `CLT${timestampPart}${randomHex}`;
+        finalUccNo = ucc_no ? ucc_no.trim().toUpperCase() : null;
+        if (!finalUccNo) {
+          const timestampPart = Date.now().toString().slice(-6);
+          const randomHex = Math.floor(Math.random() * 8999 + 1000);
+          finalUccNo = `CLT${timestampPart}${randomHex}`;
+        }
       }
 
       // Check UCC uniqueness
       const existingUcc = await client.query(`SELECT id FROM clients WHERE LOWER(ucc_no) = LOWER($1)`, [finalUccNo]);
       if (existingUcc.rows.length > 0) {
-        const timestampPart = Date.now().toString().slice(-6);
-        const randomHex = Math.floor(Math.random() * 8999 + 1000);
-        finalUccNo = `CLT${timestampPart}${randomHex}`;
+        const err = new Error("This UCC number is already in use.");
+        err.statusCode = 409;
+        throw err;
       }
 
       // 5. Create new client record in clients table
+      const normCategory = client_category && client_category.toString().trim() ? client_category.toString().trim().toUpperCase() : null;
       const insertClientQuery = `
         INSERT INTO clients (
           ucc_no, name, business_name, mobile_no, whatsapp_no, email, pan, dob,
-          client_type_id, status, client_status, services
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', 'CLIENT', '[]'::jsonb)
-        RETURNING id, ucc_no, name, business_name, mobile_no, whatsapp_no, email, pan, dob, client_type_id, status, client_status, created_at
+          client_type_id, client_category, status, client_status, services
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'active', 'CLIENT', '[]'::jsonb)
+        RETURNING id, ucc_no, name, business_name, mobile_no, whatsapp_no, email, pan, dob, client_type_id, client_category, status, client_status, created_at
       `;
       const clientValues = [
         finalUccNo,
@@ -423,6 +428,7 @@ class LeadModel {
         cleanPan,
         dob,
         finalClientTypeId,
+        normCategory,
       ];
 
       const clientResult = await client.query(insertClientQuery, clientValues);

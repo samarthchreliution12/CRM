@@ -32,12 +32,7 @@ function validateCreateClientInput(data) {
     errors.push({ field: "name", message: "Client name is required" });
   }
 
-  // 2. UCC Number (Mandatory)
-  if (!data.ucc_no || !data.ucc_no.toString().trim()) {
-    errors.push({ field: "ucc_no", message: "UCC number is required" });
-  }
-
-  // 3. Mobile Number (Mandatory)
+  // 2. Mobile Number (Mandatory)
   if (!data.mobile_no || !data.mobile_no.toString().trim()) {
     errors.push({ field: "mobile_no", message: "Mobile number is required" });
   } else if (!isValidPhoneNumber(data.mobile_no.toString())) {
@@ -147,10 +142,6 @@ function validateUpdateClientInput(data) {
 
   if (data.name !== undefined && !data.name.toString().trim()) {
     errors.push({ field: "name", message: "Client name cannot be empty" });
-  }
-
-  if (data.ucc_no !== undefined && !data.ucc_no.toString().trim()) {
-    errors.push({ field: "ucc_no", message: "UCC number cannot be empty" });
   }
 
   if (data.client_type_id !== undefined) {

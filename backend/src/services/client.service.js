@@ -2,6 +2,7 @@ const pool = require("../config/database");
 const ClientModel = require("../models/client.model");
 const ClientTypeModel = require("../models/clientType.model");
 const AuditService = require("./audit.service");
+const { generateUccFromPanAndDob } = require("../utils/ucc.util");
 
 class ClientService {
   static async listClients(query) {
@@ -50,7 +51,17 @@ class ClientService {
   }
 
   static async createClient(data, context = {}) {
-    // 1. Check duplicate UCC
+    // 1. Auto-generate UCC from PAN and DOB
+    const autoUcc = generateUccFromPanAndDob(data.pan, data.dob);
+    if (!autoUcc) {
+      const error = new Error("Unable to generate UCC. Valid PAN and Date of Birth are required.");
+      error.statusCode = 400;
+      error.errors = [{ field: "ucc_no", message: "Unable to generate UCC. Valid PAN and Date of Birth are required." }];
+      throw error;
+    }
+    data.ucc_no = autoUcc;
+
+    // 2. Check duplicate UCC
     const existingUcc = await ClientModel.findByUcc(data.ucc_no);
     if (existingUcc) {
       const error = new Error("This UCC number is already in use.");
@@ -59,7 +70,7 @@ class ClientService {
       throw error;
     }
 
-    // 2. Check client_type_id exists
+    // 3. Check client_type_id exists
     const clientType = await ClientTypeModel.findById(data.client_type_id);
     if (!clientType) {
       const error = new Error(`Invalid client_type_id: Client type ID ${data.client_type_id} does not exist`);
@@ -102,15 +113,42 @@ class ClientService {
       throw error;
     }
 
-    // Check duplicate UCC if provided
-    if (data.ucc_no && data.ucc_no.trim().toLowerCase() !== existing.ucc_no.toLowerCase()) {
-      const duplicateUcc = await ClientModel.findByUcc(data.ucc_no);
-      if (duplicateUcc) {
-        const error = new Error("This UCC number is already in use.");
-        error.statusCode = 409;
-        error.errors = [{ field: "ucc_no", message: "This UCC number is already in use." }];
+    // Do not allow manual UCC override from payload
+    delete data.ucc_no;
+
+    // Determine if PAN or DOB is being modified
+    const normalizeDobStr = (d) => {
+      if (!d) return "";
+      if (d instanceof Date) return d.toISOString().split("T")[0];
+      return String(d).trim().split("T")[0];
+    };
+
+    const existingPanClean = (existing.pan || "").trim().toUpperCase();
+    const incomingPanClean = data.pan !== undefined ? (data.pan || "").trim().toUpperCase() : existingPanClean;
+    const isPanChanged = data.pan !== undefined && incomingPanClean !== existingPanClean;
+
+    const existingDobClean = normalizeDobStr(existing.dob);
+    const incomingDobClean = data.dob !== undefined ? normalizeDobStr(data.dob) : existingDobClean;
+    const isDobChanged = data.dob !== undefined && incomingDobClean !== existingDobClean;
+
+    if (isPanChanged || isDobChanged) {
+      const newUcc = generateUccFromPanAndDob(incomingPanClean, data.dob !== undefined ? data.dob : existing.dob);
+      if (!newUcc) {
+        const error = new Error("Unable to generate UCC. Valid PAN and Date of Birth are required.");
+        error.statusCode = 400;
+        error.errors = [{ field: "ucc_no", message: "Unable to generate UCC. Valid PAN and Date of Birth are required." }];
         throw error;
       }
+      if (newUcc.toLowerCase() !== (existing.ucc_no || "").toLowerCase()) {
+        const duplicateUcc = await ClientModel.findByUcc(newUcc);
+        if (duplicateUcc && String(duplicateUcc.id) !== String(existing.id)) {
+          const error = new Error("This UCC number is already in use.");
+          error.statusCode = 409;
+          error.errors = [{ field: "ucc_no", message: "This UCC number is already in use." }];
+          throw error;
+        }
+      }
+      data.ucc_no = newUcc;
     }
 
     // Check client_type_id if provided
@@ -380,7 +418,6 @@ class ClientService {
 
     for (const row of dataRows) {
       const rowNum = row._rowNumber || 2;
-      const ucc_no = (row.ucc_no || row.ucc || "").toString().trim();
       const name = (row.name || row.client_name || "").toString().trim();
       const business_name = (row.business_name || row.company_name || "").toString().trim();
       const mobile_no = (row.mobile_no || row.mobile || "").toString().trim();
@@ -399,39 +436,24 @@ class ClientService {
       const rowErrors = [];
       let isDuplicate = false;
 
-      // 1. Validate UCC Number
-      if (!ucc_no) {
-        rowErrors.push("UCC Number is required");
-      } else {
-        const cleanUcc = ucc_no.toUpperCase();
-        if (csvUccSet.has(cleanUcc)) {
-          rowErrors.push("Duplicate UCC number in CSV file");
-          isDuplicate = true;
-        } else if (dbUccSet.has(cleanUcc)) {
-          rowErrors.push("UCC number already exists in database");
-          isDuplicate = true;
-        } else {
-          csvUccSet.add(cleanUcc);
-        }
-      }
-
-      // 2. Validate Client Name
+      // 1. Validate Client Name
       if (!name) {
         rowErrors.push("Client Name is required");
       }
 
-      // 3. Validate PAN Number
+      // 2. Validate PAN Number
+      let panClean = "";
       if (!pan) {
         rowErrors.push("PAN number is required");
       } else {
-        const panClean = pan.toUpperCase();
+        panClean = pan.toUpperCase();
         const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
         if (!panRegex.test(panClean)) {
           rowErrors.push("Invalid PAN number format (e.g. ABCDE1234F)");
         }
       }
 
-      // 4. Validate DOB (Mandatory & 18+ years old)
+      // 3. Validate DOB (Mandatory & 18+ years old)
       let formattedDob = null;
       if (!dobRaw) {
         rowErrors.push("Date of Birth is required");
@@ -455,6 +477,25 @@ class ClientService {
           const { isAtLeast18YearsOld } = require("../validators/client.validator");
           if (!isAtLeast18YearsOld(formattedDob)) {
             rowErrors.push("Client must be at least 18 years old.");
+          }
+        }
+      }
+
+      // 4. Auto-Generate UCC from PAN & DOB and validate uniqueness
+      let autoUcc = null;
+      if (panClean && formattedDob && !rowErrors.some((e) => e.includes("PAN") || e.includes("Date of Birth"))) {
+        autoUcc = generateUccFromPanAndDob(panClean, formattedDob);
+        if (!autoUcc) {
+          rowErrors.push("Unable to generate UCC from PAN and Date of Birth");
+        } else {
+          if (csvUccSet.has(autoUcc)) {
+            rowErrors.push("Duplicate UCC number in CSV file (generated from PAN and DOB)");
+            isDuplicate = true;
+          } else if (dbUccSet.has(autoUcc)) {
+            rowErrors.push("UCC number already exists in database");
+            isDuplicate = true;
+          } else {
+            csvUccSet.add(autoUcc);
           }
         }
       }
@@ -569,7 +610,7 @@ class ClientService {
         }
         errorsList.push({
           row: rowNum,
-          ucc_no: ucc_no || "N/A",
+          ucc_no: autoUcc || "Auto-generated",
           name: name || "N/A",
           error: rowErrors.join("; "),
           raw_data: row,
@@ -577,13 +618,13 @@ class ClientService {
       } else {
         validRows.push({
           _rowNumber: rowNum,
-          ucc_no,
+          ucc_no: autoUcc,
           name,
           business_name,
           mobile_no,
           whatsapp_no,
           email,
-          pan: pan.toUpperCase(),
+          pan: panClean,
           dob: formattedDob,
           gender,
           occupation,

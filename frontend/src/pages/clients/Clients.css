@@ -466,6 +466,12 @@
   color: var(--text-secondary, #596067);
 }
 
+.status-badge.non_client,
+.status-badge.non-client {
+  background-color: #FEF3C7;
+  color: #B45309;
+}
+
 .status-dot {
   font-size: 0.65rem;
   line-height: 1;

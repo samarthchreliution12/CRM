@@ -359,47 +359,80 @@ const extractList = (res, key) => {
               />
             </div>
 
-            {/* Grid Row 1: Task Type & Priority */}
-            <div className="form-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-              <div className="form-group">
-                <label className="form-label">
-                  Task Type <span className="required">*</span>
-                </label>
-                <select
-                  name="task_type"
-                  value={formData.task_type}
-                  onChange={handleChange}
-                  className={`form-select ${errors.task_type ? "error" : ""}`}
-                  disabled={isSubmitting}
-                >
-                  {TASK_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>
-                      {t.label}
-                    </option>
-                  ))}
-                </select>
-                {errors.task_type && <span className="form-error-text">{errors.task_type}</span>}
+            {/* Task Type Checkboxes */}
+            <div className="form-group">
+              <label className="form-label">
+                Task Type <span className="required">*</span>
+              </label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", marginTop: "0.25rem" }}>
+                {TASK_TYPES.map((t) => (
+                  <label
+                    key={t.value}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.35rem",
+                      cursor: isSubmitting ? "not-allowed" : "pointer",
+                      fontSize: "0.875rem",
+                      fontWeight: 500,
+                      color: "#334155",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      name="task_type"
+                      value={t.value}
+                      checked={formData.task_type === t.value}
+                      onChange={() => {
+                        setFormData((prev) => ({ ...prev, task_type: t.value }));
+                        if (errors.task_type) setErrors((prev) => ({ ...prev, task_type: "" }));
+                      }}
+                      disabled={isSubmitting}
+                      style={{ cursor: isSubmitting ? "not-allowed" : "pointer" }}
+                    />
+                    <span>{t.label}</span>
+                  </label>
+                ))}
               </div>
+              {errors.task_type && <span className="form-error-text">{errors.task_type}</span>}
+            </div>
 
-              <div className="form-group">
-                <label className="form-label">
-                  Priority <span className="required">*</span>
-                </label>
-                <select
-                  name="priority"
-                  value={formData.priority}
-                  onChange={handleChange}
-                  className={`form-select ${errors.priority ? "error" : ""}`}
-                  disabled={isSubmitting}
-                >
-                  {PRIORITIES.map((p) => (
-                    <option key={p.value} value={p.value}>
-                      {p.label}
-                    </option>
-                  ))}
-                </select>
-                {errors.priority && <span className="form-error-text">{errors.priority}</span>}
+            {/* Priority Checkboxes */}
+            <div className="form-group">
+              <label className="form-label">
+                Priority <span className="required">*</span>
+              </label>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "1.25rem", marginTop: "0.25rem" }}>
+                {PRIORITIES.map((p) => (
+                  <label
+                    key={p.value}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "0.35rem",
+                      cursor: isSubmitting ? "not-allowed" : "pointer",
+                      fontSize: "0.875rem",
+                      fontWeight: 500,
+                      color: "#334155",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      name="priority"
+                      value={p.value}
+                      checked={formData.priority === p.value}
+                      onChange={() => {
+                        setFormData((prev) => ({ ...prev, priority: p.value }));
+                        if (errors.priority) setErrors((prev) => ({ ...prev, priority: "" }));
+                      }}
+                      disabled={isSubmitting}
+                      style={{ cursor: isSubmitting ? "not-allowed" : "pointer" }}
+                    />
+                    <span>{p.label}</span>
+                  </label>
+                ))}
               </div>
+              {errors.priority && <span className="form-error-text">{errors.priority}</span>}
             </div>
 
             {/* Related To Selector (Mutually Exclusive Client/Lead) */}

@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import useAuth from "../../../hooks/useAuth";
 import ClientService from "../../../services/client.service";
 import CommunicationService from "../../../services/communication.service";
-import TaskService from "../../../services/task.service";
+import NotificationService from "../../../services/notification.service";
 import UserMenu from "../UserMenu/UserMenu";
 import "./Header.css";
 
@@ -62,8 +62,8 @@ const Header = ({ title = "Dashboard", onToggleSidebar }) => {
   const [pendingDocCount, setPendingDocCount] = useState(0);
   const [commUnreadConvs, setCommUnreadConvs] = useState([]);
   const [commUnreadTotal, setCommUnreadTotal] = useState(0);
-  const [taskNotifications, setTaskNotifications] = useState([]);
-  const [taskUnreadCount, setTaskUnreadCount] = useState(0);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
   const notifRef = useRef(null);
 
@@ -179,23 +179,23 @@ const Header = ({ title = "Dashboard", onToggleSidebar }) => {
     }
   }, [token]);
 
-  // Fetch Pending Assigned Task Notifications from Backend Task API (Dynamic Aggregation)
-  const fetchTaskNotifications = useCallback(async () => {
+  // Fetch Notifications from Database-Backed Notifications API
+  const fetchDbNotifications = useCallback(async () => {
     if (!token || !user?.id) {
-      setTaskNotifications([]);
-      setTaskUnreadCount(0);
+      setNotifications([]);
+      setUnreadCount(0);
       return;
     }
     try {
-      const res = await TaskService.getTasks(
-        { assigned_to: user.id, status: "PENDING", limit: 10 },
-        token
-      );
-      if (res && res.data) {
-        const list = res.data.tasks || [];
-        const count = res.data.pagination?.total || list.length;
-        setTaskNotifications(list);
-        setTaskUnreadCount(count);
+      const [listRes, countRes] = await Promise.all([
+        NotificationService.getNotifications(token, { limit: 20 }),
+        NotificationService.getUnreadCount(token),
+      ]);
+      if (listRes && listRes.data && Array.isArray(listRes.data.notifications)) {
+        setNotifications(listRes.data.notifications);
+      }
+      if (countRes && countRes.data && countRes.data.unread_count !== undefined) {
+        setUnreadCount(Number(countRes.data.unread_count) || 0);
       }
     } catch (e) {
       // Ignore fetch errors
@@ -206,15 +206,15 @@ const Header = ({ title = "Dashboard", onToggleSidebar }) => {
   useEffect(() => {
     fetchPendingDocCount();
     fetchCommNotifications();
-    fetchTaskNotifications();
+    fetchDbNotifications();
 
     const interval = setInterval(() => {
       fetchPendingDocCount();
       fetchCommNotifications();
-      fetchTaskNotifications();
+      fetchDbNotifications();
     }, 15000);
     return () => clearInterval(interval);
-  }, [fetchPendingDocCount, fetchCommNotifications, fetchTaskNotifications, location.pathname]);
+  }, [fetchPendingDocCount, fetchCommNotifications, fetchDbNotifications, location.pathname]);
 
   // Click Outside Listener to Close Notification Dropdown
   useEffect(() => {
@@ -232,7 +232,7 @@ const Header = ({ title = "Dashboard", onToggleSidebar }) => {
     if (!notifDropdownOpen) {
       fetchPendingDocCount();
       fetchCommNotifications();
-      fetchTaskNotifications();
+      fetchDbNotifications();
     }
   };
 
@@ -241,8 +241,58 @@ const Header = ({ title = "Dashboard", onToggleSidebar }) => {
     navigate("/documents?status=pending");
   };
 
+  const handleNotificationClick = async (notif) => {
+    setNotifDropdownOpen(false);
+
+    // If database notification and unread, mark as read
+    if (notif.id && !notif.is_read) {
+      try {
+        await NotificationService.markAsRead(notif.id, token);
+        setNotifications((prev) =>
+          prev.map((n) =>
+            n.id === notif.id
+              ? { ...n, is_read: true, read_at: new Date().toISOString() }
+              : n
+          )
+        );
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      } catch (err) {
+        console.error("Failed to mark notification read:", err);
+      }
+    }
+
+    // Dynamic Navigation based on entity_type
+    const entityType = String(notif.entity_type || notif.type || "").toUpperCase();
+    const entityId = notif.entity_id || notif.task_id || notif.id;
+
+    if (entityType.includes("TASK") || entityType === "TASK") {
+      navigate(`/tasks?taskId=${entityId}`);
+    } else if (entityType.includes("DOCUMENT") || entityType === "DOCUMENT") {
+      navigate("/documents?status=pending");
+    } else if (entityType.includes("CLIENT") || entityType === "CLIENT") {
+      navigate(`/clients/${entityId}`);
+    } else {
+      navigate("/tasks");
+    }
+  };
+
+  const handleMarkAllAsRead = async (e) => {
+    e.stopPropagation();
+    if (unreadCount === 0) return;
+    try {
+      await NotificationService.markAllAsRead(token);
+      setNotifications((prev) =>
+        prev.map((n) => ({ ...n, is_read: true, read_at: new Date().toISOString() }))
+      );
+      setUnreadCount(0);
+    } catch (err) {
+      console.error("Failed to mark all notifications read:", err);
+    }
+  };
+
   const totalUnreadCount =
-    (canViewDocs ? pendingDocCount : 0) + commUnreadTotal + taskUnreadCount;
+    (canViewDocs ? pendingDocCount : 0) + commUnreadTotal + unreadCount;
+
 
   return (
     <header className="header-container">
@@ -381,18 +431,30 @@ const Header = ({ title = "Dashboard", onToggleSidebar }) => {
           {notifDropdownOpen && (
             <div className="header-notif-dropdown">
               <div className="notif-dropdown-header">
-                <span className="notif-dropdown-title">Notifications</span>
-                {totalUnreadCount > 0 && (
-                  <span className="notif-badge-pill">{totalUnreadCount} new</span>
+                <div className="notif-dropdown-header-left">
+                  <span className="notif-dropdown-title">Notifications</span>
+                  {totalUnreadCount > 0 && (
+                    <span className="notif-badge-pill">{totalUnreadCount} new</span>
+                  )}
+                </div>
+                {unreadCount > 0 && (
+                  <button
+                    type="button"
+                    className="btn-mark-all-read"
+                    onClick={handleMarkAllAsRead}
+                    title="Mark all notifications as read"
+                  >
+                    Mark all read
+                  </button>
                 )}
               </div>
 
               <div className="notif-dropdown-body">
-                {totalUnreadCount > 0 ? (
+                {totalUnreadCount > 0 || notifications.length > 0 ? (
                   <>
                     {/* Pending Documents Notification */}
                     {canViewDocs && pendingDocCount > 0 && (
-                      <div className="notif-item" onClick={handlePendingDocClick}>
+                      <div className="notif-item unread" onClick={handlePendingDocClick}>
                         <div className="notif-item-icon-wrapper pending">
                           <FileText size={18} />
                         </div>
@@ -400,6 +462,7 @@ const Header = ({ title = "Dashboard", onToggleSidebar }) => {
                           <div className="notif-item-header">
                             <span className="notif-item-title">
                               {pendingDocCount} {pendingDocCount === 1 ? "Document" : "Documents"} Pending
+                              <span className="notif-unread-dot" title="Unread" />
                             </span>
                           </div>
                           <span className="notif-item-desc">
@@ -410,35 +473,42 @@ const Header = ({ title = "Dashboard", onToggleSidebar }) => {
                       </div>
                     )}
 
-                    {/* Dynamic Task Pending Notifications */}
-                    {taskNotifications.map((task) => (
-                      <div
-                        key={`task-notif-${task.id}`}
-                        className="notif-item"
-                        onClick={() => {
-                          setNotifDropdownOpen(false);
-                          navigate(`/tasks?taskId=${task.id}`);
-                        }}
-                      >
-                        <div className="notif-item-icon-wrapper pending">
-                          <CheckSquare size={18} />
-                        </div>
-                        <div className="notif-item-content">
-                          <div className="notif-item-header">
-                            <span className="notif-item-title">Pending Task</span>
-                            <span className="notif-item-time">{formatTimeAgo(task.due_date || task.created_at)}</span>
+                    {/* Database-Backed Notifications (Tasks, Documents, Clients) */}
+                    {notifications.map((notif) => {
+                      const isCompleted = notif.type === "TASK_COMPLETED" || notif.type === "DOCUMENT_APPROVED";
+                      const isRejected = notif.type === "DOCUMENT_REJECTED";
+                      const isDoc = notif.entity_type === "DOCUMENT" || notif.type?.includes("DOCUMENT");
+                      const iconWrapperClass = isCompleted ? "completed" : isRejected ? "rejected" : "pending";
+
+                      return (
+                        <div
+                          key={`db-notif-${notif.id}`}
+                          className={`notif-item ${notif.is_read ? "read" : "unread"}`}
+                          onClick={() => handleNotificationClick(notif)}
+                        >
+                          <div className={`notif-item-icon-wrapper ${iconWrapperClass}`}>
+                            {isDoc ? <FileText size={18} /> : <CheckSquare size={18} />}
                           </div>
-                          <span className="notif-item-desc">{task.title}</span>
+                          <div className="notif-item-content">
+                            <div className="notif-item-header">
+                              <span className="notif-item-title">
+                                {notif.title || "Notification"}
+                                {!notif.is_read && <span className="notif-unread-dot" title="Unread" />}
+                              </span>
+                              <span className="notif-item-time">{formatTimeAgo(notif.created_at)}</span>
+                            </div>
+                            <span className="notif-item-desc">{notif.message}</span>
+                          </div>
+                          <ArrowRight size={14} className="notif-item-arrow" />
                         </div>
-                        <ArrowRight size={14} className="notif-item-arrow" />
-                      </div>
-                    ))}
+                      );
+                    })}
 
                     {/* Unread Communication Notifications */}
                     {commUnreadConvs.map((conv) => (
                       <div
                         key={`comm-notif-${conv.id}`}
-                        className="notif-item"
+                        className="notif-item unread"
                         onClick={() => {
                           setNotifDropdownOpen(false);
                           navigate(`/communication?convId=${conv.id}&type=${conv.type}`);
@@ -453,6 +523,7 @@ const Header = ({ title = "Dashboard", onToggleSidebar }) => {
                               {conv.type === "direct"
                                 ? `${conv.unread_count} new message${conv.unread_count > 1 ? "s" : ""} from ${conv.name}`
                                 : `${conv.unread_count} new message${conv.unread_count > 1 ? "s" : ""} in ${conv.name}`}
+                              <span className="notif-unread-dot" title="Unread" />
                             </span>
                             <span className="notif-item-time">{formatTimeAgo(conv.last_message_at)}</span>
                           </div>

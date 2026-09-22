@@ -113,6 +113,13 @@ class TaskService {
       token
     );
   }
+
+  /**
+   * Fetch task assignment & status update notifications.
+   */
+  static async getTaskNotifications(token) {
+    return this.request("/tasks/notifications", { method: "GET" }, token);
+  }
 }
 
 export default TaskService;

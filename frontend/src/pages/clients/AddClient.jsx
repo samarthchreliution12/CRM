@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import AppLayout from "../../components/layout/AppLayout/AppLayout";
 import ClientService from "../../services/client.service";
 import useAuth from "../../hooks/useAuth";
-import { ArrowLeft, AlertCircle, CheckCircle2, Loader2, Check } from "lucide-react";
+import { ArrowLeft, AlertCircle, CheckCircle2, Loader2, Check, Award, Crown, Gem } from "lucide-react";
 import "./AddClient.css";
 
 const AddClient = () => {
@@ -46,6 +46,8 @@ const AddClient = () => {
     client_category: "",
     service_ids: [],
   });
+
+  const [initialData, setInitialData] = useState(null);
 
   // Dynamic API Options State
   const [availableServices, setAvailableServices] = useState([]);
@@ -106,6 +108,12 @@ const AddClient = () => {
               .map((s) => (typeof s === "object" ? s.id : s))
               .filter(Boolean);
           }
+
+          setInitialData({
+            pan: c.pan || "",
+            dob: dobFormatted,
+            ucc_no: c.ucc_no || "",
+          });
 
           setFormData({
             ucc_no: c.ucc_no || "",
@@ -187,6 +195,52 @@ const AddClient = () => {
     });
   };
 
+  // UCC Auto-generation helper
+  const generateUcc = (pan, dob) => {
+    if (!pan || !dob) return "";
+    const cleanPan = pan.trim().toUpperCase();
+    const panMatch = cleanPan.match(/^[A-Z]{5}([0-9]{4})[A-Z]{1}$/);
+    if (!panMatch) return "";
+    const panDigits = panMatch[1];
+
+    const dobStr = String(dob).trim();
+    // YYYY-MM-DD from HTML date input
+    const ymdMatch = dobStr.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+    if (ymdMatch) {
+      const mm = ymdMatch[2].padStart(2, "0");
+      const dd = ymdMatch[3].padStart(2, "0");
+      return `${panDigits}${dd}${mm}`;
+    }
+    const dmyMatch = dobStr.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})/);
+    if (dmyMatch) {
+      const dd = dmyMatch[1].padStart(2, "0");
+      const mm = dmyMatch[2].padStart(2, "0");
+      return `${panDigits}${dd}${mm}`;
+    }
+    return "";
+  };
+
+  // Auto-calculate UCC when PAN or DOB changes
+  useEffect(() => {
+    if (isEditMode) {
+      if (!initialData) return;
+      const panClean = (formData.pan || "").trim().toUpperCase();
+      const initPanClean = (initialData.pan || "").trim().toUpperCase();
+      const dobClean = (formData.dob || "").trim();
+      const initDobClean = (initialData.dob || "").trim();
+
+      if (panClean === initPanClean && dobClean === initDobClean) {
+        setFormData((prev) => (prev.ucc_no !== initialData.ucc_no ? { ...prev, ucc_no: initialData.ucc_no } : prev));
+      } else {
+        const calculated = generateUcc(panClean, dobClean);
+        setFormData((prev) => (prev.ucc_no !== calculated ? { ...prev, ucc_no: calculated } : prev));
+      }
+    } else {
+      const calculated = generateUcc(formData.pan, formData.dob);
+      setFormData((prev) => (prev.ucc_no !== calculated ? { ...prev, ucc_no: calculated } : prev));
+    }
+  }, [formData.pan, formData.dob, isEditMode, initialData]);
+
   // Validation helper functions
   const getMaxAllowedDob = () => {
     const today = new Date();
@@ -224,9 +278,6 @@ const AddClient = () => {
     const val = (fieldValue !== undefined && fieldValue !== null) ? fieldValue.toString().trim() : "";
 
     switch (fieldName) {
-      case "ucc_no":
-        if (!val) return "UCC number is required";
-        return "";
       case "name":
         if (!val) return "Client Name is required";
         return "";
@@ -274,7 +325,6 @@ const AddClient = () => {
   const validateForm = () => {
     const newErrors = {};
     const fieldNames = [
-      "ucc_no",
       "name",
       "mobile_no",
       "whatsapp_no",
@@ -445,18 +495,22 @@ const AddClient = () => {
             <div className="form-grid-2">
               {/* UCC No */}
               <div className="form-group">
-                <label className="form-label">
-                  UCC No <span className="required-star">*</span>
+                <label className="form-label" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span>UCC No</span>
+                  <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 500 }}>(Auto-generated)</span>
                 </label>
                 <input
                   type="text"
                   name="ucc_no"
-                  placeholder="Enter UCC number (e.g. UCC001)"
+                  readOnly
+                  placeholder="Auto-generated from PAN & DOB"
                   value={formData.ucc_no}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
                   className={`form-input ${errors.ucc_no ? "is-invalid" : ""}`}
+                  style={{ backgroundColor: "#f8fafc", cursor: "not-allowed", fontWeight: 600, color: "#1e293b" }}
                 />
+                <span style={{ fontSize: "0.72rem", color: "#64748b", marginTop: "0.25rem", display: "block" }}>
+                  Generated automatically (4 PAN numeric digits + Day & Month of DOB).
+                </span>
                 {errors.ucc_no && <span className="error-text">{errors.ucc_no}</span>}
               </div>
 
@@ -668,40 +722,96 @@ const AddClient = () => {
                 </div>
               </div>
 
-              {/* Client Category */}
-              <div className="form-group">
-                <label className="form-label">Client Category</label>
-                <select
-                  name="client_category"
-                  value={formData.client_category}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  className="form-select"
-                >
-                  <option value="">Select Category</option>
-                  <option value="BRONZE">BRONZE</option>
-                  <option value="SILVER">SILVER</option>
-                  <option value="GOLD">GOLD</option>
-                  <option value="PLATINUM">PLATINUM</option>
-                </select>
-              </div>
-
-              {/* Status */}
+              {/* Status (Checkbox Selection) */}
               <div className="form-group">
                 <label className="form-label">
                   Status <span className="required-star">*</span>
                 </label>
-                <select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  className={`form-select ${errors.status ? "is-invalid" : ""}`}
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
+                <div className="status-checkbox-grid">
+                  <label
+                    className={`status-checkbox-card ${formData.status === "active" ? "selected active" : ""}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setFormData((prev) => ({ ...prev, status: "active" }));
+                      if (errors.status) setErrors((prev) => ({ ...prev, status: "" }));
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      name="status_active"
+                      checked={formData.status === "active"}
+                      onChange={() => {}}
+                      className="status-checkbox-input"
+                    />
+                    <span>Active</span>
+                  </label>
+
+                  <label
+                    className={`status-checkbox-card ${formData.status === "inactive" ? "selected inactive" : ""}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setFormData((prev) => ({ ...prev, status: "inactive" }));
+                      if (errors.status) setErrors((prev) => ({ ...prev, status: "" }));
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      name="status_inactive"
+                      checked={formData.status === "inactive"}
+                      onChange={() => {}}
+                      className="status-checkbox-input"
+                    />
+                    <span>Inactive</span>
+                  </label>
+                </div>
                 {errors.status && <span className="error-text">{errors.status}</span>}
+              </div>
+
+              {/* Client Category (Single-Select Checkboxes) */}
+              <div className="form-group form-group-full">
+                <label className="form-label" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span>Client Category</span>
+                  <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 400 }}>(Select only one tier)</span>
+                </label>
+                <div className="category-checkbox-grid">
+                  {[
+                    { value: "BRONZE", label: "Bronze", icon: Award, cls: "cat-bronze" },
+                    { value: "SILVER", label: "Silver", icon: Award, cls: "cat-silver" },
+                    { value: "GOLD", label: "Gold", icon: Crown, cls: "cat-gold" },
+                    { value: "PLATINUM", label: "Platinum", icon: Gem, cls: "cat-platinum" },
+                  ].map((cat) => {
+                    const isSelected = formData.client_category === cat.value;
+                    const IconComp = cat.icon;
+                    return (
+                      <label
+                        key={cat.value}
+                        className={`category-checkbox-card ${cat.cls} ${isSelected ? "selected" : ""}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setFormData((prev) => ({
+                            ...prev,
+                            client_category: isSelected ? "" : cat.value,
+                          }));
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          name="client_category"
+                          value={cat.value}
+                          checked={isSelected}
+                          onChange={() => {}}
+                          className="category-checkbox-input"
+                        />
+                        <div className="category-card-inner">
+                          <span className="category-card-icon">
+                            <IconComp size={16} />
+                          </span>
+                          <span className="category-card-text">{cat.label}</span>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </div>

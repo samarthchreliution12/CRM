@@ -10,6 +10,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+  overflow-x: hidden;
 }
 
 /* --------------------------------------------------------------------------
@@ -449,33 +450,82 @@
 /* Table */
 .tasks-table-wrapper {
   width: 100%;
-  overflow-x: auto;
+  overflow-x: hidden;
 }
 
 .tasks-table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
-  font-size: 0.875rem;
+  font-size: 0.825rem;
+  table-layout: auto;
 }
 
 .tasks-table th {
   background-color: #FAF9F8;
   color: var(--text-secondary, #596067);
-  font-size: 0.75rem;
+  font-size: 0.725rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 0.875rem 1rem;
+  letter-spacing: 0.04em;
+  padding: 0.75rem 0.65rem;
   border-bottom: 1px solid var(--border, #E2E2DF);
   white-space: nowrap;
 }
 
 .tasks-table td {
-  padding: 0.875rem 1rem;
+  padding: 0.75rem 0.65rem;
   border-bottom: 1px solid var(--border, #E2E2DF);
   color: var(--text-primary, #25282A);
   vertical-align: middle;
+}
+
+/* Explicit Column Allocations to fit cleanly without horizontal scrolling */
+.tasks-table th.th-task,
+.tasks-table td.td-task {
+  min-width: 130px;
+}
+
+.tasks-table th.th-type,
+.tasks-table td.td-type {
+  width: 75px;
+}
+
+.tasks-table th.th-related,
+.tasks-table td.td-related {
+  width: 120px;
+}
+
+.tasks-table th.th-assigned,
+.tasks-table td.td-assigned {
+  width: 110px;
+}
+
+.tasks-table th.th-priority,
+.tasks-table td.td-priority {
+  width: 80px;
+}
+
+.tasks-table th.th-duedate,
+.tasks-table td.td-duedate {
+  width: 145px;
+}
+
+.tasks-table th.th-status,
+.tasks-table td.td-status {
+  width: 95px;
+}
+
+.tasks-table th.th-reminder,
+.tasks-table td.td-reminder {
+  width: 75px;
+}
+
+.tasks-table th.th-actions,
+.tasks-table td.td-actions {
+  width: 44px;
+  text-align: right;
+  padding-right: 0.75rem;
 }
 
 .tasks-table tbody tr {
@@ -487,7 +537,7 @@
 }
 
 .tasks-table tbody tr.row-overdue {
-  background-color: #FEF2F2;
+  background-color: #ffff;
 }
 
 .tasks-table tbody tr.row-overdue:hover {
@@ -499,7 +549,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
-  max-width: 280px;
+  max-width: 240px;
 }
 
 .task-title-text {
@@ -507,6 +557,9 @@
   color: var(--text-primary, #25282A);
   cursor: pointer;
   transition: color 0.15s ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .task-title-text:hover {
@@ -515,7 +568,7 @@
 }
 
 .task-desc-snippet {
-  font-size: 0.775rem;
+  font-size: 0.75rem;
   color: var(--text-secondary, #596067);
   white-space: nowrap;
   overflow: hidden;
@@ -526,12 +579,13 @@
 .task-type-pill {
   display: inline-flex;
   align-items: center;
-  padding: 0.25rem 0.625rem;
+  padding: 0.2rem 0.5rem;
   border-radius: 9999px;
-  font-size: 0.725rem;
+  font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+  white-space: nowrap;
 }
 
 .type-call {
@@ -568,11 +622,19 @@
 .related-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.375rem;
-  padding: 0.25rem 0.625rem;
+  gap: 0.35rem;
+  padding: 0.2rem 0.5rem;
   border-radius: var(--radius-sm, 6px);
-  font-size: 0.775rem;
+  font-size: 0.75rem;
   font-weight: 600;
+  max-width: 120px;
+  white-space: nowrap;
+}
+
+.related-badge span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .client-badge {
@@ -591,21 +653,30 @@
 .assignee-cell {
   display: flex;
   align-items: center;
-  gap: 0.375rem;
-  font-size: 0.825rem;
+  gap: 0.35rem;
+  font-size: 0.8rem;
   font-weight: 500;
+  max-width: 110px;
+  white-space: nowrap;
+}
+
+.assignee-cell span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .assignee-icon {
   color: var(--text-muted, #858B90);
+  flex-shrink: 0;
 }
 
 /* Due Date Cell */
 .due-date-cell {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.375rem;
-  font-size: 0.825rem;
+  gap: 0.3rem;
+  font-size: 0.785rem;
   color: var(--text-primary, #25282A);
   white-space: nowrap;
 }
@@ -619,12 +690,12 @@
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
-  margin-left: 0.35rem;
-  padding: 0.15rem 0.4rem;
+  margin-left: 0.25rem;
+  padding: 0.1rem 0.35rem;
   background-color: #fef2f2;
   color: #dc2626;
   border-radius: 4px;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
 }
@@ -651,12 +722,13 @@
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  padding: 0.2rem 0.5rem;
+  padding: 0.15rem 0.45rem;
   background-color: #fff7ed;
   color: #c2410c;
   border-radius: 4px;
-  font-size: 0.75rem;
+  font-size: 0.725rem;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .text-muted {
@@ -693,16 +765,14 @@
 }
 
 .actions-menu {
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
-  width: 140px;
+  position: fixed;
+  width: 150px;
   background-color: #ffffff;
   border: 1px solid var(--border, #E2E2DF);
   border-radius: var(--radius-md, 8px);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   padding: 0.35rem;
-  z-index: 50;
+  z-index: 500;
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
