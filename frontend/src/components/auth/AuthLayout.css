@@ -429,8 +429,8 @@
   }
 }
 
-/* Responsive Styles */
-@media (max-width: 1024px) {
+/* Responsive Styles for iPad, Tablet, and Mobile */
+@media (max-width: 1200px), (hover: none) and (pointer: coarse) {
   .auth-container {
     flex-direction: column;
     justify-content: center;
@@ -441,7 +441,7 @@
     background-color: #F8F9FA;
   }
 
-  /* Hide left branding panel completely on tablet and mobile */
+  /* Hide left branding and 3D panel completely on iPad, tablet, and mobile */
   .auth-branding-panel {
     display: none !important;
   }
@@ -456,9 +456,11 @@
     border: 1px solid #E2E2DF;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
     margin: auto;
+    box-sizing: border-box;
   }
 
   .auth-card {
+    width: 100%;
     max-width: 100%;
   }
 }
