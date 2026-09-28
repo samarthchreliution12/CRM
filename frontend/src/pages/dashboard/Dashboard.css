@@ -7,10 +7,22 @@
   font-family: var(--font-family, sans-serif);
 }
 
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-container {
+    padding: 0.75rem;
+  }
+}
+
 /* 2-Column Grid Layout */
 .dashboard-layout-grid {
   display: grid;
-  grid-template-columns: 480px 1fr;
+  grid-template-columns: minmax(360px, 460px) 1fr;
   gap: 1.5rem;
   margin-top: 1.5rem;
   align-items: start;
@@ -24,9 +36,11 @@
   width: 100%;
 }
 
-@media (max-width: 992px) {
+@media (max-width: 1024px) {
   .dashboard-layout-grid {
     grid-template-columns: 1fr;
+    gap: 1.25rem;
+    margin-top: 1.25rem;
   }
 }
 

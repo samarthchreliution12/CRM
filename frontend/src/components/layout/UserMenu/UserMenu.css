@@ -153,3 +153,22 @@
   background-color: var(--danger-light, #F9E9E8);
   color: var(--danger, #B52B27);
 }
+
+@media (max-width: 640px) {
+  .user-trigger-info {
+    display: none;
+  }
+
+  .user-menu-trigger {
+    padding: 0.25rem;
+    min-height: 40px;
+    min-width: 40px;
+    justify-content: center;
+  }
+
+  .user-menu-dropdown {
+    right: 0;
+    width: 240px;
+    max-width: calc(100vw - 20px);
+  }
+}

@@ -110,6 +110,7 @@
   padding: 1rem 1.25rem;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
+  flex-wrap: wrap;
 }
 
 .config-search-box {
@@ -120,7 +121,9 @@
   border: 1px solid #e2e8f0;
   border-radius: var(--radius-sm);
   padding: 0.5rem 0.875rem;
-  width: 520px;
+  flex: 1;
+  min-width: 260px;
+  max-width: 520px;
 }
 
 .config-search-icon {
@@ -141,6 +144,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .config-filter-select {
@@ -182,10 +186,12 @@
 .config-table-wrapper {
   width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .config-table {
   width: 100%;
+  min-width: 680px;
   border-collapse: collapse;
   text-align: left;
 }
@@ -336,7 +342,8 @@
 .modal-container {
   background-color: #ffffff;
   border-radius: var(--radius-md);
-  width: 100%;
+  width: calc(100% - 1rem);
+  max-width: min(520px, 100vw - 1rem);
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   display: flex;

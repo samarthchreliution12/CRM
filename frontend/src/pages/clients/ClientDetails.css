@@ -510,8 +510,8 @@
 .modal-container {
   background-color: #ffffff;
   border-radius: var(--radius-md);
-  width: 100%;
-  max-width: 540px;
+  width: calc(100% - 1.5rem);
+  max-width: min(540px, 100vw - 1.5rem);
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   display: flex;
@@ -581,7 +581,27 @@
   }
 }
 
+@media (max-width: 768px) {
+  .client-details-header-card {
+    padding: 1.25rem 1rem;
+  }
+
+  .client-summary-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 640px) {
+  .client-details-top-nav {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .client-actions-group {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
   .client-summary-bar {
     grid-template-columns: 1fr;
   }
@@ -768,7 +788,8 @@
 
 /* Modal Tab Bar */
 .family-modal-container {
-  max-width: 580px;
+  width: calc(100% - 1.5rem);
+  max-width: min(580px, 100vw - 1.5rem);
 }
 
 .family-modal-tab-bar {

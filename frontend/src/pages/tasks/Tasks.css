@@ -450,11 +450,13 @@
 /* Table */
 .tasks-table-wrapper {
   width: 100%;
-  overflow-x: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tasks-table {
   width: 100%;
+  min-width: 820px;
   border-collapse: collapse;
   text-align: left;
   font-size: 0.825rem;
@@ -867,8 +869,20 @@
 }
 
 /* --------------------------------------------------------------------------
-   9. Responsive Design Breakpoints
+   9. Responsive Design Breakpoints & Form Grids
    -------------------------------------------------------------------------- */
+.form-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
 @media (max-width: 1024px) {
   .tasks-summary-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -907,10 +921,23 @@
     width: 100%;
     justify-content: center;
   }
+
+  .form-grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid-2 {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 480px) {
   .tasks-summary-grid {
     grid-template-columns: 1fr;
+  }
+
+  .modal-container {
+    width: calc(100% - 1rem);
+    max-width: calc(100vw - 1rem);
   }
 }

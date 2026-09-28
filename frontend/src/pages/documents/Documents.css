@@ -219,10 +219,12 @@
 
 .doc-table-wrapper {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .doc-table {
   width: 100%;
+  min-width: 780px;
   border-collapse: collapse;
   text-align: left;
   font-size: 0.875rem;
@@ -359,7 +361,7 @@
 
 .drawer-container {
   width: 100%;
-  max-width: 580px;
+  max-width: min(580px, 100vw);
   height: 100%;
   background-color: #ffffff;
   display: flex;

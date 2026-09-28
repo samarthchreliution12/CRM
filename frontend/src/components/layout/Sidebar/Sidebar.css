@@ -404,10 +404,22 @@
 @media (max-width: 1024px) {
   .sidebar-container {
     transform: translateX(-100%);
-    width: 260px !important;
+    width: 280px !important;
+    max-width: 85vw;
+    -webkit-overflow-scrolling: touch;
   }
 
   .sidebar-container.open {
     transform: translateX(0);
+  }
+
+  .nav-link {
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+  }
+
+  .submenu-link {
+    min-height: 42px;
+    padding: 0.65rem 1rem;
   }
 }

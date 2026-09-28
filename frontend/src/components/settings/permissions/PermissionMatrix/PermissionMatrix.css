@@ -1,6 +1,7 @@
 .matrix-wrapper {
   width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border-radius: var(--radius-sm, 6px);
   border: 1px solid var(--border-color, #E2E2DF);
   background-color: #ffffff;
@@ -8,6 +9,7 @@
 
 .matrix-table {
   width: 100%;
+  min-width: 680px;
   border-collapse: collapse;
   text-align: left;
 }

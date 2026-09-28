@@ -535,12 +535,37 @@
 /* Responsive Rules */
 @media (max-width: 900px) {
   .month-day-cell {
-    min-height: 90px;
-    padding: 0.25rem;
+    min-height: 80px;
+    padding: 0.2rem;
   }
   .cal-task-chip {
-    font-size: 0.725rem;
-    padding: 0.2rem 0.35rem;
+    font-size: 0.7rem;
+    padding: 0.15rem 0.25rem;
+  }
+  .month-day-number {
+    font-size: 0.75rem;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .calendar-header-card {
+    padding: 1rem;
+  }
+  .calendar-view-card {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .month-view-grid {
+    min-width: 580px;
+  }
+  .time-grid-container {
+    min-width: 580px;
+  }
+  .day-task-card {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 
@@ -549,6 +574,14 @@
     flex-direction: column;
     align-items: flex-start;
   }
+  .calendar-header-actions {
+    width: 100%;
+  }
+  .calendar-header-actions button,
+  .calendar-header-actions a {
+    flex: 1;
+    justify-content: center;
+  }
   .calendar-controls-bar {
     flex-direction: column;
     align-items: stretch;
@@ -556,11 +589,19 @@
   .calendar-nav-group {
     justify-content: space-between;
   }
+  .calendar-view-selector {
+    width: 100%;
+    display: flex;
+  }
+  .btn-view-tab {
+    flex: 1;
+    text-align: center;
+  }
   .calendar-filters-group {
     width: 100%;
-    justify-content: space-between;
+    flex-direction: column;
   }
   .cal-filter-select {
-    flex: 1;
+    width: 100%;
   }
 }

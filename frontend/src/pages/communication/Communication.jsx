@@ -17,6 +17,7 @@ import {
   Loader2,
   User,
   ChevronDown,
+  ArrowLeft,
 } from "lucide-react";
 import "./Communication.css";
 
@@ -304,7 +305,7 @@ const Communication = () => {
 
   return (
     <AppLayout title="Communication">
-      <div className="comm-workspace-container">
+      <div className={`comm-workspace-container ${activeConvId ? "has-active-conv" : ""}`}>
         {/* Left Panel: Conversation List Area */}
         <div className="comm-sidebar-panel">
           {/* Header: Title & New Message Action */}
@@ -422,6 +423,14 @@ const Communication = () => {
               {/* Chat View Header with Avatar & Name */}
               <div className="comm-chat-header">
                 <div className="comm-chat-header-info">
+                  <button
+                    type="button"
+                    className="comm-mobile-back-btn"
+                    onClick={() => setActiveConvId(null)}
+                    aria-label="Back to conversations"
+                  >
+                    <ArrowLeft size={18} />
+                  </button>
                   <div className="comm-chat-avatar">
                     {getInitials(activeConversation.name)}
                   </div>

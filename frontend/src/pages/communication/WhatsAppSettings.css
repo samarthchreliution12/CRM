@@ -441,8 +441,8 @@
   background-color: #ffffff;
   border-radius: 12px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-  max-width: 450px;
-  width: 100%;
+  max-width: min(450px, 100vw - 1rem);
+  width: calc(100% - 1rem);
   padding: 1.75rem;
   display: flex;
   flex-direction: column;

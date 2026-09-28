@@ -198,3 +198,34 @@
   color: #0f172a;
   font-weight: 600;
 }
+
+@media (max-width: 640px) {
+  .profile-card {
+    padding: 1.25rem 1rem;
+  }
+
+  .profile-header-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .profile-header-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .profile-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .profile-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+}

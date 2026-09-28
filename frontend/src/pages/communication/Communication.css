@@ -1182,6 +1182,21 @@
   background-color: var(--background, #F7F7F5);
 }
 
+.comm-mobile-back-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid var(--border, #E2E2DF);
+  background-color: var(--surface-secondary, #F2F2F0);
+  color: var(--text-primary, #25282A);
+  cursor: pointer;
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+
 /* Responsive Layout */
 @media (max-width: 1024px) {
   .comm-workspace-container {
@@ -1196,22 +1211,55 @@
 
 @media (max-width: 768px) {
   .comm-workspace-container {
-    flex-direction: column;
-    height: auto;
-    min-height: calc(100vh - 70px);
+    margin: -1rem;
+    height: calc(100vh - 60px);
+    flex-direction: row;
   }
 
-  .comm-sidebar-panel {
+  .comm-mobile-back-btn {
+    display: inline-flex;
+  }
+
+  /* When no conversation is active, show sidebar full width, hide main panel */
+  .comm-workspace-container:not(.has-active-conv) .comm-sidebar-panel {
+    display: flex;
     width: 100%;
-    min-width: auto;
-    max-width: none;
+    max-width: 100%;
+    height: 100%;
     border-right: none;
-    border-bottom: 1px solid var(--border, #E2E2DF);
-    height: 260px;
   }
 
-  .comm-main-panel {
-    padding: 0;
-    min-height: 300px;
+  .comm-workspace-container:not(.has-active-conv) .comm-main-panel {
+    display: none;
+  }
+
+  /* When conversation IS active, show main panel full width, hide sidebar */
+  .comm-workspace-container.has-active-conv .comm-sidebar-panel {
+    display: none;
+  }
+
+  .comm-workspace-container.has-active-conv .comm-main-panel {
+    display: flex;
+    width: 100%;
+    height: 100%;
+  }
+
+  .comm-msg-row {
+    max-width: 88%;
+  }
+
+  .comm-chat-header {
+    padding: 10px 14px;
+  }
+
+  .comm-chat-input-bar {
+    padding: 8px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .comm-modal-card {
+    width: calc(100% - 1rem);
+    max-width: calc(100vw - 1rem);
   }
 }
