@@ -93,7 +93,8 @@ const JourneyCardItem = ({ step, index }) => {
   const [cardRef, isRevealed] = useScrollReveal({ threshold: 0.1 });
 
   const stickyTopDesktop = 100 + index * 32;
-  const stickyTopMobile = 85 + index * 24;
+  const stickyTopTablet = 85 + index * 20;
+  const stickyTopMobile = 75 + index * 14;
 
   return (
     <div
@@ -101,6 +102,7 @@ const JourneyCardItem = ({ step, index }) => {
       className={`journey-card-item scroll-reveal ${isRevealed ? 'revealed' : ''}`}
       style={{
         '--sticky-top-desktop': `${stickyTopDesktop}px`,
+        '--sticky-top-tablet': `${stickyTopTablet}px`,
         '--sticky-top-mobile': `${stickyTopMobile}px`,
         zIndex: index + 1,
       }}
@@ -321,24 +323,82 @@ export const FinancialJourney = () => {
           }
         }
 
-        /* Responsive Mobile Layout */
-        @media (max-width: 860px) {
+        /* Responsive Tablet Layout */
+        @media (max-width: 1024px) {
           .journey-cards-stack {
-            gap: 28px;
-            padding-bottom: 40px;
+            gap: 36px;
+            padding-bottom: 50px;
           }
 
           .journey-card-item {
-            top: var(--sticky-top-mobile);
+            top: var(--sticky-top-tablet);
             grid-template-columns: 1fr;
-            gap: var(--spacing-lg);
-            padding: var(--spacing-xl) var(--spacing-lg);
+            gap: var(--spacing-xl);
+            padding: var(--spacing-xl);
             min-height: auto;
           }
 
           .journey-image-wrapper {
-            max-height: 250px;
+            max-height: 280px;
             aspect-ratio: auto;
+          }
+
+          .journey-card-title {
+            font-size: 1.4rem;
+          }
+        }
+
+        /* Responsive Mobile Layout */
+        @media (max-width: 768px) {
+          .journey-cards-stack {
+            gap: 24px;
+            padding-bottom: 30px;
+          }
+
+          .journey-card-item {
+            top: var(--sticky-top-mobile);
+            padding: var(--spacing-lg) var(--spacing-md);
+          }
+
+          .journey-image-wrapper {
+            max-height: 220px;
+          }
+
+          .journey-card-title {
+            font-size: 1.25rem;
+          }
+
+          .journey-card-desc {
+            font-size: 0.95rem;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .journey-card-item {
+            padding: 1.25rem 0.875rem;
+          }
+
+          .journey-card-badge {
+            font-size: 0.75rem;
+            padding: 4px 10px;
+          }
+
+          .journey-card-title {
+            font-size: 1.15rem;
+          }
+
+          .journey-card-desc {
+            font-size: 0.9rem;
+            margin-bottom: var(--spacing-md);
+          }
+
+          .journey-highlight-tag {
+            padding: 6px 10px;
+            font-size: 0.775rem;
+          }
+
+          .journey-image-wrapper {
+            max-height: 180px;
           }
         }
 

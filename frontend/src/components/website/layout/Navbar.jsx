@@ -296,23 +296,28 @@ export const Navbar = ({ onMobileToggle }) => {
           transform: translateY(-2px);
         }
 
-        @media (max-width: 992px) {
-          .website-nav-links {
-            gap: 16px !important;
-          }
-          .website-nav-cta {
-            gap: 8px !important;
-          }
-          .services-dropdown-inner {
-            width: 380px;
-          }
-        }
-        @media (max-width: 860px) {
+        @media (max-width: 1024px) {
           .hide-on-mobile {
             display: none !important;
           }
           .website-mobile-toggle {
-            display: block !important;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            min-width: 44px;
+            min-height: 44px;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .website-nav-logo {
+            height: 40px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .website-nav-logo {
+            height: 36px;
           }
         }
       `}</style>

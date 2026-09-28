@@ -216,26 +216,44 @@ export const InvestmentRecovery = () => {
           color: var(--color-dark);
         }
 
-        @media (max-width: 1199px) {
+        @media (max-width: 1024px) {
           .partner-logo-grid {
             grid-template-columns: repeat(3, 1fr);
+            gap: var(--spacing-md);
           }
         }
 
         @media (max-width: 768px) {
           .partner-logo-grid {
             grid-template-columns: repeat(2, 1fr);
-            gap: var(--spacing-sm);
+            gap: 10px;
           }
 
           .partner-card {
-            height: 76px;
+            height: 72px;
+            padding: 8px;
           }
 
           .partner-trust-points {
-            gap: var(--spacing-md);
+            gap: var(--spacing-sm);
             flex-direction: column;
             align-items: center;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .partner-logo-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+          }
+
+          .partner-card {
+            height: 64px;
+            padding: 6px;
+          }
+
+          .trust-point-item {
+            font-size: 0.875rem;
           }
         }
       `}</style>

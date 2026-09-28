@@ -143,6 +143,25 @@ export const ContactPreview = () => {
             gap: 10px;
           }
         }
+
+        @media (max-width: 480px) {
+          .contact-cta-card {
+            padding: 1.5rem 1rem;
+          }
+
+          .contact-pill {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            width: 100%;
+            justify-content: center;
+            text-align: center;
+          }
+
+          .contact-primary-btn {
+            width: 100%;
+            justify-content: center;
+          }
+        }
       `}</style>
     </section>
   );

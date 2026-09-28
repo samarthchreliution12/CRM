@@ -241,7 +241,31 @@ export const Hero = () => {
           }
         }
 
-        @media (max-width: 992px) {
+        @media (max-width: 1024px) {
+          .website-hero-grid {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            text-align: center;
+          }
+
+          .website-hero-content {
+            max-width: 100%;
+            margin: 0 auto;
+          }
+
+          .website-hero-description {
+            margin-left: auto;
+            margin-right: auto;
+          }
+
+          .website-hero-buttons {
+            justify-content: center;
+          }
+
+          .website-hero-3d-col {
+            height: 360px;
+          }
+
           .website-hero-heading {
             font-size: 2.4rem;
           }
@@ -249,24 +273,60 @@ export const Hero = () => {
 
         @media (max-width: 768px) {
           .website-hero-section {
-            min-height: 560px;
+            min-height: auto;
+            padding: var(--spacing-xl) 0;
           }
 
-          .website-hero-content {
-            text-align: center;
-            margin: 0 auto;
+          .website-hero-3d-col {
+            height: 300px;
           }
 
           .website-hero-heading {
             font-size: 2rem;
+            line-height: 1.25;
           }
 
           .website-hero-description {
             font-size: 1rem;
+            line-height: 1.6;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .website-hero-section {
+            padding: var(--spacing-lg) 0;
+          }
+
+          .website-hero-heading {
+            font-size: 1.65rem;
+          }
+
+          .website-hero-eyebrow {
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            letter-spacing: 1px;
+          }
+
+          .website-hero-description {
+            font-size: 0.925rem;
+            margin-bottom: var(--spacing-lg);
+          }
+
+          .website-hero-3d-col {
+            height: 240px;
           }
 
           .website-hero-buttons {
+            flex-direction: column;
+            width: 100%;
+            gap: 12px;
+          }
+
+          .website-hero-btn-primary,
+          .website-hero-btn-outline {
+            width: 100%;
             justify-content: center;
+            text-align: center;
           }
         }
       `}</style>

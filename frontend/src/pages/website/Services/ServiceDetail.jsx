@@ -1493,38 +1493,60 @@ export const ServiceDetail = () => {
         }
 
         /* Responsive Breakpoints */
-        @media (max-width: 992px) {
+        @media (max-width: 1024px) {
           .service-hero-grid {
             grid-template-columns: 1fr;
             gap: 2rem;
           }
 
-          .service-benefits-grid {
-            grid-template-columns: 1fr;
+          .service-hero-title {
+            font-size: 2.15rem;
           }
 
           .related-services-grid {
             grid-template-columns: repeat(2, 1fr);
           }
-
-          .widget-grid-2x2,
-          .iepf-timeline,
-          .pms-stats-grid {
-            grid-template-columns: 1fr;
-          }
         }
 
         @media (max-width: 768px) {
+          .service-detail-hero-bg {
+            padding: var(--spacing-md) 0 var(--spacing-xl) 0;
+          }
+
           .service-hero-grid.scroll-reveal .service-hero-left {
-            transform: translateX(-25px);
+            transform: translateX(-20px);
           }
 
           .service-hero-grid.scroll-reveal .service-hero-right {
-            transform: translateX(25px);
+            transform: translateX(20px);
           }
 
           .service-hero-title {
             font-size: 1.85rem;
+            line-height: 1.25;
+          }
+
+          .service-hero-subtitle {
+            font-size: 1.05rem;
+          }
+
+          .service-hero-intro {
+            font-size: 0.95rem;
+          }
+
+          .service-block-heading {
+            font-size: 1.45rem;
+          }
+
+          .service-overview-text {
+            font-size: 1rem;
+            line-height: 1.65;
+          }
+
+          .service-benefits-grid,
+          .service-offerings-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
           }
 
           .related-services-grid {
@@ -1534,11 +1556,80 @@ export const ServiceDetail = () => {
           .flow-steps-horizontal {
             flex-direction: column;
             align-items: stretch;
+            gap: 6px;
           }
 
           .flow-arrow {
             text-align: center;
             transform: rotate(90deg);
+          }
+
+          .transformation-flow {
+            flex-direction: column;
+            gap: 12px;
+          }
+
+          .trans-icon {
+            transform: rotate(90deg);
+          }
+
+          .widget-grid-2x2,
+          .iepf-timeline,
+          .pms-stats-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .service-widget-card {
+            padding: 1.5rem 1.25rem;
+          }
+
+          .service-cta-banner {
+            padding: 2rem 1.25rem;
+            margin-top: var(--spacing-xl);
+            margin-bottom: var(--spacing-xl);
+          }
+
+          .service-cta-banner h3 {
+            font-size: 1.45rem;
+          }
+
+          .service-cta-banner p {
+            font-size: 0.95rem;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .service-hero-title {
+            font-size: 1.5rem;
+          }
+
+          .service-hero-placeholder-card {
+            padding: 1.25rem;
+          }
+
+          .placeholder-title {
+            font-size: 1.15rem;
+          }
+
+          .faq-accordion-question {
+            padding: 1rem;
+            font-size: 0.95rem;
+          }
+
+          .faq-accordion-answer {
+            padding: 0 1rem 1rem 1rem;
+            font-size: 0.9rem;
+          }
+
+          .cta-talk-btn {
+            width: 100%;
+            justify-content: center;
+          }
+
+          .audience-chip {
+            padding: 8px 14px;
+            font-size: 0.85rem;
+            width: 100%;
           }
         }
 

@@ -14,21 +14,22 @@ export const MobileMenu = ({ isOpen, onClose }) => {
       className="website-mobile-overlay slide-down"
       style={{
         position: 'fixed',
-        top: 'var(--header-height, 80px)',
+        top: 'var(--header-height, 70px)',
         left: 0,
         right: 0,
         bottom: 0,
         backgroundColor: 'var(--color-white)',
         zIndex: 999,
-        padding: 'var(--spacing-lg)',
+        padding: 'var(--spacing-md, 1rem)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
         boxShadow: 'var(--shadow-lg)',
         overflowY: 'auto',
+        WebkitOverflowScrolling: 'touch',
       }}
     >
-      <ul style={{ display: 'flex', flexDirection: 'column', gap: '16px', listStyle: 'none', padding: 0, margin: 0 }}>
+      <ul style={{ display: 'flex', flexDirection: 'column', gap: '14px', listStyle: 'none', padding: 0, margin: 0 }}>
         {NAV_LINKS.map((item) => {
           const isLinkActive = location.pathname === item.path;
 
@@ -47,16 +48,17 @@ export const MobileMenu = ({ isOpen, onClose }) => {
                     width: '100%',
                     background: 'none',
                     border: 'none',
-                    padding: 0,
+                    padding: '8px 0',
                     cursor: 'pointer',
                     textAlign: 'left',
+                    minHeight: '44px',
                   }}
                 >
                   <span
                     className={isServicesActive ? 'mobile-nav-item active' : 'mobile-nav-item'}
                     style={{
-                      fontSize: '1.25rem',
-                      fontWeight: isServicesActive ? 700 : 500,
+                      fontSize: '1.15rem',
+                      fontWeight: isServicesActive ? 700 : 600,
                       color: isServicesActive ? 'var(--color-primary)' : 'var(--color-dark)',
                     }}
                   >
@@ -64,7 +66,7 @@ export const MobileMenu = ({ isOpen, onClose }) => {
                   </span>
                   <span
                     style={{
-                      fontSize: '1rem',
+                      fontSize: '0.9rem',
                       padding: '6px 12px',
                       color: 'var(--color-primary)',
                       fontWeight: '700',
@@ -79,10 +81,10 @@ export const MobileMenu = ({ isOpen, onClose }) => {
                     style={{
                       display: 'grid',
                       gridTemplateColumns: '1fr',
-                      gap: '6px',
-                      paddingLeft: '12px',
+                      gap: '4px',
+                      paddingLeft: '10px',
                       borderLeft: '2px solid rgba(158, 36, 29, 0.15)',
-                      marginTop: '4px',
+                      marginTop: '2px',
                     }}
                   >
                     {SERVICES_NAV_ITEMS.map((srv) => {
@@ -93,8 +95,8 @@ export const MobileMenu = ({ isOpen, onClose }) => {
                           to={srv.path}
                           onClick={onClose}
                           style={{
-                            fontSize: '0.95rem',
-                            padding: '6px 10px',
+                            fontSize: '0.9rem',
+                            padding: '8px 10px',
                             borderRadius: '6px',
                             color: isItemActive ? 'var(--color-primary)' : 'var(--color-secondary)',
                             fontWeight: isItemActive ? 700 : 500,
@@ -103,6 +105,7 @@ export const MobileMenu = ({ isOpen, onClose }) => {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between',
+                            minHeight: '40px',
                           }}
                         >
                           <span>{srv.label}</span>
@@ -123,11 +126,14 @@ export const MobileMenu = ({ isOpen, onClose }) => {
                 onClick={onClose}
                 className={isLinkActive ? 'mobile-nav-item active' : 'mobile-nav-item'}
                 style={{
-                  fontSize: '1.25rem',
-                  fontWeight: isLinkActive ? 700 : 500,
+                  fontSize: '1.15rem',
+                  fontWeight: isLinkActive ? 700 : 600,
                   color: isLinkActive ? 'var(--color-primary)' : 'var(--color-dark)',
-                  display: 'block',
+                  display: 'flex',
+                  alignItems: 'center',
                   textDecoration: 'none',
+                  minHeight: '44px',
+                  padding: '4px 0',
                 }}
               >
                 {item.label}
@@ -137,14 +143,14 @@ export const MobileMenu = ({ isOpen, onClose }) => {
         })}
       </ul>
 
-      <div style={{ marginTop: 'auto', paddingTop: 'var(--spacing-xl)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <Button to="https://parshwa.investwell.app/app/#/login" variant="outline" size="md" onClick={onClose} style={{ width: '100%', justifyContent: 'center' }}>
+      <div style={{ marginTop: 'auto', paddingTop: 'var(--spacing-lg, 1.5rem)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <Button to="https://parshwa.investwell.app/app/#/login" variant="outline" size="md" onClick={onClose} style={{ width: '100%', justifyContent: 'center', minHeight: '44px' }}>
           Login Mutual Fund
         </Button>
-        <Button to="https://eipo.parshwaconsultancy.in/User/Login" target="_blank" variant="outline" size="md" onClick={onClose} style={{ width: '100%', justifyContent: 'center' }}>
+        <Button to="https://eipo.parshwaconsultancy.in/User/Login" target="_blank" variant="outline" size="md" onClick={onClose} style={{ width: '100%', justifyContent: 'center', minHeight: '44px' }}>
           Apply For IPO
         </Button>
-        <Button to="/login" variant="primary" size="md" onClick={onClose} style={{ width: '100%', justifyContent: 'center' }}>
+        <Button to="/login" variant="primary" size="md" onClick={onClose} style={{ width: '100%', justifyContent: 'center', minHeight: '44px' }}>
           Login
         </Button>
       </div>

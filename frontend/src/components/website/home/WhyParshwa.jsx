@@ -74,12 +74,25 @@ export const WhyParshwa = () => {
           box-shadow: 0 10px 24px rgba(139, 35, 29, 0.1);
         }
 
-        @media (max-width: 992px) {
+        @media (max-width: 1024px) {
           .why-parshwa-grid {
             grid-template-columns: 1fr;
+            gap: 1.5rem;
           }
           .why-parshwa-3d-col {
             display: none;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .why-parshwa-card {
+            padding: 1.25rem 1rem;
+          }
+          .why-parshwa-card h4 {
+            font-size: 1.05rem !important;
+          }
+          .why-parshwa-card p {
+            font-size: 0.9rem !important;
           }
         }
       `}</style>

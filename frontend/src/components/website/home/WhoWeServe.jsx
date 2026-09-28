@@ -214,7 +214,7 @@ export const WhoWeServe = () => {
           margin-bottom: var(--spacing-md);
         }
 
-        @media (max-width: 1199px) {
+        @media (max-width: 1024px) {
           .client-categories-grid {
             grid-template-columns: repeat(2, 1fr);
             gap: var(--spacing-lg);
@@ -229,6 +229,29 @@ export const WhoWeServe = () => {
 
           .client-cta-box {
             padding: var(--spacing-lg) var(--spacing-md);
+            margin-top: var(--spacing-xl);
+          }
+        }
+
+        @media (max-width: 480px) {
+          .client-category-card {
+            padding: 1.25rem 1rem;
+          }
+
+          .client-category-title {
+            font-size: 1.1rem;
+          }
+
+          .client-category-description {
+            font-size: 0.9rem;
+          }
+
+          .client-cta-heading {
+            font-size: 1.15rem;
+          }
+
+          .client-cta-text {
+            font-size: 0.9rem;
           }
         }
       `}</style>

@@ -51,14 +51,14 @@ export const Contact = () => {
             subtitle="Have questions about mutual funds, portfolio advisory, or investment recovery? Get in touch with our experts today."
           />
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 'var(--spacing-xxl)', marginBottom: 'var(--spacing-xxl)' }}>
+          <div className="contact-page-grid">
             {/* Left Column: Contact & Office Details */}
-            <div style={{ backgroundColor: 'var(--color-white)', padding: 'var(--spacing-xl)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+            <div className="contact-info-card">
               <h3 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--color-primary)' }}>Head Office Information</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)' }}>
                 <div>
                   <strong style={{ color: 'var(--color-dark)' }}>📍 Office Address:</strong>
-                  <p style={{ margin: '4px 0 0 0', color: 'var(--color-secondary)' }}>{COMPANY_INFO.address}</p>
+                  <p style={{ margin: '4px 0 0 0', color: 'var(--color-secondary)', wordBreak: 'break-word' }}>{COMPANY_INFO.address}</p>
                 </div>
                 <div>
                   <strong style={{ color: 'var(--color-dark)' }}>📞 Phone:</strong>
@@ -66,7 +66,7 @@ export const Contact = () => {
                 </div>
                 <div>
                   <strong style={{ color: 'var(--color-dark)' }}>✉️ Email:</strong>
-                  <p style={{ margin: '4px 0 0 0', color: 'var(--color-secondary)' }}>{COMPANY_INFO.email}</p>
+                  <p style={{ margin: '4px 0 0 0', color: 'var(--color-secondary)', wordBreak: 'break-all' }}>{COMPANY_INFO.email}</p>
                 </div>
                 <div>
                   <strong style={{ color: 'var(--color-dark)' }}>🕒 Working Hours:</strong>
@@ -76,11 +76,41 @@ export const Contact = () => {
             </div>
 
             {/* Right Column: Contact Form */}
-            <div>
+            <div className="contact-form-col">
               <ContactForm />
             </div>
           </div>
         </Container>
+
+        <style>{`
+          .contact-page-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: var(--spacing-xxl);
+            margin-bottom: var(--spacing-xxl);
+          }
+
+          .contact-info-card {
+            background-color: var(--color-white);
+            padding: var(--spacing-xl);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--color-border);
+            height: fit-content;
+          }
+
+          @media (max-width: 992px) {
+            .contact-page-grid {
+              grid-template-columns: 1fr;
+              gap: var(--spacing-xl);
+            }
+          }
+
+          @media (max-width: 480px) {
+            .contact-info-card {
+              padding: 1.25rem 1rem;
+            }
+          }
+        `}</style>
       </section>
 
     </>

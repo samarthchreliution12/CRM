@@ -11,10 +11,9 @@ export const AssociateWithUs = () => {
       <Container>
         <div
           className={`associate-box scroll-reveal ${isRevealed ? 'revealed' : ''}`}
-          style={{ textAlign: 'center', backgroundColor: 'var(--color-white)', padding: 'var(--spacing-xxl)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-sm)' }}
         >
-          <h2 style={{ color: 'var(--color-dark)', marginBottom: 'var(--spacing-sm)' }}>Associate & Partner With Us</h2>
-          <p style={{ maxWidth: '600px', margin: '0 auto var(--spacing-lg)', color: 'var(--color-secondary)', fontSize: '1.05rem', lineHeight: 1.6 }}>
+          <h2>Associate & Partner With Us</h2>
+          <p>
             Are you a financial advisor, CA, or legal consultant looking to offer investment recovery and mutual fund advisory to your clients? Partner with Parshwa Consultancy.
           </p>
           <Button to="/contact" variant="primary" size="md" className="website-btn">
@@ -22,6 +21,54 @@ export const AssociateWithUs = () => {
           </Button>
         </div>
       </Container>
+
+      <style>{`
+        .associate-box {
+          text-align: center;
+          background-color: var(--color-white);
+          padding: var(--spacing-xxl);
+          border-radius: var(--radius-lg);
+          border: 1px solid var(--color-border);
+          box-shadow: var(--shadow-sm);
+        }
+
+        .associate-box h2 {
+          color: var(--color-dark);
+          margin-bottom: var(--spacing-sm);
+        }
+
+        .associate-box p {
+          max-width: 600px;
+          margin: 0 auto var(--spacing-lg);
+          color: var(--color-secondary);
+          font-size: 1.05rem;
+          line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+          .associate-box {
+            padding: var(--spacing-xl) var(--spacing-md);
+          }
+          .associate-box h2 {
+            font-size: 1.4rem;
+          }
+          .associate-box p {
+            font-size: 0.95rem;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .associate-box {
+            padding: var(--spacing-lg) var(--spacing-sm);
+          }
+          .associate-box h2 {
+            font-size: 1.25rem;
+          }
+          .associate-box p {
+            font-size: 0.9rem;
+          }
+        }
+      `}</style>
     </section>
   );
 };

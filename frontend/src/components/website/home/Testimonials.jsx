@@ -232,36 +232,7 @@ export const Testimonials = () => {
             type="button"
             onClick={prevSlide}
             aria-label="Previous testimonial"
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: '0',
-              transform: 'translateY(-50%)',
-              width: '42px',
-              height: '42px',
-              borderRadius: '50%',
-              backgroundColor: 'var(--color-white)',
-              color: 'var(--color-dark)',
-              border: '1px solid var(--color-border)',
-              boxShadow: 'var(--shadow-sm)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.25rem',
-              cursor: 'pointer',
-              transition: 'all 0.25s ease',
-              zIndex: 10,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--color-primary)';
-              e.currentTarget.style.color = '#FFFFFF';
-              e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--color-white)';
-              e.currentTarget.style.color = 'var(--color-dark)';
-              e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
-            }}
+            className="testimonial-nav-btn testimonial-prev-btn"
           >
             ‹
           </button>
@@ -270,36 +241,7 @@ export const Testimonials = () => {
             type="button"
             onClick={nextSlide}
             aria-label="Next testimonial"
-            style={{
-              position: 'absolute',
-              top: '50%',
-              right: '0',
-              transform: 'translateY(-50%)',
-              width: '42px',
-              height: '42px',
-              borderRadius: '50%',
-              backgroundColor: 'var(--color-white)',
-              color: 'var(--color-dark)',
-              border: '1px solid var(--color-border)',
-              boxShadow: 'var(--shadow-sm)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.25rem',
-              cursor: 'pointer',
-              transition: 'all 0.25s ease',
-              zIndex: 10,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--color-primary)';
-              e.currentTarget.style.color = '#FFFFFF';
-              e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'var(--color-white)';
-              e.currentTarget.style.color = 'var(--color-dark)';
-              e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
-            }}
+            className="testimonial-nav-btn testimonial-next-btn"
           >
             ›
           </button>
@@ -338,17 +280,80 @@ export const Testimonials = () => {
       </Container>
 
       <style>{`
+        .testimonial-nav-btn {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 42px;
+          height: 42px;
+          border-radius: 50%;
+          background-color: var(--color-white);
+          color: var(--color-dark);
+          border: 1px solid var(--color-border);
+          box-shadow: var(--shadow-sm);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 1.25rem;
+          cursor: pointer;
+          transition: all 0.25s ease;
+          z-index: 10;
+        }
+
+        .testimonial-prev-btn {
+          left: 0;
+        }
+
+        .testimonial-next-btn {
+          right: 0;
+        }
+
+        .testimonial-nav-btn:hover {
+          background-color: var(--color-primary);
+          color: #FFFFFF;
+          transform: translateY(-50%) scale(1.1);
+        }
+
         @media (max-width: 768px) {
           .testimonials-carousel-container {
-            padding: 0 !important;
+            padding: 0 24px !important;
           }
-          
+
           .testimonial-card {
-            padding: var(--spacing-xl) var(--spacing-md) !important;
+            padding: 1.5rem 1.25rem !important;
           }
-          
+
+          .testimonial-nav-btn {
+            width: 34px;
+            height: 34px;
+            font-size: 1.1rem;
+          }
+
+          .testimonial-prev-btn {
+            left: -6px;
+          }
+
+          .testimonial-next-btn {
+            right: -6px;
+          }
+
           blockquote {
-            font-size: 1rem !important;
+            font-size: 0.95rem !important;
+            line-height: 1.55 !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .testimonials-carousel-container {
+            padding: 0 12px !important;
+          }
+
+          .testimonial-card {
+            padding: 1.25rem 1rem !important;
+          }
+
+          .testimonial-nav-btn {
+            display: none; /* Rely on touch swipe on small mobile */
           }
         }
       `}</style>

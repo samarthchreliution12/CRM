@@ -190,21 +190,43 @@ export const TrustMetrics = () => {
           height: 100%;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
           .website-metrics-grid {
             grid-template-columns: repeat(2, 1fr);
-            gap: 2rem 0;
+            gap: 1.5rem 0;
           }
 
           .website-metric-card:nth-child(2)::after {
             display: none;
+          }
+
+          .website-metric-value {
+            font-size: 2.15rem;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .website-metrics-section {
+            padding: 2rem 0;
+          }
+
+          .website-metric-value {
+            font-size: 1.85rem;
+          }
+
+          .website-metric-label {
+            font-size: 0.775rem;
           }
         }
 
         @media (max-width: 480px) {
           .website-metrics-grid {
             grid-template-columns: 1fr;
-            gap: 1.5rem;
+            gap: 1.25rem;
+          }
+
+          .website-metric-card {
+            padding: 0.75rem 1rem;
           }
 
           .website-metric-card::after {
