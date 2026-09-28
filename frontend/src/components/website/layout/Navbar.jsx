@@ -125,34 +125,34 @@ export const Navbar = ({ onMobileToggle }) => {
         })}
       </ul>
 
-      {/* Desktop Right Action Buttons */}
-      <div className="website-nav-cta hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <Button to="https://parshwa.investwell.app/app/#/login" variant="outline" size="sm" className="website-btn nav-action-btn" style={{ whiteSpace: 'nowrap', fontSize: '0.85rem' }}>
-          Login Mutual Fund
-        </Button>
-        <Button to="https://eipo.parshwaconsultancy.in/User/Login" target="_blank" variant="outline" size="sm" className="website-btn nav-action-btn" style={{ whiteSpace: 'nowrap', fontSize: '0.85rem' }}>
-          Apply For IPO
-        </Button>
-        <Button to="/login" variant="primary" size="sm" className="website-btn nav-action-btn" style={{ whiteSpace: 'nowrap', fontSize: '0.85rem' }}>
-          Login
-        </Button>
-      </div>
+      {/* Right Action Buttons & Mobile Toggle */}
+      <div className="website-nav-right" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="website-nav-cta">
+          <Button to="https://parshwa.investwell.app/app/#/login" variant="outline" size="sm" className="website-btn nav-action-btn btn-desktop-only" style={{ whiteSpace: 'nowrap', fontSize: '0.85rem' }}>
+            Login Mutual Fund
+          </Button>
+          <Button to="https://eipo.parshwaconsultancy.in/User/Login" target="_blank" variant="outline" size="sm" className="website-btn nav-action-btn btn-desktop-only" style={{ whiteSpace: 'nowrap', fontSize: '0.85rem' }}>
+            Apply For IPO
+          </Button>
+          <Button to="/login" variant="primary" size="sm" className="website-btn nav-action-btn nav-login-btn" style={{ whiteSpace: 'nowrap', fontSize: '0.85rem' }}>
+            Login
+          </Button>
+        </div>
 
-      {/* Mobile Hamburger Toggle Button */}
-      <button
-        type="button"
-        className="website-mobile-toggle"
-        onClick={onMobileToggle}
-        aria-label="Toggle navigation menu"
-        style={{
-          display: 'none',
-          fontSize: '1.5rem',
-          padding: '8px',
-          color: 'var(--color-dark)',
-        }}
-      >
-        ☰
-      </button>
+        {/* Mobile Hamburger Toggle Button */}
+        <button
+          type="button"
+          className="website-mobile-toggle"
+          onClick={onMobileToggle}
+          aria-label="Toggle navigation menu"
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+      </div>
 
       <style>{`
         .website-nav-logo {
@@ -288,6 +288,12 @@ export const Navbar = ({ onMobileToggle }) => {
           color: var(--color-primary, #9E241D);
         }
 
+        .website-nav-cta {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+
         .nav-action-btn {
           transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease !important;
         }
@@ -296,28 +302,62 @@ export const Navbar = ({ onMobileToggle }) => {
           transform: translateY(-2px);
         }
 
+        .website-mobile-toggle {
+          display: none;
+          background: none;
+          border: 1px solid rgba(0, 0, 0, 0.1);
+          border-radius: 8px;
+          padding: 6px;
+          color: var(--color-dark);
+          cursor: pointer;
+          align-items: center;
+          justify-content: center;
+          transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .website-mobile-toggle:hover {
+          background-color: rgba(158, 36, 29, 0.06);
+          border-color: rgba(158, 36, 29, 0.25);
+        }
+
         @media (max-width: 1024px) {
-          .hide-on-mobile {
+          .website-nav-links {
             display: none !important;
           }
           .website-mobile-toggle {
             display: flex !important;
-            align-items: center;
-            justify-content: center;
-            min-width: 44px;
-            min-height: 44px;
+            width: 38px;
+            height: 38px;
           }
         }
 
         @media (max-width: 768px) {
           .website-nav-logo {
-            height: 40px;
+            height: 38px;
+          }
+          .btn-desktop-only {
+            display: none !important;
+          }
+          .nav-login-btn {
+            padding: 6px 14px !important;
+            font-size: 0.825rem !important;
+            min-height: 36px !important;
           }
         }
 
         @media (max-width: 480px) {
           .website-nav-logo {
+            height: 34px;
+          }
+          .nav-login-btn {
+            padding: 5px 12px !important;
+            font-size: 0.8rem !important;
+            min-height: 34px !important;
+          }
+          .website-mobile-toggle {
+            width: 36px;
             height: 36px;
+            padding: 5px;
           }
         }
       `}</style>
