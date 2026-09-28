@@ -22,7 +22,7 @@ export const Header = () => {
       className={`website-header header-animate-in ${isScrolled ? 'is-scrolled' : ''}`}
     >
       <Container style={{ width: '100%' }}>
-        <Navbar onMobileToggle={toggle} />
+        <Navbar onMobileToggle={toggle} isMobileMenuOpen={isOpen} />
       </Container>
       <MobileMenu isOpen={isOpen} onClose={close} />
 

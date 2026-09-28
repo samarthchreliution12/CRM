@@ -18,6 +18,27 @@ export const Button = ({
   const combinedClasses = `${baseClass} ${variantClass} ${sizeClass} ${className}`.trim();
 
   if (to) {
+    const isExternal =
+      to.startsWith('http://') ||
+      to.startsWith('https://') ||
+      to.startsWith('mailto:') ||
+      to.startsWith('tel:');
+
+    if (isExternal) {
+      return (
+        <a
+          href={to}
+          className={combinedClasses}
+          onClick={onClick}
+          target={props.target || '_blank'}
+          rel={props.rel || 'noopener noreferrer'}
+          {...props}
+        >
+          {children}
+        </a>
+      );
+    }
+
     return (
       <Link to={to} className={combinedClasses} onClick={onClick} {...props}>
         {children}
