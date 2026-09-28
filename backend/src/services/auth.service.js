@@ -348,8 +348,6 @@ class AuthService {
 
     return {
       message: genericMessage,
-      reset_token: resetToken,
-      reset_link: resetLink,
     };
   }
 

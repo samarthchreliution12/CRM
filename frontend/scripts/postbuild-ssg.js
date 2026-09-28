@@ -292,9 +292,9 @@ async function generateStaticPages() {
     process.exit(1);
   }
 
-  // If Vercel or CI environment is detected, directly use Node Fallback engine to avoid Chromium shared library crashes
-  if (process.env.VERCEL || process.env.CI_SKIP_PUPPETEER) {
-    console.log('[SSG Pre-Renderer] Vercel CI environment detected. Using native Node static pre-renderer...');
+  // If CI environment or skip flag is detected, directly use native Node Fallback engine
+  if (process.env.CI_SKIP_PUPPETEER) {
+    console.log('[SSG Pre-Renderer] CI environment detected. Using native Node static pre-renderer...');
     fallbackNodeStaticPreRender();
     return;
   }

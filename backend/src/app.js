@@ -92,7 +92,6 @@ app.use(
       const cleanOrigin = origin.replace(/\/$/, "");
       const isAllowed =
         allowedOrigins.some((o) => o && o.replace(/\/$/, "") === cleanOrigin) ||
-        /\.vercel\.app$/.test(cleanOrigin) ||
         cleanOrigin.includes("localhost") ||
         cleanOrigin.includes("127.0.0.1");
 
