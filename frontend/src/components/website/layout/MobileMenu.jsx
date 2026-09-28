@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import { NAV_LINKS, SERVICES_NAV_ITEMS } from '../../../utils/website/constants';
 import { Button } from '../common/Button';
@@ -9,7 +10,7 @@ export const MobileMenu = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="website-mobile-overlay slide-down">
       <div className="mobile-menu-inner">
         {/* Main Navigation Links List */}
@@ -288,7 +289,8 @@ export const MobileMenu = ({ isOpen, onClose }) => {
           opacity: 0.6;
         }
       `}</style>
-    </div>
+    </div>,
+    document.body
   );
 };
 
