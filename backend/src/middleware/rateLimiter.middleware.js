@@ -33,8 +33,19 @@ const passwordResetLimiter = rateLimit({
   },
 });
 
+const publicLeadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: isProd ? 15 : 100, // 15 requests per 15 mins in prod
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    return sendError(res, 429, "Too many consultation requests from this IP. Please try again after 15 minutes.");
+  },
+});
+
 module.exports = {
   loginLimiter,
   refreshLimiter,
   passwordResetLimiter,
+  publicLeadLimiter,
 };

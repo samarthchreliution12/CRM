@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Search, Bell, HelpCircle, Menu, FileText, BellOff, ArrowRight, MessageSquare, CheckSquare, X, Loader2 } from "lucide-react";
+import { Search, Bell, HelpCircle, Menu, FileText, BellOff, ArrowRight, MessageSquare, CheckSquare, UserPlus, X, Loader2 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import useAuth from "../../../hooks/useAuth";
 import ClientService from "../../../services/client.service";
@@ -271,6 +271,8 @@ const Header = ({ title = "Dashboard", onToggleSidebar }) => {
       navigate("/documents?status=pending");
     } else if (entityType.includes("CLIENT") || entityType === "CLIENT") {
       navigate(`/clients/${entityId}`);
+    } else if (entityType.includes("LEAD") || entityType === "LEAD") {
+      navigate(`/leads?leadId=${entityId}`);
     } else {
       navigate("/tasks");
     }
@@ -473,12 +475,13 @@ const Header = ({ title = "Dashboard", onToggleSidebar }) => {
                       </div>
                     )}
 
-                    {/* Database-Backed Notifications (Tasks, Documents, Clients) */}
+                    {/* Database-Backed Notifications (Tasks, Documents, Clients, Leads) */}
                     {notifications.map((notif) => {
                       const isCompleted = notif.type === "TASK_COMPLETED" || notif.type === "DOCUMENT_APPROVED";
                       const isRejected = notif.type === "DOCUMENT_REJECTED";
                       const isDoc = notif.entity_type === "DOCUMENT" || notif.type?.includes("DOCUMENT");
-                      const iconWrapperClass = isCompleted ? "completed" : isRejected ? "rejected" : "pending";
+                      const isLead = notif.entity_type === "LEAD" || notif.type?.includes("LEAD");
+                      const iconWrapperClass = isLead ? "lead" : isCompleted ? "completed" : isRejected ? "rejected" : "pending";
 
                       return (
                         <div
@@ -487,7 +490,7 @@ const Header = ({ title = "Dashboard", onToggleSidebar }) => {
                           onClick={() => handleNotificationClick(notif)}
                         >
                           <div className={`notif-item-icon-wrapper ${iconWrapperClass}`}>
-                            {isDoc ? <FileText size={18} /> : <CheckSquare size={18} />}
+                            {isDoc ? <FileText size={18} /> : isLead ? <UserPlus size={18} /> : <CheckSquare size={18} />}
                           </div>
                           <div className="notif-item-content">
                             <div className="notif-item-header">

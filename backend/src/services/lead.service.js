@@ -2,6 +2,7 @@ const { LeadModel, VALID_STATUSES } = require("../models/lead.model");
 const UserModel = require("../models/user.model");
 const ClientTypeModel = require("../models/clientType.model");
 const ClientServiceModel = require("../models/clientService.model");
+const NotificationService = require("./notification.service");
 const AuditService = require("./audit.service");
 
 class LeadService {
@@ -322,6 +323,177 @@ class LeadService {
       lead: result.lead,
       client: result.client,
     };
+  }
+
+  /**
+   * Create a new Lead submitted from the public Website Contact Us form.
+   */
+  static async createPublicLead(data = {}, context = {}) {
+    // 1. Validation & Input Sanitization
+    const rawName = (data.name || data.fullName || data.full_name || "").toString().trim();
+    if (!rawName || rawName.length < 2) {
+      const err = new Error("Full name is required (minimum 2 characters).");
+      err.statusCode = 400;
+      throw err;
+    }
+    if (rawName.length > 150) {
+      const err = new Error("Full name cannot exceed 150 characters.");
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const rawEmail = (data.email || "").toString().trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!rawEmail || !emailRegex.test(rawEmail)) {
+      const err = new Error("A valid email address is required.");
+      err.statusCode = 400;
+      throw err;
+    }
+    if (rawEmail.length > 150) {
+      const err = new Error("Email cannot exceed 150 characters.");
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const rawPhone = (data.phone || data.mobile_no || data.mobile || "").toString().trim();
+    const digitsOnly = rawPhone.replace(/\D/g, "");
+    if (!rawPhone || digitsOnly.length < 7 || digitsOnly.length > 15) {
+      const err = new Error("A valid phone number is required (7 to 15 digits).");
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const rawService = (data.service || data.service_id || data.service_required || "").toString().trim();
+    if (!rawService) {
+      const err = new Error("Please select the required service.");
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const rawMessage = (data.message || data.notes || data.details || "").toString().trim();
+    if (rawMessage.length > 2000) {
+      const err = new Error("Message cannot exceed 2000 characters.");
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const sanitizeText = (str) => {
+      if (!str || typeof str !== "string") return "";
+      return str
+        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+        .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
+        .replace(/<[^>]*>?/gm, "")
+        .trim();
+    };
+
+    // 2. Resolve Service ID from client_services
+    let resolvedServiceId = null;
+    const allServices = await ClientServiceModel.findAll({ status: "active" });
+    const serviceList = Array.isArray(allServices) ? allServices : (allServices.client_services || []);
+
+    if (/^\d+$/.test(rawService)) {
+      const numId = parseInt(rawService, 10);
+      const found = serviceList.find((s) => s.id === numId);
+      if (found) resolvedServiceId = found.id;
+    }
+
+    if (!resolvedServiceId && serviceList.length > 0) {
+      const serviceSlugMap = {
+        "mutual-funds": "mutual fund",
+        "mutual-fund": "mutual fund",
+        "mutual fund": "mutual fund",
+        "investment-recovery": "physical shares",
+        "recovery": "iepf",
+        "wealth-management": "pms",
+        "financial-planning": "mutual fund",
+        "ipo": "ipo",
+        "demat": "demat",
+        "slbm": "slbm",
+        "insurance": "insurance",
+        "physical-shares": "physical shares",
+        "iepf": "iepf",
+        "trading": "trading",
+        "pms": "pms",
+        "aif": "aif",
+      };
+
+      const normalizedInput = rawService.toLowerCase().replace(/[_\s]+/g, "-");
+      const mappedKeyword = serviceSlugMap[normalizedInput] || normalizedInput.replace(/-/g, " ");
+
+      // Match by exact or partial name
+      const matched = serviceList.find(
+        (s) =>
+          s.name.toLowerCase() === mappedKeyword ||
+          s.name.toLowerCase().includes(mappedKeyword) ||
+          mappedKeyword.includes(s.name.toLowerCase())
+      );
+
+      resolvedServiceId = matched ? matched.id : serviceList[0].id;
+    }
+
+    // 3. Resolve Client Type ID (Default to Individual or first active)
+    let resolvedClientTypeId = null;
+    try {
+      const allTypes = await ClientTypeModel.findAll({ status: "active" });
+      const typesList = Array.isArray(allTypes) ? allTypes : (allTypes.client_types || []);
+      const individual = typesList.find((t) => t.name.toLowerCase() === "individual");
+      resolvedClientTypeId = individual ? individual.id : (typesList[0]?.id || null);
+    } catch (e) {
+      resolvedClientTypeId = null;
+    }
+
+    // 4. Create Lead Record in Database
+    const newLead = await LeadModel.create({
+      name: sanitizeText(rawName),
+      email: rawEmail,
+      mobile_no: sanitizeText(rawPhone),
+      whatsapp_no: sanitizeText(rawPhone),
+      service_id: resolvedServiceId,
+      client_type_id: resolvedClientTypeId,
+      source: "Website",
+      status: "new",
+      priority: "medium",
+      notes: sanitizeText(rawMessage),
+      assigned_to: null,
+      created_by: null,
+    });
+
+    // 5. Notify Active CRM Users (Admins & Staff with Lead Permissions)
+    try {
+      const recipients = await UserModel.findLeadNotificationRecipients();
+      for (const recipient of recipients) {
+        await NotificationService.createNotification({
+          recipientUserId: recipient.id,
+          type: "NEW_WEBSITE_LEAD",
+          title: "New Website Lead",
+          message: `${newLead.name} submitted a new consultation request.`,
+          entityType: "LEAD",
+          entityId: newLead.id,
+        }).catch((err) => {
+          console.error(`Failed to send website lead notification to user ${recipient.id}:`, err);
+        });
+      }
+    } catch (notifErr) {
+      console.error("Failed to generate notifications for website lead:", notifErr);
+    }
+
+    // 6. Audit Trail Logging
+    try {
+      await AuditService.log({
+        userId: null,
+        action: "CREATE",
+        module: "LEADS",
+        entityType: "LEAD",
+        entityId: newLead.id,
+        description: `New website lead submitted: ${newLead.name}`,
+        newValues: AuditService.sanitize(newLead),
+        ipAddress: context.ipAddress,
+      });
+    } catch (auditErr) {
+      console.error("Failed to log audit for website lead:", auditErr);
+    }
+
+    return newLead;
   }
 
   /**

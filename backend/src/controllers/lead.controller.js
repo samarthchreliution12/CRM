@@ -3,6 +3,26 @@ const { sendSuccess } = require("../utils/response.util");
 
 class LeadController {
   /**
+   * POST /api/public/leads - Create a new lead from public Website Contact form
+   */
+  static async createPublicLead(req, res, next) {
+    try {
+      const context = {
+        ipAddress: req.ip || req.connection?.remoteAddress,
+      };
+      const lead = await LeadService.createPublicLead(req.body, context);
+      return sendSuccess(
+        res,
+        201,
+        "Thank you! Your consultation request has been submitted successfully.",
+        { lead_id: lead.id, lead }
+      );
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
    * POST /api/leads - Create a new lead
    */
   static async createLead(req, res, next) {

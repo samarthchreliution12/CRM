@@ -148,7 +148,11 @@ app.use("/api/clients/:clientId/documents", documentRoutes);
 // WhatsApp Module Routes
 app.use("/api/whatsapp", whatsappRoutes);
 
-// Leads Module Routes
+// Public Website Leads Route
+const publicLeadRoutes = require("./routes/publicLead.routes");
+app.use("/api/public/leads", publicLeadRoutes);
+
+// Leads Module Routes (Authenticated CRM)
 const leadRoutes = require("./routes/lead.routes");
 app.use("/api/leads", leadRoutes);
 

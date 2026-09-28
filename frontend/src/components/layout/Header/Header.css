@@ -373,6 +373,11 @@
   color: #d97706;
 }
 
+.notif-item-icon-wrapper.lead {
+  background-color: #eff6ff;
+  color: #2563eb;
+}
+
 .notif-item-icon-wrapper.completed {
   background-color: #f0fdf4;
   color: #16a34a;

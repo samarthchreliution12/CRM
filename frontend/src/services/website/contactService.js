@@ -2,14 +2,14 @@ import { fetchApi } from './api';
 
 export const contactService = {
   submitContactQuery: async (formData) => {
-    return fetchApi('/contact/submit', {
+    return fetchApi('/public/leads', {
       method: 'POST',
       body: JSON.stringify(formData),
     });
   },
 
   bookConsultation: async (consultationData) => {
-    return fetchApi('/consultation/book', {
+    return fetchApi('/public/leads', {
       method: 'POST',
       body: JSON.stringify(consultationData),
     });

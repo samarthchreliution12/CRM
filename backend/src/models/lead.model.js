@@ -86,7 +86,7 @@ class LeadModel {
         cl.id AS converted_client_id, cl.ucc_no AS converted_client_ucc, cl.name AS converted_client_name
       FROM leads l
       LEFT JOIN users su ON su.id = l.assigned_to
-      INNER JOIN users cu ON cu.id = l.created_by
+      LEFT JOIN users cu ON cu.id = l.created_by
       LEFT JOIN client_types ct ON ct.id = l.client_type_id
       LEFT JOIN client_services cs ON cs.id = l.service_id
       LEFT JOIN clients cl ON cl.id = l.converted_client_id
@@ -139,7 +139,7 @@ class LeadModel {
       next_follow_up_at || null,
       last_contacted_at || null,
       notes ? notes.trim() : null,
-      parseInt(created_by, 10),
+      created_by ? parseInt(created_by, 10) : null,
     ];
 
     const result = await pool.query(insertQuery, values);

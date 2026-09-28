@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import AppLayout from "../../components/layout/AppLayout/AppLayout";
 import LeadService from "../../services/lead.service";
 import ClientService from "../../services/client.service";
@@ -208,11 +208,36 @@ const Leads = () => {
     }
   }, [token, filters]);
 
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const targetLeadIdParam = searchParams.get("leadId");
+
   useEffect(() => {
     if (token && canView) {
       fetchLeads();
     }
   }, [token, canView, fetchLeads]);
+
+  // Handle leadId URL query parameter (e.g., from notification click)
+  useEffect(() => {
+    if (targetLeadIdParam && token) {
+      const targetId = parseInt(targetLeadIdParam, 10);
+      if (!isNaN(targetId)) {
+        const existingInList = leads.find((l) => l.id === targetId);
+        if (existingInList) {
+          setSelectedLead(existingInList);
+        } else {
+          LeadService.getLeadById(targetId, token)
+            .then((res) => {
+              if (res?.data?.lead) {
+                setSelectedLead(res.data.lead);
+              }
+            })
+            .catch(() => null);
+        }
+      }
+    }
+  }, [targetLeadIdParam, leads, token]);
 
   const triggerToast = (msg) => {
     setToastMessage(msg);

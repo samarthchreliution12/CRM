@@ -12,6 +12,9 @@ const VALID_NOTIFICATION_TYPES = [
   "CLIENT_FOLLOW_UP",
   "COMMUNICATION_MESSAGE",
   "SYSTEM_ALERT",
+  "NEW_WEBSITE_LEAD",
+  "LEAD_CREATED",
+  "LEAD_NEW",
 ];
 
 class NotificationService {

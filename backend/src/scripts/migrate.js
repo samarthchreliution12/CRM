@@ -439,6 +439,9 @@ async function runMigrations() {
         ('mfa_enforced', 'false', 'Require Multi-Factor Authentication for all administrative accounts'),
         ('lockout_attempts', '5', 'Number of failed password attempts before locking an account temporarily')
       ON CONFLICT (key) DO NOTHING;
+
+      -- Migration step 17: Allow created_by to be NULL for public website leads
+      ALTER TABLE leads ALTER COLUMN created_by DROP NOT NULL;
     `);
 
     console.log("Database migrations completed successfully.");
