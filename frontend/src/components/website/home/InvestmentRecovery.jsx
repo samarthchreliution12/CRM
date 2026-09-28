@@ -48,10 +48,23 @@ export const InvestmentRecovery = () => {
             subtitle="From lost certificates to seamless IEPF dematerialization — your journey to recovered wealth."
             center={true}
           />
-          <div style={{ marginTop: '1.5rem' }}>
+          <div className="recovery-3d-wrapper" style={{ marginTop: '1.5rem' }}>
             <Suspense fallback={<div style={{ minHeight: '300px' }} />}>
               <Recovery3DScene steps={recoverySteps} />
             </Suspense>
+          </div>
+
+          {/* Clean Mobile Representation of Recovery Journey */}
+          <div className="recovery-steps-mobile-container">
+            {recoverySteps.map((step, sIdx) => (
+              <div key={sIdx} className="recovery-mobile-step-card">
+                <div className="recovery-mobile-step-num">0{sIdx + 1}</div>
+                <div className="recovery-mobile-step-content">
+                  <h4 className="recovery-mobile-step-title">{step.title}</h4>
+                  <p className="recovery-mobile-step-desc">{step.desc}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -138,6 +151,14 @@ export const InvestmentRecovery = () => {
       </Container>
 
       <style>{`
+        .recovery-3d-wrapper {
+          display: block;
+        }
+
+        .recovery-steps-mobile-container {
+          display: none;
+        }
+
         .partner-logo-grid {
           display: grid;
           grid-template-columns: repeat(6, 1fr);
@@ -217,6 +238,58 @@ export const InvestmentRecovery = () => {
         }
 
         @media (max-width: 1024px) {
+          .recovery-3d-wrapper {
+            display: none !important;
+          }
+
+          .recovery-steps-mobile-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1.5rem;
+          }
+
+          .recovery-mobile-step-card {
+            background-color: #FFFFFF;
+            border: 1px solid var(--color-border, #E2E2DF);
+            border-radius: var(--radius-md, 8px);
+            padding: 1.25rem 1rem;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+          }
+
+          .recovery-mobile-step-num {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: rgba(158, 36, 29, 0.1);
+            color: var(--color-primary, #9E241D);
+            font-weight: 800;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            border: 1px solid rgba(158, 36, 29, 0.2);
+          }
+
+          .recovery-mobile-step-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--color-dark, #0F172A);
+            margin: 0 0 4px 0;
+            letter-spacing: 0.02em;
+          }
+
+          .recovery-mobile-step-desc {
+            font-size: 0.85rem;
+            color: var(--color-secondary, #475569);
+            margin: 0;
+            line-height: 1.5;
+          }
+
           .partner-logo-grid {
             grid-template-columns: repeat(3, 1fr);
             gap: var(--spacing-md);
@@ -224,6 +297,11 @@ export const InvestmentRecovery = () => {
         }
 
         @media (max-width: 768px) {
+          .recovery-steps-mobile-container {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+          }
+
           .partner-logo-grid {
             grid-template-columns: repeat(2, 1fr);
             gap: 10px;

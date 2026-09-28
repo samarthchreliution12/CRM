@@ -244,8 +244,12 @@ export const Hero = () => {
         @media (max-width: 1024px) {
           .website-hero-grid {
             grid-template-columns: 1fr;
-            gap: 2rem;
+            gap: 1.5rem;
             text-align: center;
+          }
+
+          .website-hero-3d-col {
+            display: none !important;
           }
 
           .website-hero-content {
@@ -262,12 +266,8 @@ export const Hero = () => {
             justify-content: center;
           }
 
-          .website-hero-3d-col {
-            height: 360px;
-          }
-
           .website-hero-heading {
-            font-size: 2.4rem;
+            font-size: 2.35rem;
           }
         }
 
@@ -277,43 +277,40 @@ export const Hero = () => {
             padding: var(--spacing-xl) 0;
           }
 
-          .website-hero-3d-col {
-            height: 300px;
-          }
-
           .website-hero-heading {
-            font-size: 2rem;
+            font-size: 1.95rem;
             line-height: 1.25;
+            margin-bottom: var(--spacing-sm);
           }
 
           .website-hero-description {
             font-size: 1rem;
             line-height: 1.6;
+            margin-bottom: var(--spacing-lg);
           }
         }
 
         @media (max-width: 480px) {
           .website-hero-section {
-            padding: var(--spacing-lg) 0;
+            padding: var(--spacing-xl) 0;
           }
 
           .website-hero-heading {
             font-size: 1.65rem;
+            line-height: 1.25;
           }
 
           .website-hero-eyebrow {
             font-size: 0.75rem;
             padding: 4px 10px;
             letter-spacing: 1px;
+            margin-bottom: 12px;
           }
 
           .website-hero-description {
-            font-size: 0.925rem;
+            font-size: 0.95rem;
             margin-bottom: var(--spacing-lg);
-          }
-
-          .website-hero-3d-col {
-            height: 240px;
+            line-height: 1.55;
           }
 
           .website-hero-buttons {
@@ -325,8 +322,11 @@ export const Hero = () => {
           .website-hero-btn-primary,
           .website-hero-btn-outline {
             width: 100%;
+            min-height: 48px;
+            font-size: 0.95rem !important;
             justify-content: center;
             text-align: center;
+            box-sizing: border-box;
           }
         }
       `}</style>

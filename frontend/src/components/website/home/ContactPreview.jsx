@@ -16,9 +16,11 @@ export const ContactPreview = () => {
         <div className="contact-cta-card">
           <div className="contact-cta-glow" />
 
-          <Suspense fallback={null}>
-            <Shield3DScene />
-          </Suspense>
+          <div className="contact-3d-wrapper">
+            <Suspense fallback={null}>
+              <Shield3DScene />
+            </Suspense>
+          </div>
 
           <div className={`scroll-reveal ${isRevealed ? 'revealed' : ''}`}>
             <SectionHeading
@@ -131,6 +133,16 @@ export const ContactPreview = () => {
           background-color: var(--color-primary-hover, #861D18) !important;
           transform: translateY(-3px) scale(1.02);
           box-shadow: 0 10px 28px rgba(158, 36, 29, 0.6);
+        }
+
+        .contact-3d-wrapper {
+          display: block;
+        }
+
+        @media (max-width: 1024px) {
+          .contact-3d-wrapper {
+            display: none !important;
+          }
         }
 
         @media (max-width: 768px) {

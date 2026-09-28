@@ -653,18 +653,18 @@ export const ServiceDetail = () => {
           align-items: center;
         }
 
-        /* Initial unrevealed state for Left Content (start 60px left) */
+        /* Initial unrevealed state for Left Content */
         .service-hero-grid.scroll-reveal .service-hero-left {
           opacity: 0;
-          transform: translateX(-60px);
+          transform: translateY(20px);
           transition: opacity 800ms cubic-bezier(0.16, 1, 0.3, 1), transform 800ms cubic-bezier(0.16, 1, 0.3, 1);
           will-change: opacity, transform;
         }
 
-        /* Initial unrevealed state for Right Image/Visual (start 60px right, 120ms stagger) */
+        /* Initial unrevealed state for Right Image/Visual */
         .service-hero-grid.scroll-reveal .service-hero-right {
           opacity: 0;
-          transform: translateX(60px);
+          transform: translateY(20px);
           transition: opacity 800ms cubic-bezier(0.16, 1, 0.3, 1) 120ms, transform 800ms cubic-bezier(0.16, 1, 0.3, 1) 120ms;
           will-change: opacity, transform;
         }
@@ -672,12 +672,12 @@ export const ServiceDetail = () => {
         /* Revealed state when hero section enters viewport */
         .service-hero-grid.scroll-reveal.revealed .service-hero-left {
           opacity: 1;
-          transform: translateX(0);
+          transform: translateY(0);
         }
 
         .service-hero-grid.scroll-reveal.revealed .service-hero-right {
           opacity: 1;
-          transform: translateX(0);
+          transform: translateY(0);
         }
 
         .service-badge-pill {

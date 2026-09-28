@@ -203,12 +203,12 @@ export const AboutSection = () => {
 
         .vm-card-mission {
           opacity: 0;
-          transform: translateX(-24px) translateY(15px) scale(0.98);
+          transform: translateY(16px) scale(0.98);
         }
 
         .vm-card-vision {
           opacity: 0;
-          transform: translateX(24px) translateY(15px) scale(0.98);
+          transform: translateY(16px) scale(0.98);
         }
 
         .vm-card-mission.revealed {
@@ -222,14 +222,14 @@ export const AboutSection = () => {
         @keyframes vmMissionIn {
           to {
             opacity: 1;
-            transform: translateX(0) translateY(0) scale(1);
+            transform: translateY(0) scale(1);
           }
         }
 
         @keyframes vmVisionIn {
           to {
             opacity: 1;
-            transform: translateX(0) translateY(0) scale(1);
+            transform: translateY(0) scale(1);
           }
         }
 
