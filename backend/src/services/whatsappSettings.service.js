@@ -59,11 +59,21 @@ class WhatsAppSettingsService {
     }
 
     let updateApiKey = null;
-    if (cp_api_key && String(cp_api_key).trim() !== "" && !String(cp_api_key).includes("...")) {
+    if (
+      cp_api_key &&
+      String(cp_api_key).trim() !== "" &&
+      !String(cp_api_key).includes("...") &&
+      !String(cp_api_key).includes("••••")
+    ) {
       updateApiKey = String(cp_api_key).trim();
     }
 
-    const trimmedMobile = whatsapp_mobile !== undefined ? (whatsapp_mobile ? String(whatsapp_mobile).trim() : null) : undefined;
+    const trimmedMobile =
+      whatsapp_mobile !== undefined
+        ? whatsapp_mobile
+          ? String(whatsapp_mobile).trim()
+          : null
+        : undefined;
 
     const updatedRow = await WhatsAppSettingsModel.update(existing.id, {
       cp_api_key: updateApiKey,
@@ -76,7 +86,7 @@ class WhatsAppSettingsService {
   /**
    * Verify WhatsApp API connection with ChatterPillar.
    */
-  static async testConnection({ userId = null }) {
+  static async testConnection({ userId = null } = {}) {
     const settingRow = await WhatsAppSettingsModel.getSettings();
 
     if (!settingRow) {
@@ -149,6 +159,25 @@ class WhatsAppSettingsService {
   }
 
   /**
+   * Disconnect WhatsApp integration.
+   */
+  static async disconnect({ userId = null } = {}) {
+    const settingRow = await WhatsAppSettingsModel.getSettings();
+    if (!settingRow) {
+      return {
+        is_connected: false,
+        provider: "ChatterPillar",
+        whatsapp_mobile: null,
+        whatsapp_account_id: null,
+        message: "No active WhatsApp connection found.",
+      };
+    }
+
+    const updatedRow = await WhatsAppSettingsModel.disconnect(settingRow.id);
+    return WhatsAppSettingsModel.formatResponse(updatedRow);
+  }
+
+  /**
    * Get public connection status without exposing sensitive credentials.
    */
   static async getStatus() {
@@ -160,8 +189,22 @@ class WhatsAppSettingsService {
         provider: "ChatterPillar",
         whatsapp_mobile: null,
         whatsapp_account_id: null,
+        birthday_template_id: null,
+        birthday_template_data: null,
         last_checked_at: null,
       };
+    }
+
+    let parsedBirthdayData = null;
+    if (settingRow.birthday_template_data) {
+      try {
+        parsedBirthdayData =
+          typeof settingRow.birthday_template_data === "string"
+            ? JSON.parse(settingRow.birthday_template_data)
+            : settingRow.birthday_template_data;
+      } catch (e) {
+        parsedBirthdayData = settingRow.birthday_template_data;
+      }
     }
 
     return {
@@ -169,6 +212,8 @@ class WhatsAppSettingsService {
       provider: settingRow.provider || "ChatterPillar",
       whatsapp_mobile: settingRow.whatsapp_mobile || null,
       whatsapp_account_id: settingRow.whatsapp_account_id || null,
+      birthday_template_id: settingRow.birthday_template_id || null,
+      birthday_template_data: parsedBirthdayData,
       last_checked_at: settingRow.updated_at || null,
     };
   }

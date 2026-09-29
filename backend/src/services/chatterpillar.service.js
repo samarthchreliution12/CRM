@@ -41,9 +41,6 @@ class ChatterPillarService {
   /**
    * Verify WhatsApp account information with ChatterPillar.
    * Calls: POST /getWhatsAppAccountInfo
-   * @param {Object} params
-   * @param {string} params.apiKey - CP API key
-   * @param {string} [params.mobile] - Optional mobile number
    */
   static async getWhatsAppAccountInfo({ apiKey, mobile = null }) {
     if (!apiKey || !String(apiKey).trim()) {
@@ -66,16 +63,31 @@ class ChatterPillarService {
       });
 
       const resData = response.data || {};
-      const accountList = Array.isArray(resData.data) ? resData.data : [];
+      let accountList = [];
+
+      if (Array.isArray(resData.data)) {
+        accountList = resData.data;
+      } else if (Array.isArray(resData)) {
+        accountList = resData;
+      } else if (resData.data && typeof resData.data === "object") {
+        accountList = [resData.data];
+      }
 
       return {
         success: true,
-        message: resData.message || (accountList.length > 0 ? "WhatsApp business account verified successfully." : "No matching WhatsApp business account found."),
+        message:
+          resData.message ||
+          (accountList.length > 0
+            ? "WhatsApp business account verified successfully."
+            : "No matching WhatsApp business account found."),
         accounts: accountList,
         raw: resData,
       };
     } catch (err) {
-      const errorMsg = err.response?.data?.message || err.message || "Failed to communicate with ChatterPillar API.";
+      const errorMsg =
+        err.response?.data?.message ||
+        err.message ||
+        "Failed to communicate with ChatterPillar API.";
       const error = new Error(`ChatterPillar connection verification failed: ${errorMsg}`);
       error.statusCode = err.response?.status || 502;
       error.details = err.response?.data || null;
@@ -85,9 +97,9 @@ class ChatterPillarService {
 
   /**
    * Retrieve WhatsApp Template list from ChatterPillar.
-   * Calls: POST /getTemplateList (or GET /getTemplateList)
+   * Calls: POST /getTemplateList
    */
-  static async getTemplateList({ apiKey, whatsappAccountId = null }) {
+  static async getTemplateList({ apiKey, whatsappAccountId = null, filters = {} }) {
     if (!apiKey || !String(apiKey).trim()) {
       const err = new Error("ChatterPillar API key is required.");
       err.statusCode = 400;
@@ -97,18 +109,50 @@ class ChatterPillarService {
     const baseUrl = this.getBaseUrl();
     const headers = this.buildHeaders(apiKey, whatsappAccountId);
     const timeout = this.getTimeout();
+    const rawBody = JSON.stringify(filters || {});
 
     try {
-      const response = await axios.post(`${baseUrl}/getTemplateList`, "{}", {
-        headers,
-        timeout,
-      });
+      let response;
+      try {
+        response = await axios.post(`${baseUrl}/getTemplateList`, rawBody, {
+          headers,
+          timeout,
+        });
+      } catch (postErr) {
+        // Fallback to GET if POST is not accepted
+        if (postErr.response && postErr.response.status === 405) {
+          response = await axios.get(`${baseUrl}/getTemplateList`, {
+            headers,
+            timeout,
+          });
+        } else {
+          throw postErr;
+        }
+      }
 
-      return response.data;
+      const resData = response.data || {};
+      let templates = [];
+
+      if (Array.isArray(resData.data)) {
+        templates = resData.data;
+      } else if (Array.isArray(resData.templates)) {
+        templates = resData.templates;
+      } else if (Array.isArray(resData)) {
+        templates = resData;
+      }
+
+      return {
+        success: true,
+        message: resData.message || "Templates fetched successfully.",
+        templates,
+        raw: resData,
+      };
     } catch (err) {
-      const errorMsg = err.response?.data?.message || err.message || "Failed to fetch template list.";
+      const errorMsg =
+        err.response?.data?.message || err.message || "Failed to fetch template list.";
       const error = new Error(`ChatterPillar template list request failed: ${errorMsg}`);
       error.statusCode = err.response?.status || 502;
+      error.details = err.response?.data || null;
       throw error;
     }
   }
@@ -149,9 +193,15 @@ class ChatterPillarService {
       ],
     };
 
-    if (Array.isArray(bodyVariables)) payloadObj.body_variable_values = bodyVariables;
-    if (Array.isArray(headerVariables)) payloadObj.header_variable_values = headerVariables;
-    if (Array.isArray(buttonVariables)) payloadObj.button_variable_values = buttonVariables;
+    if (Array.isArray(bodyVariables) && bodyVariables.length > 0) {
+      payloadObj.body_variable_values = bodyVariables;
+    }
+    if (Array.isArray(headerVariables) && headerVariables.length > 0) {
+      payloadObj.header_variable_values = headerVariables;
+    }
+    if (Array.isArray(buttonVariables) && buttonVariables.length > 0) {
+      payloadObj.button_variable_values = buttonVariables;
+    }
 
     const rawBody = JSON.stringify(payloadObj);
 
@@ -161,29 +211,18 @@ class ChatterPillarService {
         timeout,
       });
 
-      return response.data;
+      return response.data || { success: true, message: "Template message dispatched." };
     } catch (err) {
-      const errorMsg = err.response?.data?.message || err.message || "Failed to send message.";
+      const errorMsg =
+        err.response?.data?.message ||
+        (typeof err.response?.data === "string" ? err.response.data : null) ||
+        err.message ||
+        "Failed to send template message.";
       const error = new Error(`ChatterPillar send message failed: ${errorMsg}`);
       error.statusCode = err.response?.status || 502;
+      error.details = err.response?.data || null;
       throw error;
     }
-  }
-
-  /**
-   * Media upload foundation method (for future media attachment support).
-   * Calls: POST /uploadMedia
-   */
-  static async uploadMedia({ apiKey, whatsappAccountId = null, fileBuffer, mimeType, fileName }) {
-    if (!apiKey || !String(apiKey).trim()) {
-      const err = new Error("ChatterPillar API key is required.");
-      err.statusCode = 400;
-      throw err;
-    }
-
-    const error = new Error("Media upload feature architecture ready for future integration.");
-    error.statusCode = 501;
-    throw error;
   }
 }
 

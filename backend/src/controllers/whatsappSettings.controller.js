@@ -74,6 +74,20 @@ class WhatsAppSettingsController {
   }
 
   /**
+   * POST /api/whatsapp/settings/disconnect
+   * Disconnect the active WhatsApp connection.
+   */
+  static async disconnect(req, res) {
+    try {
+      const userId = req.user ? req.user.id : null;
+      const data = await WhatsAppSettingsService.disconnect({ userId });
+      return sendSuccess(res, 200, "WhatsApp connection disconnected successfully.", data);
+    } catch (error) {
+      return sendError(res, error.statusCode || 500, error.message);
+    }
+  }
+
+  /**
    * GET /api/whatsapp/settings/status
    * Retrieve current WhatsApp connection status without sensitive credentials.
    */

@@ -442,6 +442,49 @@ async function runMigrations() {
 
       -- Migration step 17: Allow created_by to be NULL for public website leads
       ALTER TABLE leads ALTER COLUMN created_by DROP NOT NULL;
+
+      -- Migration step 18: Extend WhatsApp templates & settings tables and permissions
+      ALTER TABLE whatsapp_templates ADD COLUMN IF NOT EXISTS category VARCHAR(50);
+      ALTER TABLE whatsapp_templates ADD COLUMN IF NOT EXISTS language VARCHAR(20) DEFAULT 'en';
+      ALTER TABLE whatsapp_templates ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'APPROVED';
+      ALTER TABLE whatsapp_templates ADD COLUMN IF NOT EXISTS template_type VARCHAR(50) DEFAULT 'TEXT';
+      ALTER TABLE whatsapp_templates ADD COLUMN IF NOT EXISTS header_type VARCHAR(50);
+      ALTER TABLE whatsapp_templates ADD COLUMN IF NOT EXISTS header_content TEXT;
+      ALTER TABLE whatsapp_templates ADD COLUMN IF NOT EXISTS body_content TEXT;
+      ALTER TABLE whatsapp_templates ADD COLUMN IF NOT EXISTS footer_content TEXT;
+      ALTER TABLE whatsapp_templates ADD COLUMN IF NOT EXISTS buttons JSONB DEFAULT '[]'::jsonb;
+      ALTER TABLE whatsapp_templates ADD COLUMN IF NOT EXISTS variable_count INTEGER DEFAULT 0;
+      ALTER TABLE whatsapp_templates ADD COLUMN IF NOT EXISTS variables JSONB DEFAULT '[]'::jsonb;
+      ALTER TABLE whatsapp_templates ADD COLUMN IF NOT EXISTS raw_data JSONB;
+
+      CREATE INDEX IF NOT EXISTS idx_whatsapp_templates_status ON whatsapp_templates(status);
+      CREATE INDEX IF NOT EXISTS idx_whatsapp_templates_category ON whatsapp_templates(category);
+
+      ALTER TABLE whatsapp_settings ADD COLUMN IF NOT EXISTS birthday_template_id VARCHAR(100);
+      ALTER TABLE whatsapp_settings ADD COLUMN IF NOT EXISTS birthday_template_data JSONB;
+
+      INSERT INTO permissions (permission_key, description, module, action)
+      VALUES 
+        ('whatsapp.view', 'View WhatsApp settings and templates', 'whatsapp', 'view'),
+        ('whatsapp.read', 'Read WhatsApp configuration and templates', 'whatsapp', 'read'),
+        ('whatsapp.create', 'Create WhatsApp configuration', 'whatsapp', 'create'),
+        ('whatsapp.update', 'Update WhatsApp configuration and settings', 'whatsapp', 'update'),
+        ('whatsapp.edit', 'Edit WhatsApp settings and templates', 'whatsapp', 'edit'),
+        ('whatsapp.send', 'Send WhatsApp template and test messages', 'whatsapp', 'send'),
+        ('whatsapp.template.sync', 'Synchronize templates from ChatterPillar', 'whatsapp', 'template.sync'),
+        ('whatsapp.template.select', 'Select default birthday and campaign templates', 'whatsapp', 'template.select')
+      ON CONFLICT (permission_key) DO UPDATE SET 
+        description = EXCLUDED.description, 
+        module = EXCLUDED.module, 
+        action = EXCLUDED.action, 
+        updated_at = CURRENT_TIMESTAMP;
+
+      INSERT INTO role_permissions (role_id, permission_id)
+      SELECT r.id, p.id
+      FROM roles r
+      CROSS JOIN permissions p
+      WHERE r.name IN ('Admin', 'Staff') AND p.module = 'whatsapp'
+      ON CONFLICT DO NOTHING;
     `);
 
     console.log("Database migrations completed successfully.");

@@ -4,7 +4,7 @@ const validateAccountInfoQuery = (req, res, next) => {
   const { mobile } = req.body || {};
 
   if (mobile !== undefined && mobile !== null && String(mobile).trim() !== "") {
-    const cleanMobile = String(mobile).trim().replace(/[\s\-()]/g, "");
+    const cleanMobile = String(mobile).trim().replace(/[\s\-()+]/g, "");
     if (!/^[0-9]{10,15}$/.test(cleanMobile)) {
       return sendError(res, 400, "Invalid mobile number format. Mobile number must contain 10 to 15 digits.");
     }
@@ -28,9 +28,19 @@ const validateSendTemplate = (req, res, next) => {
     return sendError(res, 400, "full_name is required.");
   }
 
-  const cleanMobile = String(mobile).trim().replace(/[\s\-()]/g, "");
+  const cleanMobile = String(mobile).trim().replace(/[\s\-()+]/g, "");
   if (!/^[0-9]{10,15}$/.test(cleanMobile)) {
     return sendError(res, 400, "Invalid mobile number format. Mobile number must contain 10 to 15 digits.");
+  }
+
+  next();
+};
+
+const validateSelectBirthdayTemplate = (req, res, next) => {
+  const { template_id } = req.body || {};
+
+  if (!template_id || String(template_id).trim() === "") {
+    return sendError(res, 400, "template_id is required.");
   }
 
   next();
@@ -69,6 +79,7 @@ const validateUpdateSettings = (req, res, next) => {
 module.exports = {
   validateAccountInfoQuery,
   validateSendTemplate,
+  validateSelectBirthdayTemplate,
   validateCreateSettings,
   validateUpdateSettings,
 };

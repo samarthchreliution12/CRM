@@ -5,6 +5,7 @@ const WhatsAppSettingsController = require("../controllers/whatsappSettings.cont
 const {
   validateAccountInfoQuery,
   validateSendTemplate,
+  validateSelectBirthdayTemplate,
   validateCreateSettings,
   validateUpdateSettings,
 } = require("../validators/whatsapp.validator");
@@ -40,15 +41,58 @@ router.post(
   WhatsAppSettingsController.testConnection
 );
 
+router.post(
+  "/settings/disconnect",
+  requirePermission(["whatsapp.update", "whatsapp.edit"]),
+  WhatsAppSettingsController.disconnect
+);
+
 router.get(
   "/settings/status",
   requirePermission(["whatsapp.view", "whatsapp.read", "whatsapp.edit"]),
   WhatsAppSettingsController.getStatus
 );
 
-// 2. Existing WhatsApp Messaging & Template Endpoints
-router.post("/getWhatsAppAccountInfo", validateAccountInfoQuery, WhatsAppController.getWhatsAppAccountInfo);
-router.post("/send-template", validateSendTemplate, WhatsAppController.sendTemplateMessage);
-router.get("/templates", WhatsAppController.getTemplateList);
+// 2. WhatsApp Templates Endpoints
+router.get(
+  "/templates",
+  requirePermission(["whatsapp.view", "whatsapp.read", "whatsapp.edit"]),
+  WhatsAppController.getTemplateList
+);
+
+router.post(
+  "/templates/sync",
+  requirePermission(["whatsapp.template.sync", "whatsapp.update", "whatsapp.edit"]),
+  WhatsAppController.syncTemplates
+);
+
+router.post(
+  "/templates/birthday-select",
+  requirePermission(["whatsapp.template.select", "whatsapp.update", "whatsapp.edit"]),
+  validateSelectBirthdayTemplate,
+  WhatsAppController.selectBirthdayTemplate
+);
+
+// 3. WhatsApp Messaging & Account Info Endpoints
+router.post(
+  "/send-test",
+  requirePermission(["whatsapp.send", "whatsapp.edit", "whatsapp.update"]),
+  validateSendTemplate,
+  WhatsAppController.sendTestMessage
+);
+
+router.post(
+  "/send-template",
+  requirePermission(["whatsapp.send", "whatsapp.edit", "whatsapp.update"]),
+  validateSendTemplate,
+  WhatsAppController.sendTemplateMessage
+);
+
+router.post(
+  "/getWhatsAppAccountInfo",
+  requirePermission(["whatsapp.view", "whatsapp.read", "whatsapp.edit"]),
+  validateAccountInfoQuery,
+  WhatsAppController.getWhatsAppAccountInfo
+);
 
 module.exports = router;
