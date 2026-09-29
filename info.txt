@@ -1,0 +1,3 @@
+create postgres database and also run this command to setup the inital admin configurtation 
+Run the migration 
+1 - node backend/src/scripts/migrate.js

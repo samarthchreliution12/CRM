@@ -8,7 +8,10 @@ const NotificationService = require("./notification.service");
 const { encryptBuffer, decryptBuffer } = require("../utils/encryption.util");
 const { isValidDocumentType, validateUploadedFile } = require("../utils/fileValidation.util");
 
-const STORAGE_DIR = path.join(__dirname, "../../storage/documents");
+// Store encrypted documents outside the repository when configured.
+const STORAGE_DIR = path.resolve(
+  process.env.DOCUMENT_STORAGE_DIR || path.join(__dirname, "../../storage/documents")
+);
 
 if (!fs.existsSync(STORAGE_DIR)) {
   fs.mkdirSync(STORAGE_DIR, { recursive: true });
