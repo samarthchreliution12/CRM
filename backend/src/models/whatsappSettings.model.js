@@ -88,13 +88,13 @@ class WhatsAppSettingsModel {
    * Update an existing WhatsApp settings record.
    */
   static async update(id, {
-    cp_api_key = null,
-    whatsapp_mobile = null,
-    whatsapp_account_id = null,
-    is_connected = null,
-    birthday_template_id = null,
-    birthday_template_data = null,
-  }) {
+    cp_api_key = undefined,
+    whatsapp_mobile = undefined,
+    whatsapp_account_id = undefined,
+    is_connected = undefined,
+    birthday_template_id = undefined,
+    birthday_template_data = undefined,
+  } = {}) {
     const updates = [];
     const values = [];
     let paramIndex = 1;
