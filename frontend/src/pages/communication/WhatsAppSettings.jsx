@@ -529,42 +529,6 @@ const WhatsAppSettings = () => {
           </div>
         </div>
 
-        {/* 5. CONNECTION INFORMATION */}
-        <div className="wa-settings-card">
-          <div className="wa-card-title-group">
-            <div className="wa-card-icon">
-              <Info size={20} />
-            </div>
-            <div>
-              <h2 className="wa-card-title">Integration Details</h2>
-              <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
-                System Architecture & Encryption
-              </span>
-            </div>
-          </div>
-
-          <div className="wa-info-grid">
-            <div className="wa-info-item">
-              <span className="wa-info-label">Provider</span>
-              <span className="wa-info-value">ChatterPillar</span>
-            </div>
-
-            <div className="wa-info-item">
-              <span className="wa-info-label">Encryption</span>
-              <span className="wa-info-value">AES-256-GCM</span>
-            </div>
-
-            <div className="wa-info-item">
-              <span className="wa-info-label">API Status</span>
-              <span
-                className="wa-info-value"
-                style={{ color: isConnected ? "#166534" : "#64748b" }}
-              >
-                {isConnected ? "Active & Verified" : "Unconnected"}
-              </span>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Disconnect Confirmation Dialog */}
