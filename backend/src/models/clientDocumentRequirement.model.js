@@ -23,7 +23,7 @@ const DEFAULT_REQUIREMENTS = [
     document_type: "SIGNATURE",
     document_name: "Specimen Signature",
     description: "Clear signature on white paper with black or blue pen",
-    required: false,
+    required: true,
   },
   {
     document_type: "PHOTO",

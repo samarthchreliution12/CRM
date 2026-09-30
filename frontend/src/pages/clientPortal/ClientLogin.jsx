@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Phone, ArrowLeft, AlertCircle, ShieldCheck, Lock, CheckCircle2 } from "lucide-react";
+import { Phone, ArrowLeft, AlertCircle, ShieldCheck, CheckCircle2 } from "lucide-react";
 import useClientAuth from "../../hooks/useClientAuth";
 import headerLogo from "../../assets/website/logo/header-logo.png";
 import SEO from "../../components/SEO";

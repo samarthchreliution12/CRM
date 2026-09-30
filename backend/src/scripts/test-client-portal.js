@@ -32,6 +32,11 @@ async function runTests() {
   let adminToken = null;
 
   try {
+    // Reset test client 2110 requirements for idempotent test runs
+    await pool.query(
+      "UPDATE client_document_requirements SET status = 'PENDING', uploaded_document_id = NULL, rejection_reason = NULL WHERE client_id = 2110"
+    );
+
     // -----------------------------------------------------------
     // TEST 1: Valid client mobile login
     // -----------------------------------------------------------
@@ -119,6 +124,9 @@ async function runTests() {
     const panReq = docsData.data.documents.find((d) => d.document_type === "PAN");
     assert(!!panReq, "Has PAN requirement");
     assert(panReq.can_upload === true, "can_upload is true for pending document");
+    const sigReq = docsData.data.documents.find((d) => d.document_type === "SIGNATURE");
+    assert(!!sigReq, "Has SIGNATURE requirement");
+    assert(sigReq.required === true, "SIGNATURE requirement is mandatory (required: true)");
     requirementId = panReq.id;
 
     // -----------------------------------------------------------
