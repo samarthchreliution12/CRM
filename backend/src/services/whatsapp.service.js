@@ -1,5 +1,7 @@
+const pool = require("../config/database");
 const WhatsAppSettingsModel = require("../models/whatsappSettings.model");
 const WhatsAppTemplateModel = require("../models/whatsappTemplate.model");
+const WhatsAppMessageModel = require("../models/whatsappMessage.model");
 const ChatterPillarService = require("./chatterpillar.service");
 
 class WhatsAppService {
@@ -27,6 +29,8 @@ class WhatsAppService {
       whatsappAccountId: settingRow.whatsapp_account_id,
       whatsappMobile: settingRow.whatsapp_mobile,
       isConnected: Boolean(settingRow.is_connected),
+      birthdayTemplateId: settingRow.birthday_template_id,
+      birthdayTemplateData: settingRow.birthday_template_data,
       settingRow,
     };
   }
@@ -127,6 +131,7 @@ class WhatsAppService {
       language: template.language,
       body_content: template.body_content,
       header_content: template.header_content,
+      footer_content: template.footer_content,
       variable_count: template.variable_count,
       variables: parsedVariables,
     };
@@ -142,6 +147,324 @@ class WhatsAppService {
       birthday_template_id: updatedRow.birthday_template_id,
       birthday_template_data: templateSummary,
     };
+  }
+
+  /**
+   * Prepare and validate birthday preview for a specific client.
+   * Calculates age, verifies birthday is today, loads the selected template,
+   * replaces visible variables ({{1}} -> client name, {{2}} -> client age),
+   * and identifies any missing variables.
+   */
+  static async getBirthdayPreview({ clientId, referenceDate = null }) {
+    if (!clientId) {
+      const err = new Error("clientId is required.");
+      err.statusCode = 400;
+      throw err;
+    }
+
+    // 1. Fetch client record
+    const clientQuery = `
+      SELECT id, name, dob, mobile_no, whatsapp_no, email, status
+      FROM clients
+      WHERE id = $1
+      LIMIT 1
+    `;
+    const clientResult = await pool.query(clientQuery, [clientId]);
+    if (clientResult.rows.length === 0) {
+      const err = new Error(`Client with ID ${clientId} not found.`);
+      err.statusCode = 404;
+      throw err;
+    }
+
+    const client = clientResult.rows[0];
+    const today = referenceDate ? new Date(referenceDate) : new Date();
+    const currentYear = today.getFullYear();
+
+    // 2. Check if client has DOB & calculate age
+    let age = null;
+    let isBirthdayToday = false;
+    let dobFormatted = null;
+
+    if (client.dob) {
+      const dobDate = new Date(client.dob);
+      dobFormatted = `${dobDate.getFullYear()}-${String(dobDate.getMonth() + 1).padStart(2, "0")}-${String(dobDate.getDate()).padStart(2, "0")}`;
+
+      isBirthdayToday =
+        dobDate.getMonth() === today.getMonth() &&
+        dobDate.getDate() === today.getDate();
+
+      // Calculate exact age
+      age = today.getFullYear() - dobDate.getFullYear();
+      const hasHadBirthday =
+        today.getMonth() > dobDate.getMonth() ||
+        (today.getMonth() === dobDate.getMonth() && today.getDate() >= dobDate.getDate());
+      if (!hasHadBirthday) {
+        age--;
+      }
+    }
+
+    // 3. Check WhatsApp Phone
+    const recipientPhone = (client.whatsapp_no || client.mobile_no || "").trim();
+    const cleanPhone = recipientPhone.replace(/[\s\-()+]/g, "");
+    const hasValidPhone = /^[0-9]{10,15}$/.test(cleanPhone);
+
+    // 4. Check if birthday message was already sent this year
+    const alreadySentRecord = await WhatsAppMessageModel.hasSentBirthdayWish(client.id, currentYear);
+    const alreadySentThisYear = Boolean(alreadySentRecord);
+
+    // 5. Fetch active Birthday Template from WhatsApp Settings
+    const settingRow = await WhatsAppSettingsModel.getSettings();
+    const isConnected = Boolean(settingRow?.is_connected);
+    const birthdayTemplateId = settingRow?.birthday_template_id;
+
+    let template = null;
+    let templateError = null;
+
+    if (!birthdayTemplateId) {
+      templateError = "No Birthday Template configured. Please select an approved template in WhatsApp Settings.";
+    } else {
+      template = await WhatsAppTemplateModel.findByTemplateId(birthdayTemplateId);
+      if (!template) {
+        templateError = `Selected template '${birthdayTemplateId}' not found in database. Please sync templates.`;
+      } else if (String(template.status).toUpperCase() !== "APPROVED") {
+        templateError = `The selected template '${template.template_name}' is ${template.status}. Only APPROVED templates can be sent.`;
+      }
+    }
+
+    // 6. Parse and map template variables
+    const variableMap = {};
+    const missingVariables = [];
+    let renderedBody = "";
+
+    if (template && template.body_content) {
+      // Find all {{...}} in body
+      const varRegex = /{{\s*([a-zA-Z0-9_-]+)\s*}}/g;
+      let match;
+      const detectedTokens = [];
+
+      while ((match = varRegex.exec(template.body_content)) !== null) {
+        if (!detectedTokens.includes(match[1])) {
+          detectedTokens.push(match[1]);
+        }
+      }
+
+      // Map tokens:
+      // Standard WhatsApp convention:
+      // {{1}} -> Client Name
+      // {{2}} -> Client Age
+      detectedTokens.forEach((token) => {
+        const tokenLower = token.toLowerCase();
+        if (token === "1" || tokenLower === "name" || tokenLower === "client_name") {
+          if (client.name && client.name.trim()) {
+            variableMap[token] = client.name.trim();
+          } else {
+            missingVariables.push({
+              token,
+              label: "Client Name",
+              reason: "Client name is empty.",
+            });
+          }
+        } else if (token === "2" || tokenLower === "age" || tokenLower === "client_age") {
+          if (age !== null && age >= 0) {
+            variableMap[token] = String(age);
+          } else {
+            missingVariables.push({
+              token,
+              label: "Client Age",
+              reason: "Client date of birth / age is not available.",
+            });
+          }
+        } else {
+          // Additional variable in template that CRM cannot auto-populate
+          missingVariables.push({
+            token,
+            label: `Variable {{${token}}}`,
+            reason: `Template requires {{${token}}}, but no automatic client field is mapped for this variable.`,
+          });
+        }
+      });
+
+      // Render read-only preview with variables replaced
+      renderedBody = template.body_content;
+      detectedTokens.forEach((token) => {
+        const val = variableMap[token];
+        const tokenPattern = new RegExp(`{{\\s*${token}\\s*}}`, "g");
+        renderedBody = renderedBody.replace(tokenPattern, val !== undefined ? val : `{{${token}}}`);
+      });
+    }
+
+    // 7. Compile blocking reasons if sending is not allowed
+    const sendBlockReasons = [];
+    if (!isBirthdayToday) {
+      sendBlockReasons.push("Client's birthday is not today.");
+    }
+    if (client.status !== "active") {
+      sendBlockReasons.push(`Client account is ${client.status || "inactive"}. Only active clients can receive wishes.`);
+    }
+    if (!hasValidPhone) {
+      sendBlockReasons.push("Client does not have a valid WhatsApp phone number (10 to 15 digits required).");
+    }
+    if (!isConnected) {
+      sendBlockReasons.push("WhatsApp connection is not active. Please connect your CP API Key in WhatsApp Settings.");
+    }
+    if (templateError) {
+      sendBlockReasons.push(templateError);
+    }
+    if (alreadySentThisYear) {
+      sendBlockReasons.push(`A birthday wish has already been sent to this client in ${currentYear}.`);
+    }
+    if (missingVariables.length > 0) {
+      missingVariables.forEach((mv) => {
+        sendBlockReasons.push(`Missing template variable {{${mv.token}}}: ${mv.reason}`);
+      });
+    }
+
+    const canSend = sendBlockReasons.length === 0;
+
+    return {
+      client: {
+        id: client.id,
+        name: client.name,
+        dob: dobFormatted,
+        age,
+        mobile_no: client.mobile_no || null,
+        whatsapp_no: client.whatsapp_no || client.mobile_no || null,
+        status: client.status,
+      },
+      template: template
+        ? {
+            template_id: template.template_id,
+            template_name: template.template_name,
+            category: template.category,
+            language: template.language,
+            status: template.status,
+            header_content: template.header_content,
+            body_content: template.body_content,
+            footer_content: template.footer_content,
+          }
+        : null,
+      rendered_body: renderedBody,
+      variable_map: variableMap,
+      missing_variables: missingVariables,
+      is_birthday_today: isBirthdayToday,
+      already_sent_this_year: alreadySentThisYear,
+      already_sent_at: alreadySentRecord ? alreadySentRecord.sent_at : null,
+      can_send: canSend,
+      send_block_reasons: sendBlockReasons,
+    };
+  }
+
+  /**
+   * Send manual birthday wish to a single client.
+   * Completely manual action: user must confirm before sending.
+   * Performs all validations, dispatches via ChatterPillar, and logs history.
+   */
+  static async sendBirthdayWish({ clientId, userId = null, referenceDate = null }) {
+    // 1. Run preview validation check
+    const preview = await this.getBirthdayPreview({ clientId, referenceDate });
+
+    if (!preview.can_send) {
+      const firstReason = preview.send_block_reasons[0] || "Cannot send birthday wish due to validation constraints.";
+      const err = new Error(firstReason);
+      err.statusCode = 400;
+      err.reasons = preview.send_block_reasons;
+      throw err;
+    }
+
+    // 2. Fetch active credentials
+    const creds = await this.getDecryptedCredentials();
+
+    const client = preview.client;
+    const template = preview.template;
+    const cleanMobile = (client.whatsapp_no || client.mobile_no).replace(/[\s\-()+]/g, "");
+
+    // Prepare ordered variables array
+    const orderedBodyValues = Object.keys(preview.variable_map)
+      .sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
+      .map((k) => preview.variable_map[k]);
+
+    const currentYear = referenceDate ? new Date(referenceDate).getFullYear() : new Date().getFullYear();
+
+    // 3. Call ChatterPillar API
+    try {
+      const providerRes = await ChatterPillarService.sendTemplateMessage({
+        apiKey: creds.apiKey,
+        whatsappAccountId: creds.whatsappAccountId,
+        templateId: template.template_id,
+        mobile: cleanMobile,
+        fullName: client.name,
+        bodyVariables: orderedBodyValues.length > 0 ? orderedBodyValues : undefined,
+      });
+
+      // Extract provider message ID
+      let providerMessageId = null;
+      if (Array.isArray(providerRes?.data) && providerRes.data.length > 0) {
+        providerMessageId = providerRes.data[0].id || providerRes.data[0].message_id || null;
+      } else if (providerRes?.message_id || providerRes?.id) {
+        providerMessageId = providerRes.message_id || providerRes.id;
+      }
+
+      // 4. Save successful message log
+      const messageLog = await WhatsAppMessageModel.create({
+        clientId: client.id,
+        templateId: template.template_id,
+        templateName: template.template_name,
+        userId,
+        messageType: "BIRTHDAY",
+        recipientMobile: cleanMobile,
+        recipientName: client.name,
+        messageContent: preview.rendered_body,
+        variableValues: orderedBodyValues,
+        provider: "ChatterPillar",
+        providerMessageId,
+        status: "SENT",
+        errorDetails: null,
+        sentYear: currentYear,
+      });
+
+      return {
+        success: true,
+        message: `Birthday greeting successfully sent to ${client.name}!`,
+        log: messageLog,
+        provider_response: providerRes,
+      };
+    } catch (sendErr) {
+      // 5. On failure: log FAILED record in message history and throw safe error
+      const errorMsg = sendErr.message || "Failed to deliver WhatsApp message via provider.";
+
+      await WhatsAppMessageModel.create({
+        clientId: client.id,
+        templateId: template.template_id,
+        templateName: template.template_name,
+        userId,
+        messageType: "BIRTHDAY",
+        recipientMobile: cleanMobile,
+        recipientName: client.name,
+        messageContent: preview.rendered_body,
+        variableValues: orderedBodyValues,
+        provider: "ChatterPillar",
+        providerMessageId: null,
+        status: "FAILED",
+        errorDetails: errorMsg,
+        sentYear: currentYear,
+      });
+
+      const userSafeError = new Error(errorMsg);
+      userSafeError.statusCode = sendErr.statusCode || 502;
+      throw userSafeError;
+    }
+  }
+
+  /**
+   * Retrieve message history for a client.
+   */
+  static async getClientMessageHistory(clientId) {
+    if (!clientId) {
+      const err = new Error("clientId is required.");
+      err.statusCode = 400;
+      throw err;
+    }
+    return WhatsAppMessageModel.findByClient(clientId);
   }
 
   /**
@@ -208,7 +531,6 @@ class WhatsAppService {
     button_variable_values = null,
   }) {
     const creds = await this.getDecryptedCredentials();
-
     const accountId = whatsapp_account_id || creds.whatsappAccountId;
 
     return ChatterPillarService.sendTemplateMessage({

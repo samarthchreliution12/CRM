@@ -26,9 +26,14 @@ import {
   ExternalLink,
   UserPlus,
   Link as LinkIcon,
+  MessageSquare,
+  Cake,
+  CheckCircle2,
+  RefreshCw,
 } from "lucide-react";
 import DocumentUploadModal from "../documents/DocumentUploadModal";
 import DocumentReviewDrawer from "../documents/DocumentReviewDrawer";
+import WhatsAppService from "../../services/whatsapp.service";
 import "./ClientDetails.css";
 
 const renderCategoryBadge = (categoryStr) => {
@@ -258,6 +263,34 @@ const ClientDetails = () => {
 
   const [deleteFamilyTarget, setDeleteFamilyTarget] = useState(null);
   const [isDeletingFamily, setIsDeletingFamily] = useState(false);
+
+  // WhatsApp Message History State
+  const [whatsappMessages, setWhatsappMessages] = useState([]);
+  const [whatsappLoading, setWhatsappLoading] = useState(false);
+  const [whatsappError, setWhatsappError] = useState("");
+
+  const fetchWhatsappHistory = useCallback(async () => {
+    if (!id || !token) return;
+    setWhatsappLoading(true);
+    setWhatsappError("");
+    try {
+      const res = await WhatsAppService.getClientMessageHistory(id, token);
+      if (res && res.success) {
+        setWhatsappMessages(res.data || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch WhatsApp history:", err);
+      setWhatsappError(err.message || "Failed to load WhatsApp message history.");
+    } finally {
+      setWhatsappLoading(false);
+    }
+  }, [id, token]);
+
+  useEffect(() => {
+    if (activeTab === "whatsapp") {
+      fetchWhatsappHistory();
+    }
+  }, [activeTab, fetchWhatsappHistory]);
 
 
   // Toggle reveal state for specific contact fields (mobile, email, whatsapp, pan, etc.)
@@ -763,6 +796,19 @@ const ClientDetails = () => {
           >
             <CreditCard size={16} />
             <span>UCC / Account Details</span>
+          </button>
+          <button
+            type="button"
+            className={`tab-button ${activeTab === "whatsapp" ? "active" : ""}`}
+            onClick={() => setActiveTab("whatsapp")}
+          >
+            <MessageSquare size={16} />
+            <span>WhatsApp History</span>
+            {whatsappMessages.length > 0 && (
+              <span className="badge-count" style={{ marginLeft: "0.25rem", fontSize: "0.75rem", backgroundColor: "#f1f5f9", color: "#475569", padding: "0.1rem 0.4rem", borderRadius: "10px" }}>
+                {whatsappMessages.length}
+              </span>
+            )}
           </button>
         </div>
 
@@ -1359,6 +1405,169 @@ const ClientDetails = () => {
                   <span className="info-kv-value">{formatDate(client.updated_at)}</span>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* 6. WHATSAPP MESSAGE HISTORY TAB */}
+          {activeTab === "whatsapp" && (
+            <div className="whatsapp-history-card">
+              <div className="whatsapp-history-header">
+                <div className="whatsapp-history-title-group">
+                  <MessageSquare size={18} color="#9E241E" />
+                  <h3 className="card-title" style={{ margin: 0 }}>
+                    WhatsApp Message History
+                  </h3>
+                  <span
+                    className="badge-count"
+                    style={{
+                      backgroundColor: "#FAF3F2",
+                      color: "#9E241E",
+                      padding: "0.15rem 0.5rem",
+                      borderRadius: "10px",
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {whatsappMessages.length} Messages
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  className="btn-edit-client"
+                  onClick={fetchWhatsappHistory}
+                  disabled={whatsappLoading}
+                  style={{ padding: "0.35rem 0.75rem", fontSize: "0.8rem" }}
+                  title="Refresh Message History"
+                >
+                  <RefreshCw size={13} className={whatsappLoading ? "animate-spin" : ""} />
+                  <span>Refresh</span>
+                </button>
+              </div>
+
+              {whatsappLoading ? (
+                <div style={{ padding: "3rem", textAlign: "center", color: "#64748b" }}>
+                  <Loader2 size={24} className="animate-spin" style={{ margin: "0 auto 0.5rem auto" }} />
+                  <div>Loading message history...</div>
+                </div>
+              ) : whatsappError ? (
+                <div
+                  style={{
+                    padding: "1rem",
+                    backgroundColor: "#fef2f2",
+                    border: "1px solid #fecaca",
+                    borderRadius: "6px",
+                    color: "#991b1b",
+                    display: "flex",
+                    gap: "0.5rem",
+                    alignItems: "center",
+                  }}
+                >
+                  <AlertCircle size={16} />
+                  <span>{whatsappError}</span>
+                </div>
+              ) : whatsappMessages.length === 0 ? (
+                <div style={{ padding: "3rem 1rem", textAlign: "center", color: "#64748b" }}>
+                  <MessageSquare size={36} style={{ margin: "0 auto 0.75rem auto", color: "#cbd5e1" }} />
+                  <div style={{ fontSize: "1rem", fontWeight: 600, color: "#1e293b" }}>
+                    No WhatsApp Messages Sent Yet
+                  </div>
+                  <p style={{ fontSize: "0.85rem", color: "#64748b", marginTop: "0.25rem" }}>
+                    Birthday greetings and WhatsApp messages sent to this client will be recorded here.
+                  </p>
+                </div>
+              ) : (
+                <div className="whatsapp-history-table-container">
+                  <table className="whatsapp-history-table">
+                    <thead>
+                      <tr>
+                        <th>Date & Time</th>
+                        <th>Type</th>
+                        <th>Template</th>
+                        <th>Sent By</th>
+                        <th>Recipient Mobile</th>
+                        <th>Provider Msg ID</th>
+                        <th>Status</th>
+                        <th>Message Preview</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {whatsappMessages.map((msg) => {
+                        const isSent = msg.status === "SENT";
+                        return (
+                          <tr key={msg.id}>
+                            <td style={{ whiteSpace: "nowrap", fontWeight: 600 }}>
+                              {new Date(msg.sent_at).toLocaleDateString("en-IN", {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              })}{" "}
+                              <span style={{ color: "#64748b", fontWeight: 400, fontSize: "0.75rem" }}>
+                                {new Date(msg.sent_at).toLocaleTimeString("en-IN", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                            </td>
+                            <td>
+                              <span className="wa-type-badge">
+                                <Cake size={12} />
+                                <span>{msg.message_type || "BIRTHDAY"}</span>
+                              </span>
+                            </td>
+                            <td>
+                              <div style={{ fontWeight: 600 }}>{msg.template_name || msg.template_id}</div>
+                              <span style={{ fontSize: "0.725rem", color: "#64748b", fontFamily: "monospace" }}>
+                                {msg.template_id}
+                              </span>
+                            </td>
+                            <td>
+                              <div style={{ fontWeight: 600 }}>{msg.sender_name || "CRM System"}</div>
+                              {msg.sender_email && (
+                                <div style={{ fontSize: "0.725rem", color: "#64748b" }}>{msg.sender_email}</div>
+                              )}
+                            </td>
+                            <td style={{ fontFamily: "monospace", fontSize: "0.8rem" }}>
+                              {msg.recipient_mobile}
+                            </td>
+                            <td style={{ fontFamily: "monospace", fontSize: "0.75rem", color: "#64748b" }}>
+                              {msg.provider_message_id || "N/A"}
+                            </td>
+                            <td>
+                              <span className={`wa-status-pill ${isSent ? "sent" : "failed"}`}>
+                                {isSent ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+                                <span>{msg.status}</span>
+                              </span>
+                              {msg.error_details && (
+                                <div style={{ fontSize: "0.725rem", color: "#dc2626", marginTop: "0.25rem", maxWidth: "200px" }}>
+                                  {msg.error_details}
+                                </div>
+                              )}
+                            </td>
+                            <td style={{ maxWidth: "260px" }}>
+                              <p
+                                style={{
+                                  margin: 0,
+                                  fontSize: "0.8rem",
+                                  color: "#475569",
+                                  lineHeight: 1.4,
+                                  whiteSpace: "pre-wrap",
+                                  display: "-webkit-box",
+                                  WebkitLineClamp: 3,
+                                  WebkitBoxOrient: "vertical",
+                                  overflow: "hidden",
+                                }}
+                              >
+                                {msg.message_content || "Template message"}
+                              </p>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
         </div>

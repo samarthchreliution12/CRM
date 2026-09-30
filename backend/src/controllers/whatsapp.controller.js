@@ -70,6 +70,63 @@ class WhatsAppController {
   }
 
   /**
+   * GET /api/whatsapp/birthday/preview/:clientId
+   * Retrieve calculated client info, mapped template variables, and send validation.
+   */
+  static async getBirthdayPreview(req, res) {
+    try {
+      const { clientId } = req.params;
+      const { reference_date } = req.query || {};
+      const result = await WhatsAppService.getBirthdayPreview({
+        clientId: parseInt(clientId, 10),
+        referenceDate: reference_date || null,
+      });
+      return sendSuccess(res, 200, "Birthday preview loaded successfully.", result);
+    } catch (error) {
+      return sendError(res, error.statusCode || 500, error.message);
+    }
+  }
+
+  /**
+   * POST /api/whatsapp/birthday/send
+   * Explicit manual send of birthday greeting to a single client.
+   */
+  static async sendBirthdayWish(req, res) {
+    try {
+      const { client_id, reference_date } = req.body || {};
+      const userId = req.user ? req.user.id : null;
+
+      if (!client_id) {
+        return sendError(res, 400, "client_id is required.");
+      }
+
+      const result = await WhatsAppService.sendBirthdayWish({
+        clientId: parseInt(client_id, 10),
+        userId,
+        referenceDate: reference_date || null,
+      });
+
+      return sendSuccess(res, 200, result.message, result);
+    } catch (error) {
+      return sendError(res, error.statusCode || 500, error.message);
+    }
+  }
+
+  /**
+   * GET /api/whatsapp/messages/client/:clientId
+   * Retrieve sent WhatsApp message history for a specific client.
+   */
+  static async getClientMessageHistory(req, res) {
+    try {
+      const { clientId } = req.params;
+      const result = await WhatsAppService.getClientMessageHistory(parseInt(clientId, 10));
+      return sendSuccess(res, 200, "Client WhatsApp message history retrieved.", result);
+    } catch (error) {
+      return sendError(res, error.statusCode || 500, error.message);
+    }
+  }
+
+  /**
    * POST /api/whatsapp/send-test
    * Send a test WhatsApp message using a selected template.
    */

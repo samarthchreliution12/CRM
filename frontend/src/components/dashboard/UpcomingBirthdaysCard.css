@@ -380,3 +380,252 @@
 .birthdays-modal-btn-secondary:hover {
   background-color: var(--surface-secondary, #F2F2F0);
 }
+
+/* Birthday Wish Action Button on Card & Modal */
+.birthday-wish-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.65rem;
+  background-color: #25D366;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.775rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  white-space: nowrap;
+}
+
+.birthday-wish-btn:hover {
+  background-color: #1eb956;
+  transform: translateY(-1px);
+}
+
+.birthday-wish-sent-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.6rem;
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Birthday Confirmation Modal */
+.bday-confirm-modal {
+  background-color: #ffffff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 580px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e2e2df;
+  overflow: hidden;
+  animation: birthdaysModalFadeIn 0.2s ease;
+}
+
+.bday-confirm-header {
+  padding: 1.25rem 1.5rem;
+  background-color: #FAF3F2;
+  border-bottom: 1px solid #f5e9e7;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bday-confirm-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.bday-confirm-icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background-color: #fef08a;
+  color: #ca8a04;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bday-confirm-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.bday-confirm-body {
+  padding: 1.25rem 1.5rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+
+/* Client Details Summary Grid */
+.bday-client-summary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.875rem 1rem;
+}
+
+.bday-client-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.bday-field-label {
+  font-size: 0.725rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.03em;
+}
+
+.bday-field-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* WhatsApp Message Preview Section */
+.bday-template-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bday-section-label {
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bday-preview-bubble {
+  background-color: #f0f2f5;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.bday-chat-bubble {
+  background-color: #ffffff;
+  border-radius: 8px 8px 8px 2px;
+  padding: 0.875rem 1rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bday-bubble-header {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #1e293b;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 0.35rem;
+}
+
+.bday-bubble-body {
+  font-size: 0.875rem;
+  color: #1e293b;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.bday-bubble-footer {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+}
+
+/* Alert Boxes in Modal */
+.bday-alert-banner {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.bday-alert-danger {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.bday-alert-success {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+.bday-alert-warning {
+  background-color: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+}
+
+/* Modal Footer Actions */
+.bday-confirm-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e2e2df;
+  background-color: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.bday-btn-send {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1.25rem;
+  background-color: #25D366;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.bday-btn-send:hover:not(:disabled) {
+  background-color: #1eb956;
+}
+
+.bday-btn-send:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #94a3b8;
+}
+
+@media (max-width: 640px) {
+  .bday-client-summary {
+    grid-template-columns: 1fr;
+  }
+}
+

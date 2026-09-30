@@ -131,6 +131,38 @@ class WhatsAppService {
   }
 
   /**
+   * Load birthday preview for a specific client (variables, calculated age, validation).
+   */
+  static async getBirthdayPreview(clientId, token, referenceDate = null) {
+    const query = referenceDate ? `?reference_date=${encodeURIComponent(referenceDate)}` : "";
+    return this.request(`/whatsapp/birthday/preview/${clientId}${query}`, { method: "GET" }, token);
+  }
+
+  /**
+   * Explicit manual send of birthday wish to a client.
+   */
+  static async sendBirthdayWish(clientId, token, referenceDate = null) {
+    return this.request(
+      "/whatsapp/birthday/send",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          client_id: clientId,
+          reference_date: referenceDate || undefined,
+        }),
+      },
+      token
+    );
+  }
+
+  /**
+   * Fetch WhatsApp message history for a specific client.
+   */
+  static async getClientMessageHistory(clientId, token) {
+    return this.request(`/whatsapp/messages/client/${clientId}`, { method: "GET" }, token);
+  }
+
+  /**
    * Send a test WhatsApp message using a selected template.
    */
   static async sendTestMessage(data, token) {

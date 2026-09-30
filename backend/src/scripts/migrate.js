@@ -485,6 +485,31 @@ async function runMigrations() {
       CROSS JOIN permissions p
       WHERE r.name IN ('Admin', 'Staff') AND p.module = 'whatsapp'
       ON CONFLICT DO NOTHING;
+
+      -- Migration step 19: Create whatsapp_messages table for message history and birthday logs
+      CREATE TABLE IF NOT EXISTS whatsapp_messages (
+        id SERIAL PRIMARY KEY,
+        client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+        template_id VARCHAR(100) NOT NULL,
+        template_name VARCHAR(150),
+        user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        message_type VARCHAR(50) DEFAULT 'BIRTHDAY' NOT NULL,
+        recipient_mobile VARCHAR(50) NOT NULL,
+        recipient_name VARCHAR(150),
+        message_content TEXT,
+        variable_values JSONB,
+        provider VARCHAR(50) DEFAULT 'ChatterPillar' NOT NULL,
+        provider_message_id VARCHAR(150),
+        status VARCHAR(50) NOT NULL,
+        error_details TEXT,
+        sent_year INTEGER NOT NULL,
+        sent_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_wa_messages_client_year ON whatsapp_messages(client_id, message_type, sent_year, status);
+      CREATE INDEX IF NOT EXISTS idx_wa_messages_sent_at ON whatsapp_messages(sent_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_wa_messages_client_id ON whatsapp_messages(client_id);
     `);
 
     console.log("Database migrations completed successfully.");

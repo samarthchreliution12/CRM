@@ -56,8 +56,14 @@ class DashboardService {
     ];
 
     const query = `
-      SELECT c.id, c.name, c.dob, c.mobile_no, c.email, c.status
+      SELECT c.id, c.name, c.dob, c.mobile_no, c.whatsapp_no, c.email, c.status,
+             wm.sent_at AS birthday_wish_sent_at,
+             CASE WHEN wm.id IS NOT NULL THEN true ELSE false END AS birthday_wish_sent
       FROM clients c
+      LEFT JOIN whatsapp_messages wm ON wm.client_id = c.id
+        AND wm.message_type = 'BIRTHDAY'
+        AND wm.sent_year = $7
+        AND wm.status = 'SENT'
       WHERE c.status = 'active'
         AND c.dob IS NOT NULL
         AND (
@@ -71,6 +77,7 @@ class DashboardService {
       targetDays[0].month, targetDays[0].day,
       targetDays[1].month, targetDays[1].day,
       targetDays[2].month, targetDays[2].day,
+      d0.getFullYear(),
     ];
 
     const result = await pool.query(query, params);
@@ -97,9 +104,13 @@ class DashboardService {
         name: row.name,
         dob: this.formatDateStr(dobDate),
         age,
+        mobile_no: row.mobile_no || null,
+        whatsapp_no: row.whatsapp_no || row.mobile_no || null,
         birthday_date: birthdayDateStr,
         days_until_birthday: daysUntil,
         relative_label: relativeLabel,
+        birthday_wish_sent: Boolean(row.birthday_wish_sent),
+        birthday_wish_sent_at: row.birthday_wish_sent_at || null,
       };
     });
 

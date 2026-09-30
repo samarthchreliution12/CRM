@@ -329,4 +329,30 @@ CREATE INDEX IF NOT EXISTS idx_notifications_recipient_created ON notifications(
 CREATE INDEX IF NOT EXISTS idx_notifications_recipient_unread ON notifications(recipient_user_id, is_read);
 CREATE INDEX IF NOT EXISTS idx_notifications_entity ON notifications(entity_type, entity_id);
 
+-- 16. WhatsApp Messages Log Table
+CREATE TABLE IF NOT EXISTS whatsapp_messages (
+  id SERIAL PRIMARY KEY,
+  client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  template_id VARCHAR(100) NOT NULL,
+  template_name VARCHAR(150),
+  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  message_type VARCHAR(50) DEFAULT 'BIRTHDAY' NOT NULL,
+  recipient_mobile VARCHAR(50) NOT NULL,
+  recipient_name VARCHAR(150),
+  message_content TEXT,
+  variable_values JSONB,
+  provider VARCHAR(50) DEFAULT 'ChatterPillar' NOT NULL,
+  provider_message_id VARCHAR(150),
+  status VARCHAR(50) NOT NULL,
+  error_details TEXT,
+  sent_year INTEGER NOT NULL,
+  sent_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_wa_messages_client_year ON whatsapp_messages(client_id, message_type, sent_year, status);
+CREATE INDEX IF NOT EXISTS idx_wa_messages_sent_at ON whatsapp_messages(sent_at DESC);
+CREATE INDEX IF NOT EXISTS idx_wa_messages_client_id ON whatsapp_messages(client_id);
+
+
 
