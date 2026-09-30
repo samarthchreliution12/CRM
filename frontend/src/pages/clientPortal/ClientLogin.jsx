@@ -147,10 +147,10 @@ const ClientLogin = () => {
 
           {/* Security Features Info */}
           <div className="client-login-security-features">
-            <div className="security-item">
+            {/* <div className="security-item">
               <Lock size={13} />
               <span>AES-256 Encrypted</span>
-            </div>
+            </div> */}
             <div className="security-item">
               <CheckCircle2 size={13} />
               <span>Instant Verification</span>

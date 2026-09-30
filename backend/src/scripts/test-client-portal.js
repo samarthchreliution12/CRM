@@ -237,7 +237,7 @@ async function runTests() {
     const adminLoginRes = await fetch(`${BASE_URL}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: "admin@gmail.com", password: "admin123" }),
+      body: JSON.stringify({ email: "admin@gmail.com", password: "password123" }),
     });
     
     assert(adminLoginRes.status === 200, `Admin login returns 200 (got ${adminLoginRes.status})`);
