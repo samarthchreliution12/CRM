@@ -42,6 +42,15 @@ import ClientServices from "./pages/settings/clientConfiguration/ClientServices"
 import Security from "./pages/settings/security/Security";
 import AuditLogs from "./pages/settings/auditLogs/AuditLogs";
 
+// Client Portal Auth & Routes
+import { ClientAuthProvider } from "./context/ClientAuthContext";
+import ClientProtectedRoute from "./routes/ClientProtectedRoute";
+import ClientPublicRoute from "./routes/ClientPublicRoute";
+import ClientLogin from "./pages/clientPortal/ClientLogin";
+import ClientDashboard from "./pages/clientPortal/ClientDashboard";
+import ClientProfile from "./pages/clientPortal/ClientProfile";
+import ClientDocuments from "./pages/clientPortal/ClientDocuments";
+
 import "./styles/global.css";
 
 function App() {
@@ -49,7 +58,8 @@ function App() {
     <HelmetProvider>
       <BrowserRouter>
         <AuthProvider>
-        <Routes>
+          <ClientAuthProvider>
+            <Routes>
           {/* Public Website Routes */}
           <Route
             path="/"
@@ -125,12 +135,47 @@ function App() {
               </PublicRoute>
             }
           />
+          {/* Client Portal Public Routes */}
+          <Route
+            path="/client-login"
+            element={
+              <ClientPublicRoute>
+                <ClientLogin />
+              </ClientPublicRoute>
+            }
+          />
           <Route
             path="/client/login"
             element={
-              <PublicRoute>
-                <Login />
-              </PublicRoute>
+              <ClientPublicRoute>
+                <ClientLogin />
+              </ClientPublicRoute>
+            }
+          />
+
+          {/* Client Portal Protected Routes */}
+          <Route
+            path="/client-portal"
+            element={
+              <ClientProtectedRoute>
+                <ClientDashboard />
+              </ClientProtectedRoute>
+            }
+          />
+          <Route
+            path="/client-portal/profile"
+            element={
+              <ClientProtectedRoute>
+                <ClientProfile />
+              </ClientProtectedRoute>
+            }
+          />
+          <Route
+            path="/client-portal/documents"
+            element={
+              <ClientProtectedRoute>
+                <ClientDocuments />
+              </ClientProtectedRoute>
             }
           />
           <Route
@@ -420,9 +465,10 @@ function App() {
             }
           />
         </Routes>
-      </AuthProvider>
-    </BrowserRouter>
-  </HelmetProvider>
+          </ClientAuthProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </HelmetProvider>
   );
 }
 

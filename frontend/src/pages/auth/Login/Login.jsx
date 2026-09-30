@@ -263,6 +263,28 @@ const Login = () => {
           <button type="submit" className="btn-submit" disabled={isSubmitting}>
             {isSubmitting ? "Signing In..." : "Sign In"}
           </button>
+
+          <div
+            style={{
+              marginTop: "1.25rem",
+              paddingTop: "1.125rem",
+              borderTop: "1px solid #E5E7EB",
+              textAlign: "center",
+            }}
+          >
+            <span style={{ fontSize: "0.875rem", color: "#6B7280" }}>Are you an investor/client? </span>
+            <Link
+              to="/client-login"
+              style={{
+                fontSize: "0.875rem",
+                fontWeight: "600",
+                color: "#9E241D",
+                textDecoration: "none",
+              }}
+            >
+              Client Portal Login →
+            </Link>
+          </div>
         </form>
       )}
     </AuthLayout>
