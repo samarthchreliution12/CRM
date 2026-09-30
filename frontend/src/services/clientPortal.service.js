@@ -1,4 +1,9 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || "http://localhost:5050/api";
+const getBaseApiUrl = () => {
+  const raw = (process.env.REACT_APP_API_URL || "http://localhost:5050/api").trim().replace(/\/+$/, "");
+  return raw.endsWith("/api") ? raw : `${raw}/api`;
+};
+
+const API_BASE_URL = getBaseApiUrl();
 const CLIENT_PORTAL_BASE = `${API_BASE_URL}/client-portal`;
 
 const TOKEN_KEY = "client_portal_token";

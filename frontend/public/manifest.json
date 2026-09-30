@@ -1,0 +1,9 @@
+{
+  "short_name": "CRM",
+  "name": "Parshwa Consultancy CRM",
+  "icons": [],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#9E241D",
+  "background_color": "#ffffff"
+}

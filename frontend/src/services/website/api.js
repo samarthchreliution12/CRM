@@ -1,7 +1,13 @@
-const API_BASE_URL =
-  process.env.REACT_APP_API_URL ||
-  (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_BASE_URL) ||
-  "http://localhost:5050/api";
+const getBaseApiUrl = () => {
+  const raw = (
+    process.env.REACT_APP_API_URL ||
+    (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_BASE_URL) ||
+    "http://localhost:5050/api"
+  ).trim().replace(/\/+$/, "");
+  return raw.endsWith("/api") ? raw : `${raw}/api`;
+};
+
+const API_BASE_URL = getBaseApiUrl();
 
 export const fetchApi = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
