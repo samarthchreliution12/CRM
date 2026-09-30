@@ -20,4 +20,6 @@ module.exports = {
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || "30m",
   refreshTokenExpiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || "7d",
   enableSignup: process.env.ENABLE_SIGNUP === "true",
+  clientJwtSecret: process.env.CLIENT_JWT_SECRET || `${jwtSecret || "dev_jwt_access_secret_parshwa_consultancy_key_2026"}_client_portal`,
+  clientJwtExpiresIn: process.env.CLIENT_JWT_EXPIRES_IN || "24h",
 };

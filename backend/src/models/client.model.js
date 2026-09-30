@@ -294,6 +294,51 @@ class ClientModel {
     return result.rows[0] || null;
   }
 
+  /**
+   * Find client by registered mobile or whatsapp number.
+   * Matches exact, core 10 digits, or cleaned digits.
+   */
+  static async findByMobile(mobileNo) {
+    if (!mobileNo || typeof mobileNo !== "string") return null;
+
+    const raw = mobileNo.trim();
+    const digitsOnly = raw.replace(/\D/g, "");
+    if (!digitsOnly || digitsOnly.length < 7) return null;
+
+    const core10 = digitsOnly.length >= 10 ? digitsOnly.slice(-10) : digitsOnly;
+
+    const query = `
+      SELECT
+        c.id, c.ucc_no, c.name, c.business_name, c.mobile_no, c.whatsapp_no, c.email, c.pan, c.dob, c.gender, c.occupation, c.address,
+        c.client_type_id, ct.name AS client_type_name, ct.description AS client_type_desc,
+        c.status, c.client_status, c.client_category,
+        c.created_at, c.updated_at,
+        COALESCE(
+          JSON_AGG(
+            JSON_BUILD_OBJECT('id', cs.id, 'name', cs.name, 'description', cs.description)
+          ) FILTER (WHERE cs.id IS NOT NULL),
+          '[]'::json
+        ) AS services
+      FROM clients c
+      INNER JOIN client_types ct ON ct.id = c.client_type_id
+      LEFT JOIN client_service_assignments csa ON csa.client_id = c.id
+      LEFT JOIN client_services cs ON cs.id = csa.service_id
+      WHERE 
+        c.mobile_no = $1
+        OR c.whatsapp_no = $1
+        OR RIGHT(REGEXP_REPLACE(c.mobile_no, '\\D', '', 'g'), 10) = $2
+        OR RIGHT(REGEXP_REPLACE(c.whatsapp_no, '\\D', '', 'g'), 10) = $2
+        OR REGEXP_REPLACE(c.mobile_no, '\\D', '', 'g') = $3
+        OR REGEXP_REPLACE(c.whatsapp_no, '\\D', '', 'g') = $3
+      GROUP BY c.id, ct.name, ct.description
+      ORDER BY c.id ASC
+      LIMIT 1
+    `;
+
+    const result = await pool.query(query, [raw, core10, digitsOnly]);
+    return result.rows[0] || null;
+  }
+
   static async create({
     ucc_no,
     name,

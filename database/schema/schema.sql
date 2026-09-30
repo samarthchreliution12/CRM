@@ -352,7 +352,37 @@ CREATE TABLE IF NOT EXISTS whatsapp_messages (
 
 CREATE INDEX IF NOT EXISTS idx_wa_messages_client_year ON whatsapp_messages(client_id, message_type, sent_year, status);
 CREATE INDEX IF NOT EXISTS idx_wa_messages_sent_at ON whatsapp_messages(sent_at DESC);
-CREATE INDEX IF NOT EXISTS idx_wa_messages_client_id ON whatsapp_messages(client_id);
+CREATE INDEX IF NOT EXISTS idx_wa_messages_client_id ON whatsapp_messages(client_id);-- 17. Client Sessions Table (Client Portal Authentication)
+CREATE TABLE IF NOT EXISTS client_sessions (
+  id SERIAL PRIMARY KEY,
+  client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  token VARCHAR(500) NOT NULL UNIQUE,
+  ip_address VARCHAR(50),
+  user_agent TEXT,
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  revoked_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
 
+CREATE INDEX IF NOT EXISTS idx_client_sessions_client_id ON client_sessions(client_id);
+CREATE INDEX IF NOT EXISTS idx_client_sessions_token ON client_sessions(token);
+CREATE INDEX IF NOT EXISTS idx_client_sessions_expires_at ON client_sessions(expires_at);
 
+-- 18. Client Document Requirements Table (Client Portal Documents)
+CREATE TABLE IF NOT EXISTS client_document_requirements (
+  id SERIAL PRIMARY KEY,
+  client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+  document_type VARCHAR(50) NOT NULL,
+  document_name VARCHAR(150),
+  description TEXT,
+  required BOOLEAN DEFAULT true NOT NULL,
+  status VARCHAR(30) DEFAULT 'PENDING' NOT NULL,
+  rejection_reason TEXT,
+  uploaded_document_id INTEGER REFERENCES client_documents(id) ON DELETE SET NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
 
+CREATE INDEX IF NOT EXISTS idx_cdr_client_id ON client_document_requirements(client_id);
+CREATE INDEX IF NOT EXISTS idx_cdr_status ON client_document_requirements(status);
+CREATE INDEX IF NOT EXISTS idx_cdr_uploaded_doc ON client_document_requirements(uploaded_document_id);

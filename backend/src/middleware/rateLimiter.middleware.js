@@ -43,9 +43,21 @@ const publicLeadLimiter = rateLimit({
   },
 });
 
+const clientLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: isProd ? 20 : 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    return sendError(res, 429, "Too many client login attempts. Please try again after 15 minutes.");
+  },
+});
+
 module.exports = {
   loginLimiter,
   refreshLimiter,
   passwordResetLimiter,
   publicLeadLimiter,
+  clientLoginLimiter,
 };
+

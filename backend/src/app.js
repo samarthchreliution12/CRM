@@ -144,6 +144,10 @@ app.use("/api/client-types", clientTypeRoutes);
 app.use("/api/client-services", clientServiceRoutes);
 app.use("/api/clients/:clientId/documents", documentRoutes);
 
+// Client Portal Routes (Independent client authentication & portal services)
+const clientPortalRoutes = require("./routes/clientPortal.routes");
+app.use("/api/client-portal", clientPortalRoutes);
+
 // WhatsApp Module Routes
 app.use("/api/whatsapp", whatsappRoutes);
 

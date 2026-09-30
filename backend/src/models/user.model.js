@@ -88,6 +88,27 @@ class UserModel {
   }
 
   /**
+   * Fetch active users who should receive document notifications (Admins, or users with document view/verify permissions).
+   */
+  static async findDocumentNotificationRecipients() {
+    const query = `
+      SELECT DISTINCT u.id, u.name, u.email
+      FROM users u
+      LEFT JOIN roles r ON r.id = u.role_id
+      LEFT JOIN role_permissions rp ON rp.role_id = r.id
+      LEFT JOIN permissions p ON p.id = rp.permission_id
+      WHERE LOWER(u.status) = 'active'
+        AND (
+          r.name = 'Admin' 
+          OR p.permission_key IN ('document.view', 'document.read', 'document.verify', 'document.create', 'document.update')
+        )
+      ORDER BY u.id ASC
+    `;
+    const result = await pool.query(query);
+    return result.rows;
+  }
+
+  /**
    * Fetch all Staff users with optional search, status filtering, and pagination.
    */
   static async findAllStaff({ search, status, page = 1, limit = 20 }) {

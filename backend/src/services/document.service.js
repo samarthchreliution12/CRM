@@ -422,6 +422,14 @@ class DocumentService {
 
     const approvedDoc = await DocumentModel.approve(numericDocId, userId);
 
+    // Sync client portal requirement status if linked
+    try {
+      const ClientDocumentRequirementModel = require("../models/clientDocumentRequirement.model");
+      await ClientDocumentRequirementModel.updateStatusByDocumentId(numericDocId, "APPROVED");
+    } catch (syncErr) {
+      console.error("Failed to sync requirement status on approval:", syncErr);
+    }
+
     // Audit log
     await DocumentModel.logAudit({
       user_id: userId,
@@ -486,6 +494,14 @@ class DocumentService {
     const reasonStr = rejectionReason ? String(rejectionReason).trim() : "Invalid document";
 
     const rejectedDoc = await DocumentModel.reject(numericDocId, userId, reasonStr);
+
+    // Sync client portal requirement status if linked
+    try {
+      const ClientDocumentRequirementModel = require("../models/clientDocumentRequirement.model");
+      await ClientDocumentRequirementModel.updateStatusByDocumentId(numericDocId, "REJECTED", reasonStr);
+    } catch (syncErr) {
+      console.error("Failed to sync requirement status on rejection:", syncErr);
+    }
 
     // Audit log
     await DocumentModel.logAudit({

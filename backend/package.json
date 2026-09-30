@@ -8,7 +8,8 @@
     "start": "node src/server.js",
     "db:migrate": "node src/scripts/migrate.js",
     "db:seed": "node src/scripts/seed.js",
-    "test": "echo \"No test specified\" && exit 0"
+    "test": "node src/scripts/test-client-portal.js",
+    "test:client-portal": "node src/scripts/test-client-portal.js"
   },
   "keywords": [],
   "author": "",
