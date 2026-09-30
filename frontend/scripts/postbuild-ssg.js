@@ -292,9 +292,17 @@ async function generateStaticPages() {
     process.exit(1);
   }
 
-  // If CI environment or skip flag is detected, directly use native Node Fallback engine
-  if (process.env.CI_SKIP_PUPPETEER) {
-    console.log('[SSG Pre-Renderer] CI environment detected. Using native Node static pre-renderer...');
+  // If CI/Cloud environment or skip flag is detected, directly use fast native Node Fallback engine
+  const isCloudOrCI =
+    process.env.CI_SKIP_PUPPETEER ||
+    process.env.VERCEL ||
+    process.env.RENDER ||
+    process.env.NETLIFY ||
+    process.env.CI === "true" ||
+    process.env.CI === "1";
+
+  if (isCloudOrCI) {
+    console.log("[SSG Pre-Renderer] Cloud/CI environment detected (Vercel/Render/CI). Using fast native Node static pre-renderer...");
     fallbackNodeStaticPreRender();
     return;
   }
