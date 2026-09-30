@@ -109,7 +109,17 @@ class ChatterPillarService {
     const baseUrl = this.getBaseUrl();
     const headers = this.buildHeaders(apiKey, whatsappAccountId);
     const timeout = this.getTimeout();
-    const rawBody = JSON.stringify(filters || {});
+    const defaultPayload = {
+      filters: {
+        status: "A",
+        template_status: "",
+        ...(filters.filters || {}),
+      },
+      syncronize: false,
+      pagination: "true",
+      ...filters,
+    };
+    const rawBody = JSON.stringify(defaultPayload);
 
     try {
       let response;
@@ -133,10 +143,16 @@ class ChatterPillarService {
       const resData = response.data || {};
       let templates = [];
 
-      if (Array.isArray(resData.data)) {
+      if (resData.data && Array.isArray(resData.data.template)) {
+        templates = resData.data.template;
+      } else if (resData.data && Array.isArray(resData.data.templates)) {
+        templates = resData.data.templates;
+      } else if (Array.isArray(resData.data)) {
         templates = resData.data;
       } else if (Array.isArray(resData.templates)) {
         templates = resData.templates;
+      } else if (Array.isArray(resData.template)) {
+        templates = resData.template;
       } else if (Array.isArray(resData)) {
         templates = resData;
       }
@@ -181,26 +197,32 @@ class ChatterPillarService {
     const headers = this.buildHeaders(apiKey, whatsappAccountId);
     const timeout = this.getTimeout();
 
+    // Standardize recipient mobile with country code (ChatterPillar requires e.g. 918888888888)
+    let cleanMobile = String(mobile).trim().replace(/[\s\-()+]/g, "");
+    if (/^[6-9]\d{9}$/.test(cleanMobile)) {
+      cleanMobile = `91${cleanMobile}`;
+    }
+
     const payloadObj = {
       message_type: "template",
       template_id: String(templateId).trim(),
       send_to_type: "individual",
       send_to: [
         {
-          mobile: String(mobile).trim(),
+          mobile: cleanMobile,
           full_name: String(fullName).trim(),
         },
       ],
     };
 
     if (Array.isArray(bodyVariables) && bodyVariables.length > 0) {
-      payloadObj.body_variable_values = bodyVariables;
+      payloadObj.body_variable_values = bodyVariables.map((v) => String(v ?? "").trim());
     }
     if (Array.isArray(headerVariables) && headerVariables.length > 0) {
-      payloadObj.header_variable_values = headerVariables;
+      payloadObj.header_variable_values = headerVariables.map((v) => String(v ?? "").trim());
     }
     if (Array.isArray(buttonVariables) && buttonVariables.length > 0) {
-      payloadObj.button_variable_values = buttonVariables;
+      payloadObj.button_variable_values = buttonVariables.map((v) => String(v ?? "").trim());
     }
 
     const rawBody = JSON.stringify(payloadObj);
@@ -211,16 +233,40 @@ class ChatterPillarService {
         timeout,
       });
 
-      return response.data || { success: true, message: "Template message dispatched." };
+      const resData = response.data || {};
+
+      // Validate response for logical error codes even on HTTP 200
+      if (
+        (resData.code && parseInt(resData.code, 10) >= 400) ||
+        resData.status === false ||
+        resData.status === "failed" ||
+        resData.error
+      ) {
+        const errorMsg =
+          resData.message ||
+          (resData.errors && resData.errors[0]?.title) ||
+          (resData.errors && resData.errors[0]?.message) ||
+          resData.error ||
+          "ChatterPillar rejected the message request.";
+        const error = new Error(`ChatterPillar send message failed: ${errorMsg}`);
+        error.statusCode = 400;
+        error.details = resData;
+        throw error;
+      }
+
+      return resData || { success: true, message: "Template message dispatched." };
     } catch (err) {
       const errorMsg =
         err.response?.data?.message ||
+        (err.response?.data?.errors && err.response.data.errors[0]?.title) ||
+        (err.response?.data?.errors && err.response.data.errors[0]?.message) ||
+        err.response?.data?.error ||
         (typeof err.response?.data === "string" ? err.response.data : null) ||
         err.message ||
         "Failed to send template message.";
       const error = new Error(`ChatterPillar send message failed: ${errorMsg}`);
-      error.statusCode = err.response?.status || 502;
-      error.details = err.response?.data || null;
+      error.statusCode = err.response?.status || err.statusCode || 502;
+      error.details = err.response?.data || err.details || null;
       throw error;
     }
   }

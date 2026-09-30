@@ -18,22 +18,46 @@ class WhatsAppTemplateModel {
     ).trim();
 
     const category = String(
-      raw.category || raw.template_category || "UTILITY"
+      raw.category_slug || raw.category_name || raw.category || raw.template_category || "UTILITY"
     ).toUpperCase().trim();
 
     const language = String(
-      raw.language || raw.language_code || raw.lang || "en"
+      raw.language_code || raw.language_name || raw.language || raw.lang || "en"
     ).trim();
 
     const status = String(
-      raw.status || raw.template_status || "APPROVED"
+      raw.template_status || raw.status || "APPROVED"
     ).toUpperCase().trim();
 
-    let headerType = raw.header_type || null;
+    let headerType = raw.header_type || (raw.has_header ? (raw.header_format === 1 ? "TEXT" : "MEDIA") : null);
     let headerContent = raw.header_content || null;
-    let bodyContent = raw.body_content || raw.body || "";
+    let bodyContent = raw.body_text || raw.body_content || raw.body || "";
     let footerContent = raw.footer_content || raw.footer || null;
     let buttons = Array.isArray(raw.buttons) ? raw.buttons : [];
+
+    // Parse ChatterPillar flat button definitions if present
+    if (buttons.length === 0) {
+      if (raw.button1_text && String(raw.button1_text).trim()) {
+        buttons.push({
+          text: raw.button1_text.trim(),
+          type: raw.button1_call_to_action_type ? "CTA" : "QUICK_REPLY",
+          content: raw.button1_call_to_action_content || null,
+        });
+      }
+      if (raw.button2_text && String(raw.button2_text).trim()) {
+        buttons.push({
+          text: raw.button2_text.trim(),
+          type: raw.button2_call_to_action_type ? "CTA" : "QUICK_REPLY",
+          content: raw.button2_call_to_action_content || null,
+        });
+      }
+      if (raw.button3_text && String(raw.button3_text).trim()) {
+        buttons.push({
+          text: raw.button3_text.trim(),
+          type: "QUICK_REPLY",
+        });
+      }
+    }
 
     // If template has components array (Meta / ChatterPillar format)
     if (Array.isArray(raw.components)) {
@@ -43,11 +67,11 @@ class WhatsAppTemplateModel {
           headerType = comp.format || "TEXT";
           headerContent = comp.text || comp.url || null;
         } else if (compType === "BODY") {
-          bodyContent = comp.text || "";
+          bodyContent = comp.text || bodyContent;
         } else if (compType === "FOOTER") {
-          footerContent = comp.text || null;
+          footerContent = comp.text || footerContent;
         } else if (compType === "BUTTONS") {
-          buttons = Array.isArray(comp.buttons) ? comp.buttons : [];
+          buttons = Array.isArray(comp.buttons) && comp.buttons.length > 0 ? comp.buttons : buttons;
         }
       }
     }
@@ -64,6 +88,14 @@ class WhatsAppTemplateModel {
         }
       }
     }
+
+    // Sort variable matches in numerical order if numbers (1, 2, 3...)
+    variableMatches.sort((a, b) => {
+      const numA = parseInt(a, 10);
+      const numB = parseInt(b, 10);
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      return a.localeCompare(b);
+    });
 
     const templateType = headerType && headerType !== "TEXT" ? "MEDIA" : "TEXT";
 
@@ -164,6 +196,21 @@ class WhatsAppTemplateModel {
    * Find templates with search, filter, and pagination support.
    */
   static async findAll({ search, category, status, language, page = 1, limit = 50 }) {
+    // Quick auto-heal for any legacy synced rows where body_content was empty
+    try {
+      await pool.query(`
+        UPDATE whatsapp_templates
+        SET body_content = raw_data->>'body_text',
+            updated_at = CURRENT_TIMESTAMP
+        WHERE (body_content IS NULL OR body_content = '')
+          AND raw_data IS NOT NULL
+          AND (raw_data::jsonb ? 'body_text')
+          AND raw_data->>'body_text' != '';
+      `);
+    } catch (e) {
+      // non-fatal
+    }
+
     const conditions = [];
     const values = [];
     let paramIndex = 1;

@@ -143,12 +143,32 @@ const WhatsAppTemplates = () => {
     }
   };
 
+  // Robust helper to extract template body from all possible API response formats
+  const getTemplateBody = useCallback((tpl) => {
+    if (!tpl) return "";
+    if (tpl.body_content && tpl.body_content.trim()) return tpl.body_content;
+    if (tpl.body_text && tpl.body_text.trim()) return tpl.body_text;
+    if (tpl.raw_data) {
+      try {
+        const raw = typeof tpl.raw_data === "string" ? JSON.parse(tpl.raw_data) : tpl.raw_data;
+        if (raw?.body_text && raw.body_text.trim()) return raw.body_text;
+        if (raw?.body_content && raw.body_content.trim()) return raw.body_content;
+        if (raw?.body && raw.body.trim()) return raw.body;
+      } catch (e) {
+        // ignore
+      }
+    }
+    return "";
+  }, []);
+
   // Open Test Send Modal
   const handleOpenTestModal = (template) => {
     setTestModalTemplate(template);
     setTestFullName("");
     setTestMobile("");
     setTestFeedback(null);
+
+    const bodyToScan = getTemplateBody(template);
 
     // Parse required variables from template
     let varsList = [];
@@ -168,11 +188,19 @@ const WhatsAppTemplates = () => {
       const matches = [];
       const regex = /{{\s*([a-zA-Z0-9_-]+)\s*}}/g;
       let m;
-      while ((m = regex.exec(template.body_content || "")) !== null) {
+      while ((m = regex.exec(bodyToScan || "")) !== null) {
         if (!matches.includes(m[1])) matches.push(m[1]);
       }
       varsList = matches;
     }
+
+    // Sort variable keys numerically (1, 2, 3...)
+    varsList.sort((a, b) => {
+      const numA = parseInt(a, 10);
+      const numB = parseInt(b, 10);
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      return String(a).localeCompare(String(b));
+    });
 
     const initialVarObj = {};
     varsList.forEach((vKey) => {
@@ -202,20 +230,41 @@ const WhatsAppTemplates = () => {
     if (!/^[0-9]{10,15}$/.test(cleanMobile)) {
       setTestFeedback({
         type: "danger",
-        message: "Please enter a valid 10 to 15 digit mobile number (with country code if international).",
+        message: "Please enter a valid 10 to 15 digit mobile number.",
       });
       return;
+    }
+
+    // Standardize mobile with 91 prefix for 10-digit Indian numbers
+    let formattedMobile = cleanMobile;
+    if (/^[6-9]\d{9}$/.test(cleanMobile)) {
+      formattedMobile = `91${cleanMobile}`;
     }
 
     setIsSendingTest(true);
 
     try {
-      // Convert variables object into ordered values array
-      const bodyValues = Object.values(testVariables).map((v) => String(v || "").trim());
+      // Sort variable keys numerically
+      const sortedKeys = Object.keys(testVariables).sort((a, b) => {
+        const numA = parseInt(a, 10);
+        const numB = parseInt(b, 10);
+        if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+        return String(a).localeCompare(String(b));
+      });
+
+      let bodyValues = sortedKeys.map((k) => String(testVariables[k] || "").trim());
+
+      // If template has {{1}} and user did not type in variable field, use testFullName
+      const bodyToScan = getTemplateBody(testModalTemplate);
+      if (bodyValues.length === 0 && (/{{\s*1\s*}}/.test(bodyToScan) || sortedKeys.length > 0)) {
+        bodyValues = [testFullName.trim()];
+      } else if (bodyValues.length > 0 && !bodyValues[0] && testFullName.trim()) {
+        bodyValues[0] = testFullName.trim();
+      }
 
       const payload = {
         template_id: testModalTemplate.template_id,
-        mobile: cleanMobile,
+        mobile: formattedMobile,
         full_name: testFullName.trim(),
         body_variable_values: bodyValues.length > 0 ? bodyValues : undefined,
       };
@@ -269,14 +318,22 @@ const WhatsAppTemplates = () => {
 
   // Live preview with values replaced
   const renderLivePreviewBody = (bodyText, varValues, fallbackName) => {
-    if (!bodyText) return "";
+    if (!bodyText) return "No message content available.";
     let preview = bodyText;
 
-    Object.keys(varValues).forEach((vKey) => {
-      const val = varValues[vKey] || (vKey === "1" ? fallbackName || `{{${vKey}}}` : `{{${vKey}}}`);
-      const reg = new RegExp(`{{\\s*${vKey}\\s*}}`, "g");
-      preview = preview.replace(reg, val);
-    });
+    // Replace {{1}} with varValues["1"] or fallbackName
+    const firstVal = (varValues && varValues["1"]) || fallbackName || "{{1}}";
+    preview = preview.replace(/{{\s*1\s*}}/g, firstVal);
+
+    if (varValues) {
+      Object.keys(varValues).forEach((vKey) => {
+        if (vKey !== "1") {
+          const val = varValues[vKey] || `{{${vKey}}}`;
+          const reg = new RegExp(`{{\\s*${vKey}\\s*}}`, "g");
+          preview = preview.replace(reg, val);
+        }
+      });
+    }
 
     return preview;
   };
@@ -284,11 +341,12 @@ const WhatsAppTemplates = () => {
   // Filtered Templates
   const filteredTemplates = useMemo(() => {
     return templates.filter((tpl) => {
+      const body = getTemplateBody(tpl);
       const matchSearch =
         !searchQuery.trim() ||
         tpl.template_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         tpl.template_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tpl.body_content?.toLowerCase().includes(searchQuery.toLowerCase());
+        body?.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchCategory =
         selectedCategory === "ALL" ||
@@ -296,7 +354,7 @@ const WhatsAppTemplates = () => {
 
       return matchSearch && matchCategory;
     });
-  }, [templates, searchQuery, selectedCategory]);
+  }, [templates, searchQuery, selectedCategory, getTemplateBody]);
 
   const isConnected = Boolean(settings?.is_connected);
   const activeBirthdayId = settings?.birthday_template_id;
@@ -567,14 +625,19 @@ const WhatsAppTemplates = () => {
                       <span className="wa-pill wa-pill-lang">
                         {tpl.language || "en"}
                       </span>
-                      {tpl.variable_count > 0 && (
-                        <span
-                          className="wa-pill"
-                          style={{ backgroundColor: "#eff6ff", color: "#1d4ed8" }}
-                        >
-                          {tpl.variable_count} {tpl.variable_count === 1 ? "Variable" : "Variables"}
-                        </span>
-                      )}
+                      {(() => {
+                        const body = getTemplateBody(tpl);
+                        const matchCount = (body.match(/{{\s*([a-zA-Z0-9_-]+)\s*}}/g) || []).length;
+                        const count = tpl.variable_count > 0 ? tpl.variable_count : matchCount;
+                        return count > 0 ? (
+                          <span
+                            className="wa-pill"
+                            style={{ backgroundColor: "#eff6ff", color: "#1d4ed8" }}
+                          >
+                            {count} {count === 1 ? "Variable" : "Variables"}
+                          </span>
+                        ) : null;
+                      })()}
                     </div>
                   </div>
 
@@ -589,8 +652,8 @@ const WhatsAppTemplates = () => {
                       )}
 
                       {/* Body Content */}
-                      <div className="wa-bubble-text">
-                        {renderFormattedBody(tpl.body_content)}
+                      <div className="wa-bubble-text" style={{ whiteSpace: "pre-line" }}>
+                        {renderFormattedBody(getTemplateBody(tpl))}
                       </div>
 
                       {/* Footer Content */}
@@ -714,7 +777,16 @@ const WhatsAppTemplates = () => {
                   className="wa-form-input"
                   placeholder="e.g. Rahul Sharma"
                   value={testFullName}
-                  onChange={(e) => setTestFullName(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setTestFullName(val);
+                    setTestVariables((prev) => {
+                      if (prev.hasOwnProperty("1") && (!prev["1"] || prev["1"] === testFullName)) {
+                        return { ...prev, "1": val };
+                      }
+                      return prev;
+                    });
+                  }}
                   required
                 />
               </div>
@@ -782,9 +854,9 @@ const WhatsAppTemplates = () => {
                 </label>
                 <div className="wa-live-preview-box">
                   <div className="wa-chat-bubble">
-                    <div className="wa-bubble-text" style={{ fontSize: "0.85rem" }}>
+                    <div className="wa-bubble-text" style={{ fontSize: "0.85rem", whiteSpace: "pre-line" }}>
                       {renderLivePreviewBody(
-                        testModalTemplate.body_content,
+                        getTemplateBody(testModalTemplate),
                         testVariables,
                         testFullName
                       )}
