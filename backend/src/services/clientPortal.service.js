@@ -14,13 +14,30 @@ const AuditService = require("./audit.service");
 const { encryptBuffer, decryptBuffer } = require("../utils/encryption.util");
 const { validateUploadedFile, isValidDocumentType } = require("../utils/fileValidation.util");
 
-const STORAGE_DIR = path.resolve(
-  process.env.DOCUMENT_STORAGE_DIR || path.join(__dirname, "../../storage/documents")
-);
-
-if (!fs.existsSync(STORAGE_DIR)) {
-  fs.mkdirSync(STORAGE_DIR, { recursive: true });
+// Store encrypted documents safely with fail-safe fallback
+function getStorageDir() {
+  const fallbackDir = path.resolve(path.join(__dirname, "../../storage/documents"));
+  const configuredDir = process.env.DOCUMENT_STORAGE_DIR;
+  if (configuredDir) {
+    try {
+      const resolved = path.resolve(configuredDir);
+      if (!fs.existsSync(resolved)) {
+        fs.mkdirSync(resolved, { recursive: true });
+      }
+      return resolved;
+    } catch (err) {
+      console.warn(
+        `[ClientPortalService] Cannot use DOCUMENT_STORAGE_DIR "${configuredDir}": ${err.message}. Falling back to: ${fallbackDir}`
+      );
+    }
+  }
+  if (!fs.existsSync(fallbackDir)) {
+    fs.mkdirSync(fallbackDir, { recursive: true });
+  }
+  return fallbackDir;
 }
+
+const STORAGE_DIR = getStorageDir();
 
 class ClientPortalService {
   /**
