@@ -175,12 +175,12 @@ async function seedDatabase() {
     // 6. Seed default admin account
     const adminRoleId = roleMap["Admin"] || 1;
     const adminEmail = process.env.SEED_ADMIN_EMAIL || "admin@gmail.com";
-    const adminPassword = process.env.SEED_ADMIN_PASSWORD || "admin123";
+    const adminPassword = process.env.SEED_ADMIN_PASSWORD || "password123";
     const passwordHash = await bcrypt.hash(adminPassword, 10);
     await client.query(
-      `INSERT INTO users (name, email, password_hash, role_id, status)
-       VALUES ($1, $2, $3, $4, 'active')
-       ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash, status = 'active'`,
+      `INSERT INTO users (name, email, password_hash, role_id, status, failed_login_attempts, lock_until)
+       VALUES ($1, $2, $3, $4, 'active', 0, NULL)
+       ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash, status = 'active', failed_login_attempts = 0, lock_until = NULL`,
       ["System Admin", adminEmail, passwordHash, adminRoleId]
     );
 
