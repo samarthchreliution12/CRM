@@ -34,7 +34,6 @@ const WhatsAppTemplates = () => {
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("ALL");
-  const [selectedStatus, setSelectedStatus] = useState("ALL");
 
   // Notifications
   const [alert, setAlert] = useState(null);
@@ -295,13 +294,9 @@ const WhatsAppTemplates = () => {
         selectedCategory === "ALL" ||
         tpl.category?.toUpperCase() === selectedCategory.toUpperCase();
 
-      const matchStatus =
-        selectedStatus === "ALL" ||
-        tpl.status?.toUpperCase() === selectedStatus.toUpperCase();
-
-      return matchSearch && matchCategory && matchStatus;
+      return matchSearch && matchCategory;
     });
-  }, [templates, searchQuery, selectedCategory, selectedStatus]);
+  }, [templates, searchQuery, selectedCategory]);
 
   const isConnected = Boolean(settings?.is_connected);
   const activeBirthdayId = settings?.birthday_template_id;
@@ -458,24 +453,6 @@ const WhatsAppTemplates = () => {
                     onClick={() => setSelectedCategory(cat)}
                   >
                     {cat}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-              <span style={{ fontSize: "0.775rem", color: "#64748b", fontWeight: 700, textTransform: "uppercase" }}>
-                Status:
-              </span>
-              <div className="wa-filter-tabs">
-                {["ALL", "APPROVED", "PENDING", "REJECTED"].map((st) => (
-                  <button
-                    key={st}
-                    type="button"
-                    className={`wa-filter-tab ${selectedStatus === st ? "active" : ""}`}
-                    onClick={() => setSelectedStatus(st)}
-                  >
-                    {st}
                   </button>
                 ))}
               </div>
