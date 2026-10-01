@@ -142,7 +142,13 @@ const WhatsAppConfiguration = () => {
       }
 
       if (clientTypesRes.status === "fulfilled" && clientTypesRes.value?.success) {
-        setClientTypes(clientTypesRes.value.data || []);
+        const ctData = clientTypesRes.value.data;
+        const list = Array.isArray(ctData)
+          ? ctData
+          : Array.isArray(ctData?.client_types)
+          ? ctData.client_types
+          : [];
+        setClientTypes(list);
       }
     } catch (err) {
       console.error("Error loading configuration data:", err);
@@ -534,24 +540,39 @@ const WhatsAppConfiguration = () => {
                     </p>
                   </div>
                 </div>
-                {settings?.birthday_template_id && (
-                  <span className="wa-status-badge active">
-                    <Check size={12} />
-                    Active in CRM
-                  </span>
+                {settings?.birthday_template_id ? (
+                  selectedBirthdayId === settings?.birthday_template_id ? (
+                    <span className="wa-status-badge active">
+                      <Check size={12} />
+                      Active in CRM
+                    </span>
+                  ) : (
+                    <span
+                      className="wa-status-badge"
+                      style={{ backgroundColor: "#fef3c7", color: "#b45309", border: "1px solid #fde047" }}
+                    >
+                      Unsaved Changes
+                    </span>
+                  )
+                ) : (
+                  <span className="wa-status-badge unassigned">Not Assigned</span>
                 )}
               </div>
 
               <div className="wa-form-group">
                 <label className="wa-form-label">
                   <span>Selected Template</span>
-                  <span style={{ fontSize: "0.75rem", color: "#64748b" }}>Approved only</span>
+                  {settings?.birthday_template_id && (
+                    <span style={{ fontSize: "0.75rem", color: "#166534", fontWeight: 600 }}>
+                      Active: {settings.birthday_template_data?.template_name || settings.birthday_template_id}
+                    </span>
+                  )}
                 </label>
                 <select
                   className="wa-select-control"
                   value={selectedBirthdayId}
                   onChange={(e) => setSelectedBirthdayId(e.target.value)}
-                  disabled={isLoading}
+                  disabled={isLoading || isSavingBirthday}
                 >
                   <option value="">-- Select Birthday Template --</option>
                   {approvedTemplates.map((tpl) => (
@@ -583,7 +604,15 @@ const WhatsAppConfiguration = () => {
                 </div>
               )}
 
-              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem" }}>
+                <span style={{ fontSize: "0.775rem", color: "#64748b" }}>
+                  {selectedBirthdayId === settings?.birthday_template_id
+                    ? "To change template, pick another from dropdown and click Update."
+                    : selectedBirthdayId
+                    ? "Click Update to switch to this template."
+                    : "Select a template above to assign."}
+                </span>
+
                 <button
                   type="button"
                   className="wa-btn-save"
@@ -593,12 +622,24 @@ const WhatsAppConfiguration = () => {
                     !selectedBirthdayId ||
                     selectedBirthdayId === settings?.birthday_template_id
                   }
+                  style={
+                    selectedBirthdayId === settings?.birthday_template_id
+                      ? { backgroundColor: "#15803d", opacity: 0.95, cursor: "default" }
+                      : {}
+                  }
                 >
                   {isSavingBirthday ? (
                     <>
                       <Loader2 size={14} className="wa-spinner" />
                       <span>Saving...</span>
                     </>
+                  ) : selectedBirthdayId === settings?.birthday_template_id ? (
+                    <>
+                      <Check size={14} />
+                      <span>Active in CRM</span>
+                    </>
+                  ) : settings?.birthday_template_id ? (
+                    <span>Update Birthday Template</span>
                   ) : (
                     <span>Save Birthday Template</span>
                   )}
@@ -620,26 +661,39 @@ const WhatsAppConfiguration = () => {
                     </p>
                   </div>
                 </div>
-                {settings?.otp_template_id && (
-                  <span className="wa-status-badge active">
-                    <Check size={12} />
-                    Active in CRM
-                  </span>
+                {settings?.otp_template_id ? (
+                  selectedOtpId === settings?.otp_template_id ? (
+                    <span className="wa-status-badge active">
+                      <Check size={12} />
+                      Active in CRM
+                    </span>
+                  ) : (
+                    <span
+                      className="wa-status-badge"
+                      style={{ backgroundColor: "#fef3c7", color: "#b45309", border: "1px solid #fde047" }}
+                    >
+                      Unsaved Changes
+                    </span>
+                  )
+                ) : (
+                  <span className="wa-status-badge unassigned">Not Assigned</span>
                 )}
               </div>
 
               <div className="wa-form-group">
                 <label className="wa-form-label">
                   <span>Selected Template</span>
-                  <span style={{ fontSize: "0.75rem", color: "#2563eb" }}>
-                    Authentication Category
-                  </span>
+                  {settings?.otp_template_id && (
+                    <span style={{ fontSize: "0.75rem", color: "#1d4ed8", fontWeight: 600 }}>
+                      Active: {settings.otp_template_data?.template_name || settings.otp_template_id}
+                    </span>
+                  )}
                 </label>
                 <select
                   className="wa-select-control"
                   value={selectedOtpId}
                   onChange={(e) => setSelectedOtpId(e.target.value)}
-                  disabled={isLoading}
+                  disabled={isLoading || isSavingOtp}
                 >
                   <option value="">-- Select Authentication Template --</option>
                   {otpTemplates.map((tpl) => (
@@ -675,7 +729,15 @@ const WhatsAppConfiguration = () => {
                 </div>
               )}
 
-              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem" }}>
+                <span style={{ fontSize: "0.775rem", color: "#64748b" }}>
+                  {selectedOtpId === settings?.otp_template_id
+                    ? "To change template, pick another from dropdown and click Update."
+                    : selectedOtpId
+                    ? "Click Update to switch to this template."
+                    : "Select an Authentication template above to assign."}
+                </span>
+
                 <button
                   type="button"
                   className="wa-btn-save"
@@ -685,12 +747,24 @@ const WhatsAppConfiguration = () => {
                     !selectedOtpId ||
                     selectedOtpId === settings?.otp_template_id
                   }
+                  style={
+                    selectedOtpId === settings?.otp_template_id
+                      ? { backgroundColor: "#15803d", opacity: 0.95, cursor: "default" }
+                      : {}
+                  }
                 >
                   {isSavingOtp ? (
                     <>
                       <Loader2 size={14} className="wa-spinner" />
                       <span>Saving...</span>
                     </>
+                  ) : selectedOtpId === settings?.otp_template_id ? (
+                    <>
+                      <Check size={14} />
+                      <span>Active in CRM</span>
+                    </>
+                  ) : settings?.otp_template_id ? (
+                    <span>Update OTP Template</span>
                   ) : (
                     <span>Save OTP Template</span>
                   )}
@@ -795,11 +869,12 @@ const WhatsAppConfiguration = () => {
                       onChange={(e) => setSelectedClientTypeId(e.target.value)}
                     >
                       <option value="">-- Choose Client Type --</option>
-                      {clientTypes.map((ct) => (
-                        <option key={ct.id} value={ct.id}>
-                          {ct.name}
-                        </option>
-                      ))}
+                      {Array.isArray(clientTypes) &&
+                        clientTypes.map((ct) => (
+                          <option key={ct.id} value={ct.id}>
+                            {ct.name}
+                          </option>
+                        ))}
                     </select>
                   </div>
                 )}

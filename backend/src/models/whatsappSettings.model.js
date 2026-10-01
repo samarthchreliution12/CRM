@@ -95,6 +95,8 @@ class WhatsAppSettingsModel {
     is_connected = undefined,
     birthday_template_id = undefined,
     birthday_template_data = undefined,
+    otp_template_id = undefined,
+    otp_template_data = undefined,
   } = {}) {
     const updates = [];
     const values = [];
