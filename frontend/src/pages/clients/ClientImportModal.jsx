@@ -95,8 +95,8 @@ const ClientImportModal = ({ show, onClose, onSuccess, token }) => {
       [
         "Rahul Sharma",
         "Rahul Tech",
-        "9876543210",
-        "9876543210",
+        "+91 9876543210",
+        "+91 9876543210",
         "rahul@example.com",
         "CYZPC1015Q",
         "2003-09-12",
@@ -252,7 +252,7 @@ const ClientImportModal = ({ show, onClose, onSuccess, token }) => {
             <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
               <Info size={18} color="#2563eb" style={{ flexShrink: 0 }} />
               <span style={{ fontSize: "0.825rem", color: "#334155" }}>
-                UCC Number is automatically generated from PAN and Date of Birth. Do not include UCC in your CSV file. Required columns: <strong>name, pan, dob, mobile_no, whatsapp_no, email, client_type</strong>.
+                UCC is auto-generated from PAN & DOB. Required columns: <strong>name, pan, dob, mobile_no, whatsapp_no, email, client_type</strong>. Mobile numbers support 10 digits or +91 format (e.g. 9876543210 or +91 9876543210).
               </span>
             </div>
             <button

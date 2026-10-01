@@ -3,6 +3,7 @@ const WhatsAppSettingsModel = require("../models/whatsappSettings.model");
 const WhatsAppTemplateModel = require("../models/whatsappTemplate.model");
 const WhatsAppMessageModel = require("../models/whatsappMessage.model");
 const ChatterPillarService = require("./chatterpillar.service");
+const { formatForWhatsAppApi } = require("../utils/phone.util");
 
 class WhatsAppService {
   /**
@@ -205,8 +206,8 @@ class WhatsAppService {
 
     // 3. Check WhatsApp Phone
     const recipientPhone = (client.whatsapp_no || client.mobile_no || "").trim();
-    const cleanPhone = recipientPhone.replace(/[\s\-()+]/g, "");
-    const hasValidPhone = /^[0-9]{10,15}$/.test(cleanPhone);
+    const cleanPhone = formatForWhatsAppApi(recipientPhone);
+    const hasValidPhone = /^91[6-9]\d{9}$/.test(cleanPhone) || (/^[0-9]{10,15}$/.test(cleanPhone) && cleanPhone.length >= 10);
 
     // 4. Check if birthday message was already sent this year
     const alreadySentRecord = await WhatsAppMessageModel.hasSentBirthdayWish(client.id, currentYear);
@@ -376,7 +377,7 @@ class WhatsAppService {
 
     const client = preview.client;
     const template = preview.template;
-    const cleanMobile = (client.whatsapp_no || client.mobile_no).replace(/[\s\-()+]/g, "");
+    const cleanMobile = formatForWhatsAppApi(client.whatsapp_no || client.mobile_no);
 
     // Prepare ordered variables array
     const orderedBodyValues = Object.keys(preview.variable_map)

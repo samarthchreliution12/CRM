@@ -34,6 +34,8 @@ import {
 import DocumentUploadModal from "../documents/DocumentUploadModal";
 import DocumentReviewDrawer from "../documents/DocumentReviewDrawer";
 import WhatsAppService from "../../services/whatsapp.service";
+import PhoneInput from "../../components/common/PhoneInput";
+import { formatPhoneNumber, validatePhoneNumber } from "../../utils/phone.util";
 import "./ClientDetails.css";
 
 const renderCategoryBadge = (categoryStr) => {
@@ -247,8 +249,10 @@ const ClientDetails = () => {
     relationship: "Spouse",
     name: "",
     business_name: "",
+    mobile_country_code: "+91",
     mobile_no: "",
     same_as_whatsapp: false,
+    whatsapp_country_code: "+91",
     whatsapp_no: "",
     email: "",
     pan: "",
@@ -455,13 +459,9 @@ const ClientDetails = () => {
     if (!newClientFormData.name || !newClientFormData.name.trim()) {
       formErrors.name = "Full name is required";
     }
-    if (!newClientFormData.mobile_no || !newClientFormData.mobile_no.trim()) {
-      formErrors.mobile_no = "Mobile number is required";
-    } else {
-      const cleanMobile = newClientFormData.mobile_no.trim().replace(/[\s\-()]/g, "");
-      if (!/^[0-9]{10,15}$/.test(cleanMobile)) {
-        formErrors.mobile_no = "Mobile number must be 10-15 digits";
-      }
+    const mobErr = validatePhoneNumber(newClientFormData.mobile_country_code, newClientFormData.mobile_no, "Mobile number");
+    if (mobErr) {
+      formErrors.mobile_no = mobErr;
     }
     if (newClientFormData.pan && newClientFormData.pan.trim()) {
       const cleanPan = newClientFormData.pan.trim().toUpperCase();
@@ -490,8 +490,8 @@ const ClientDetails = () => {
       const createPayload = {
         name: newClientFormData.name.trim(),
         business_name: newClientFormData.business_name?.trim() || null,
-        mobile_no: newClientFormData.mobile_no.trim(),
-        whatsapp_no: newClientFormData.whatsapp_no?.trim() || null,
+        mobile_no: formatPhoneNumber(newClientFormData.mobile_country_code, newClientFormData.mobile_no),
+        whatsapp_no: formatPhoneNumber(newClientFormData.whatsapp_country_code, newClientFormData.whatsapp_no) || null,
         email: newClientFormData.email?.trim() || null,
         pan: newClientFormData.pan?.trim().toUpperCase() || null,
         dob: newClientFormData.dob || null,
@@ -1914,13 +1914,17 @@ const ClientDetails = () => {
                         <label className="form-label">
                           Mobile Number <span className="required-star">*</span>
                         </label>
-                        <input
-                          type="text"
-                          placeholder="10-digit mobile"
-                          maxLength={15}
-                          value={newClientFormData.mobile_no}
-                          onChange={(e) => {
-                            const val = e.target.value;
+                        <PhoneInput
+                          countryCode={newClientFormData.mobile_country_code}
+                          phone={newClientFormData.mobile_no}
+                          onCountryCodeChange={(code) => {
+                            setNewClientFormData((prev) => {
+                              const updated = { ...prev, mobile_country_code: code };
+                              if (prev.same_as_whatsapp) updated.whatsapp_country_code = code;
+                              return updated;
+                            });
+                          }}
+                          onPhoneChange={(val) => {
                             setNewClientFormData((prev) => {
                               const updated = { ...prev, mobile_no: val };
                               if (prev.same_as_whatsapp) updated.whatsapp_no = val;
@@ -1928,7 +1932,14 @@ const ClientDetails = () => {
                             });
                             if (newClientErrors.mobile_no) setNewClientErrors((prev) => ({ ...prev, mobile_no: "" }));
                           }}
-                          className={`form-input ${newClientErrors.mobile_no ? "input-error" : ""}`}
+                          onBlur={() => {
+                            const err = validatePhoneNumber(newClientFormData.mobile_country_code, newClientFormData.mobile_no, "Mobile number");
+                            setNewClientErrors((prev) => ({ ...prev, mobile_no: err }));
+                          }}
+                          isInvalid={Boolean(newClientErrors.mobile_no)}
+                          name="new_client_mobile"
+                          id="new-client-mobile"
+                          required
                         />
                         {newClientErrors.mobile_no && <span className="field-error-text">{newClientErrors.mobile_no}</span>}
                       </div>
@@ -1945,6 +1956,7 @@ const ClientDetails = () => {
                                 setNewClientFormData((prev) => ({
                                   ...prev,
                                   same_as_whatsapp: chk,
+                                  whatsapp_country_code: chk ? prev.mobile_country_code : prev.whatsapp_country_code,
                                   whatsapp_no: chk ? prev.mobile_no : prev.whatsapp_no,
                                 }));
                               }}
@@ -1952,15 +1964,20 @@ const ClientDetails = () => {
                             Same as mobile
                           </label>
                         </div>
-                        <input
-                          type="text"
-                          placeholder="WhatsApp number"
+                        <PhoneInput
+                          countryCode={newClientFormData.whatsapp_country_code}
+                          phone={newClientFormData.whatsapp_no}
+                          onCountryCodeChange={(code) => {
+                            setNewClientFormData((prev) => ({ ...prev, whatsapp_country_code: code }));
+                          }}
+                          onPhoneChange={(val) => {
+                            setNewClientFormData((prev) => ({ ...prev, whatsapp_no: val }));
+                            if (newClientErrors.whatsapp_no) setNewClientErrors((prev) => ({ ...prev, whatsapp_no: "" }));
+                          }}
                           disabled={newClientFormData.same_as_whatsapp}
-                          value={newClientFormData.whatsapp_no}
-                          onChange={(e) =>
-                            setNewClientFormData((prev) => ({ ...prev, whatsapp_no: e.target.value }))
-                          }
-                          className="form-input"
+                          readOnly={newClientFormData.same_as_whatsapp}
+                          name="new_client_whatsapp"
+                          id="new-client-whatsapp"
                         />
                       </div>
                     </div>

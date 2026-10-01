@@ -140,7 +140,7 @@ const ClientProfile = () => {
                   <Phone size={14} /> Mobile Number
                 </span>
                 <span className="field-value">
-                  {profile?.mobile_no ? `+91 ${profile.mobile_no}` : "—"}
+                  {profile?.mobile_no ? (profile.mobile_no.startsWith("+") ? profile.mobile_no : `+91 ${profile.mobile_no}`) : "—"}
                 </span>
               </div>
 
@@ -149,7 +149,11 @@ const ClientProfile = () => {
                   <Phone size={14} /> WhatsApp Number
                 </span>
                 <span className="field-value">
-                  {profile?.whatsapp_no ? `+91 ${profile.whatsapp_no}` : profile?.mobile_no ? `+91 ${profile.mobile_no}` : "—"}
+                  {profile?.whatsapp_no
+                    ? (profile.whatsapp_no.startsWith("+") ? profile.whatsapp_no : `+91 ${profile.whatsapp_no}`)
+                    : profile?.mobile_no
+                    ? (profile.mobile_no.startsWith("+") ? profile.mobile_no : `+91 ${profile.mobile_no}`)
+                    : "—"}
                 </span>
               </div>
 

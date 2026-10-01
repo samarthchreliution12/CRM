@@ -4,6 +4,7 @@ const ClientTypeModel = require("../models/clientType.model");
 const ClientServiceModel = require("../models/clientService.model");
 const NotificationService = require("./notification.service");
 const AuditService = require("./audit.service");
+const { validateAndNormalizePhone } = require("../utils/phone.util");
 
 class LeadService {
   /**
@@ -16,14 +17,16 @@ class LeadService {
       throw err;
     }
 
-    if (!data.mobile_no || !data.mobile_no.toString().trim()) {
-      const err = new Error("Mobile number is required.");
+    const normMobile = validateAndNormalizePhone(data.mobile_no, "Mobile number");
+    if (!normMobile.isValid) {
+      const err = new Error(normMobile.error);
       err.statusCode = 400;
       throw err;
     }
 
-    if (!data.whatsapp_no || !data.whatsapp_no.toString().trim()) {
-      const err = new Error("WhatsApp number is required.");
+    const normWhatsApp = validateAndNormalizePhone(data.whatsapp_no, "WhatsApp number");
+    if (!normWhatsApp.isValid) {
+      const err = new Error(normWhatsApp.error);
       err.statusCode = 400;
       throw err;
     }
@@ -71,6 +74,8 @@ class LeadService {
 
     const newLead = await LeadModel.create({
       ...data,
+      mobile_no: normMobile.formatted,
+      whatsapp_no: normWhatsApp.formatted,
       created_by: context.userId,
     });
 
@@ -152,7 +157,28 @@ class LeadService {
       }
     }
 
-    const updatedLead = await LeadModel.update(id, data);
+    const payload = { ...data };
+    if (data.mobile_no !== undefined) {
+      const normMobile = validateAndNormalizePhone(data.mobile_no, "Mobile number");
+      if (!normMobile.isValid) {
+        const err = new Error(normMobile.error);
+        err.statusCode = 400;
+        throw err;
+      }
+      payload.mobile_no = normMobile.formatted;
+    }
+
+    if (data.whatsapp_no !== undefined) {
+      const normWhatsApp = validateAndNormalizePhone(data.whatsapp_no, "WhatsApp number");
+      if (!normWhatsApp.isValid) {
+        const err = new Error(normWhatsApp.error);
+        err.statusCode = 400;
+        throw err;
+      }
+      payload.whatsapp_no = normWhatsApp.formatted;
+    }
+
+    const updatedLead = await LeadModel.update(id, payload);
     const diff = AuditService.calculateDiff(existingLead, updatedLead);
 
     if (Object.keys(diff.newValues || {}).length > 0) {
@@ -356,9 +382,9 @@ class LeadService {
     }
 
     const rawPhone = (data.phone || data.mobile_no || data.mobile || "").toString().trim();
-    const digitsOnly = rawPhone.replace(/\D/g, "");
-    if (!rawPhone || digitsOnly.length < 7 || digitsOnly.length > 15) {
-      const err = new Error("A valid phone number is required (7 to 15 digits).");
+    const normPhone = validateAndNormalizePhone(rawPhone, "Phone number");
+    if (!normPhone.isValid) {
+      const err = new Error(normPhone.error);
       err.statusCode = 400;
       throw err;
     }
@@ -446,8 +472,8 @@ class LeadService {
     const newLead = await LeadModel.create({
       name: sanitizeText(rawName),
       email: rawEmail,
-      mobile_no: sanitizeText(rawPhone),
-      whatsapp_no: sanitizeText(rawPhone),
+      mobile_no: normPhone.formatted,
+      whatsapp_no: normPhone.formatted,
       service_id: resolvedServiceId,
       client_type_id: resolvedClientTypeId,
       source: "Website",

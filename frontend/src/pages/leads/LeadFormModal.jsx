@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import LeadService from "../../services/lead.service";
 import useAuth from "../../hooks/useAuth";
-import { X, AlertCircle, Loader2, User, Building, Phone, Mail, Calendar, Tag, Briefcase } from "lucide-react";
+import { X, AlertCircle, Loader2, User, Building, Mail, Calendar, Tag, Briefcase } from "lucide-react";
+import PhoneInput from "../../components/common/PhoneInput";
+import { parsePhoneNumber, formatPhoneNumber, validatePhoneNumber } from "../../utils/phone.util";
 
 const SOURCE_OPTIONS = ["Website", "Referral", "Walk-in", "Call", "WhatsApp", "Other"];
 const PRIORITY_OPTIONS = [
@@ -24,8 +26,10 @@ const LeadFormModal = ({
 
   const [formData, setFormData] = useState({
     name: "",
+    mobile_country_code: "+91",
     mobile_no: "",
     same_as_whatsapp: false,
+    whatsapp_country_code: "+91",
     whatsapp_no: "",
     email: "",
     company_name: "",
@@ -56,16 +60,20 @@ const LeadFormModal = ({
 
   useEffect(() => {
     if (editingLead) {
+      const parsedMobile = parsePhoneNumber(editingLead.mobile_no);
+      const parsedWhatsApp = parsePhoneNumber(editingLead.whatsapp_no || editingLead.mobile_no);
       const isSame = Boolean(
         editingLead.mobile_no &&
         editingLead.whatsapp_no &&
-        editingLead.mobile_no === editingLead.whatsapp_no
+        (editingLead.mobile_no === editingLead.whatsapp_no || parsedMobile.phone === parsedWhatsApp.phone)
       );
       setFormData({
         name: editingLead.name || "",
-        mobile_no: editingLead.mobile_no || "",
+        mobile_country_code: parsedMobile.countryCode || "+91",
+        mobile_no: parsedMobile.phone || "",
         same_as_whatsapp: isSame,
-        whatsapp_no: editingLead.whatsapp_no || "",
+        whatsapp_country_code: parsedWhatsApp.countryCode || "+91",
+        whatsapp_no: parsedWhatsApp.phone || "",
         email: editingLead.email || "",
         company_name: editingLead.company_name || "",
         client_type_id: editingLead.client_type_id || editingLead.client_type?.id || "",
@@ -79,8 +87,10 @@ const LeadFormModal = ({
     } else {
       setFormData({
         name: "",
+        mobile_country_code: "+91",
         mobile_no: "",
         same_as_whatsapp: false,
+        whatsapp_country_code: "+91",
         whatsapp_no: "",
         email: "",
         company_name: "",
@@ -118,8 +128,12 @@ const LeadFormModal = ({
       if (field === "mobile_no" && prev.same_as_whatsapp) {
         updated.whatsapp_no = value;
       }
+      if (field === "mobile_country_code" && prev.same_as_whatsapp) {
+        updated.whatsapp_country_code = value;
+      }
       if (field === "same_as_whatsapp") {
         if (value) {
+          updated.whatsapp_country_code = prev.mobile_country_code;
           updated.whatsapp_no = prev.mobile_no;
         }
       }
@@ -130,7 +144,7 @@ const LeadFormModal = ({
     if (fieldErrors[field]) {
       setFieldErrors((prev) => ({ ...prev, [field]: "" }));
     }
-    if ((field === "mobile_no" || field === "same_as_whatsapp") && fieldErrors.whatsapp_no) {
+    if ((field === "mobile_no" || field === "mobile_country_code" || field === "same_as_whatsapp") && fieldErrors.whatsapp_no) {
       setFieldErrors((prev) => ({ ...prev, whatsapp_no: "" }));
     }
   };
@@ -142,22 +156,14 @@ const LeadFormModal = ({
       errs.name = "Lead Name is required";
     }
 
-    if (!formData.mobile_no || !formData.mobile_no.trim()) {
-      errs.mobile_no = "Mobile Number is required";
-    } else {
-      const cleanMobile = formData.mobile_no.trim().replace(/[\s\-()]/g, "");
-      if (!/^[0-9]{10,15}$/.test(cleanMobile)) {
-        errs.mobile_no = "Invalid Mobile Number (10-15 digits required)";
-      }
+    const mobErr = validatePhoneNumber(formData.mobile_country_code, formData.mobile_no, "Mobile Number");
+    if (mobErr) {
+      errs.mobile_no = mobErr;
     }
 
-    if (!formData.whatsapp_no || !formData.whatsapp_no.trim()) {
-      errs.whatsapp_no = "WhatsApp Number is required";
-    } else {
-      const cleanWhatsApp = formData.whatsapp_no.trim().replace(/[\s\-()]/g, "");
-      if (!/^[0-9]{10,15}$/.test(cleanWhatsApp)) {
-        errs.whatsapp_no = "Invalid WhatsApp Number (10-15 digits required)";
-      }
+    const waErr = validatePhoneNumber(formData.whatsapp_country_code, formData.whatsapp_no, "WhatsApp Number");
+    if (waErr) {
+      errs.whatsapp_no = waErr;
     }
 
     if (!formData.email || !formData.email.trim()) {
@@ -204,8 +210,8 @@ const LeadFormModal = ({
 
       const payload = {
         name: formData.name.trim(),
-        mobile_no: formData.mobile_no.trim(),
-        whatsapp_no: formData.whatsapp_no.trim(),
+        mobile_no: formatPhoneNumber(formData.mobile_country_code, formData.mobile_no),
+        whatsapp_no: formatPhoneNumber(formData.whatsapp_country_code, formData.whatsapp_no),
         email: formData.email.trim().toLowerCase(),
         company_name: formData.company_name ? formData.company_name.trim() : null,
         client_type_id: parseInt(formData.client_type_id, 10),
@@ -312,17 +318,25 @@ const LeadFormModal = ({
                 <label className="form-label">
                   Mobile Number <span className="required-star">*</span>
                 </label>
-                <div className="input-with-icon">
-                  <Phone size={16} className="input-icon" />
-                  <input
-                    type="text"
-                    className={`form-input ${fieldErrors.mobile_no ? "input-error" : ""}`}
-                    placeholder="e.g. 9876543210"
-                    value={formData.mobile_no}
-                    onChange={(e) => handleChange("mobile_no", e.target.value)}
-                  />
-                </div>
-                <label className="checkbox-inline-wrapper">
+                <PhoneInput
+                  countryCode={formData.mobile_country_code}
+                  phone={formData.mobile_no}
+                  onCountryCodeChange={(code) => {
+                    handleChange("mobile_country_code", code);
+                  }}
+                  onPhoneChange={(val) => {
+                    handleChange("mobile_no", val);
+                  }}
+                  onBlur={() => {
+                    const err = validatePhoneNumber(formData.mobile_country_code, formData.mobile_no, "Mobile Number");
+                    setFieldErrors((prev) => ({ ...prev, mobile_no: err }));
+                  }}
+                  isInvalid={Boolean(fieldErrors.mobile_no)}
+                  name="mobile_no"
+                  id="lead-mobile-no"
+                  required
+                />
+                <label className="checkbox-inline-wrapper" style={{ marginTop: "0.5rem" }}>
                   <input
                     type="checkbox"
                     name="same_as_whatsapp"
@@ -340,17 +354,26 @@ const LeadFormModal = ({
                 <label className="form-label">
                   WhatsApp Number <span className="required-star">*</span>
                 </label>
-                <div className="input-with-icon">
-                  <Phone size={16} className="input-icon" style={{ color: "#16a34a" }} />
-                  <input
-                    type="text"
-                    className={`form-input ${fieldErrors.whatsapp_no ? "input-error" : ""}`}
-                    placeholder="e.g. 9876543210"
-                    value={formData.whatsapp_no}
-                    onChange={(e) => handleChange("whatsapp_no", e.target.value)}
-                    readOnly={formData.same_as_whatsapp}
-                  />
-                </div>
+                <PhoneInput
+                  countryCode={formData.whatsapp_country_code}
+                  phone={formData.whatsapp_no}
+                  onCountryCodeChange={(code) => {
+                    handleChange("whatsapp_country_code", code);
+                  }}
+                  onPhoneChange={(val) => {
+                    handleChange("whatsapp_no", val);
+                  }}
+                  onBlur={() => {
+                    const err = validatePhoneNumber(formData.whatsapp_country_code, formData.whatsapp_no, "WhatsApp Number");
+                    setFieldErrors((prev) => ({ ...prev, whatsapp_no: err }));
+                  }}
+                  disabled={formData.same_as_whatsapp}
+                  readOnly={formData.same_as_whatsapp}
+                  isInvalid={Boolean(fieldErrors.whatsapp_no)}
+                  name="whatsapp_no"
+                  id="lead-whatsapp-no"
+                  required
+                />
                 {fieldErrors.whatsapp_no && <span className="field-error-text">{fieldErrors.whatsapp_no}</span>}
               </div>
 

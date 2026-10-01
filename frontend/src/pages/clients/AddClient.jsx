@@ -4,6 +4,8 @@ import AppLayout from "../../components/layout/AppLayout/AppLayout";
 import ClientService from "../../services/client.service";
 import useAuth from "../../hooks/useAuth";
 import { ArrowLeft, AlertCircle, CheckCircle2, Loader2, Check, Award, Crown, Gem } from "lucide-react";
+import PhoneInput from "../../components/common/PhoneInput";
+import { parsePhoneNumber, formatPhoneNumber, validatePhoneNumber } from "../../utils/phone.util";
 import "./AddClient.css";
 
 const AddClient = () => {
@@ -32,8 +34,10 @@ const AddClient = () => {
     ucc_no: "",
     name: "",
     business_name: "",
+    mobile_country_code: "+91",
     mobile_no: "",
     same_as_whatsapp: false,
+    whatsapp_country_code: "+91",
     whatsapp_no: "",
     email: "",
     pan: "",
@@ -115,13 +119,23 @@ const AddClient = () => {
             ucc_no: c.ucc_no || "",
           });
 
+          const parsedMobile = parsePhoneNumber(c.mobile_no);
+          const parsedWhatsApp = parsePhoneNumber(c.whatsapp_no || c.mobile_no);
+          const isSame = Boolean(
+            c.mobile_no &&
+            c.whatsapp_no &&
+            (c.mobile_no === c.whatsapp_no || parsedMobile.phone === parsedWhatsApp.phone)
+          );
+
           setFormData({
             ucc_no: c.ucc_no || "",
             name: c.name || "",
             business_name: c.business_name || "",
-            mobile_no: c.mobile_no || "",
-            same_as_whatsapp: c.mobile_no && c.whatsapp_no && c.mobile_no === c.whatsapp_no,
-            whatsapp_no: c.whatsapp_no || "",
+            mobile_country_code: parsedMobile.countryCode || "+91",
+            mobile_no: parsedMobile.phone || "",
+            same_as_whatsapp: isSame,
+            whatsapp_country_code: parsedWhatsApp.countryCode || "+91",
+            whatsapp_no: parsedWhatsApp.phone || "",
             email: c.email || "",
             pan: c.pan || "",
             dob: dobFormatted,
@@ -172,6 +186,7 @@ const AddClient = () => {
       }
       if (name === "same_as_whatsapp") {
         if (checked) {
+          updated.whatsapp_country_code = prev.mobile_country_code;
           updated.whatsapp_no = prev.mobile_no;
         }
       }
@@ -267,12 +282,6 @@ const AddClient = () => {
     return emailRegex.test(emailStr.trim());
   };
 
-  const isValidPhoneNumber = (phoneStr) => {
-    if (!phoneStr || typeof phoneStr !== "string") return false;
-    const clean = phoneStr.trim().replace(/[\s\-()]/g, "");
-    return /^[0-9]{10,15}$/.test(clean);
-  };
-
   // Single field validation for blur and submit
   const validateSingleField = (fieldName, fieldValue, currentData = formData) => {
     const val = (fieldValue !== undefined && fieldValue !== null) ? fieldValue.toString().trim() : "";
@@ -282,13 +291,9 @@ const AddClient = () => {
         if (!val) return "Client Name is required";
         return "";
       case "mobile_no":
-        if (!val) return "Mobile Number is required";
-        if (!isValidPhoneNumber(val)) return "Please enter a valid mobile number.";
-        return "";
+        return validatePhoneNumber(currentData.mobile_country_code, currentData.mobile_no, "Mobile Number");
       case "whatsapp_no":
-        if (!val) return "WhatsApp Number is required";
-        if (!isValidPhoneNumber(val)) return "Please enter a valid WhatsApp number.";
-        return "";
+        return validatePhoneNumber(currentData.whatsapp_country_code, currentData.whatsapp_no, "WhatsApp Number");
       case "email":
         if (!val) return "Email address is required";
         if (!isValidEmail(val)) return "Please enter a valid email address.";
@@ -374,8 +379,8 @@ const AddClient = () => {
         ucc_no: formData.ucc_no.trim().toUpperCase(),
         name: formData.name.trim(),
         business_name: formData.business_name.trim() || null,
-        mobile_no: formData.mobile_no.trim(),
-        whatsapp_no: formData.whatsapp_no.trim() || null,
+        mobile_no: formatPhoneNumber(formData.mobile_country_code, formData.mobile_no),
+        whatsapp_no: formatPhoneNumber(formData.whatsapp_country_code, formData.whatsapp_no) || null,
         email: formData.email.trim() || null,
         pan: formData.pan.trim() ? formData.pan.trim().toUpperCase() : null,
         dob: formData.dob || null,
@@ -550,16 +555,34 @@ const AddClient = () => {
                 <label className="form-label">
                   Mobile Number <span className="required-star">*</span>
                 </label>
-                <input
-                  type="text"
+                <PhoneInput
+                  countryCode={formData.mobile_country_code}
+                  phone={formData.mobile_no}
+                  onCountryCodeChange={(code) => {
+                    setFormData((prev) => {
+                      const updated = { ...prev, mobile_country_code: code };
+                      if (prev.same_as_whatsapp) updated.whatsapp_country_code = code;
+                      return updated;
+                    });
+                  }}
+                  onPhoneChange={(val) => {
+                    setFormData((prev) => {
+                      const updated = { ...prev, mobile_no: val };
+                      if (prev.same_as_whatsapp) updated.whatsapp_no = val;
+                      return updated;
+                    });
+                    if (errors.mobile_no) setErrors((prev) => ({ ...prev, mobile_no: "" }));
+                  }}
+                  onBlur={() => {
+                    const err = validateSingleField("mobile_no", formData.mobile_no, formData);
+                    setErrors((prev) => ({ ...prev, mobile_no: err }));
+                  }}
+                  isInvalid={Boolean(errors.mobile_no)}
                   name="mobile_no"
-                  placeholder="Enter 10-digit mobile number"
-                  value={formData.mobile_no}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  className={`form-input ${errors.mobile_no ? "is-invalid" : ""}`}
+                  id="client-mobile-no"
+                  required
                 />
-                <label className="checkbox-inline-wrapper">
+                <label className="checkbox-inline-wrapper" style={{ marginTop: "0.5rem" }}>
                   <input
                     type="checkbox"
                     name="same_as_whatsapp"
@@ -577,15 +600,26 @@ const AddClient = () => {
                 <label className="form-label">
                   WhatsApp Number <span className="required-star">*</span>
                 </label>
-                <input
-                  type="text"
-                  name="whatsapp_no"
-                  placeholder="Enter 10-digit WhatsApp number"
-                  value={formData.whatsapp_no}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
+                <PhoneInput
+                  countryCode={formData.whatsapp_country_code}
+                  phone={formData.whatsapp_no}
+                  onCountryCodeChange={(code) => {
+                    setFormData((prev) => ({ ...prev, whatsapp_country_code: code }));
+                  }}
+                  onPhoneChange={(val) => {
+                    setFormData((prev) => ({ ...prev, whatsapp_no: val }));
+                    if (errors.whatsapp_no) setErrors((prev) => ({ ...prev, whatsapp_no: "" }));
+                  }}
+                  onBlur={() => {
+                    const err = validateSingleField("whatsapp_no", formData.whatsapp_no, formData);
+                    setErrors((prev) => ({ ...prev, whatsapp_no: err }));
+                  }}
+                  disabled={formData.same_as_whatsapp}
                   readOnly={formData.same_as_whatsapp}
-                  className={`form-input ${errors.whatsapp_no ? "is-invalid" : ""}`}
+                  isInvalid={Boolean(errors.whatsapp_no)}
+                  name="whatsapp_no"
+                  id="client-whatsapp-no"
+                  required
                 />
                 {errors.whatsapp_no && (
                   <span className="error-text">{errors.whatsapp_no}</span>

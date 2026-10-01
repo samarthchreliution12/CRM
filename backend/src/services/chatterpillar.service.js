@@ -198,10 +198,8 @@ class ChatterPillarService {
     const timeout = this.getTimeout();
 
     // Standardize recipient mobile with country code (ChatterPillar requires e.g. 918888888888)
-    let cleanMobile = String(mobile).trim().replace(/[\s\-()+]/g, "");
-    if (/^[6-9]\d{9}$/.test(cleanMobile)) {
-      cleanMobile = `91${cleanMobile}`;
-    }
+    const { formatForWhatsAppApi } = require("../utils/phone.util");
+    const cleanMobile = formatForWhatsAppApi(mobile);
 
     const payloadObj = {
       message_type: "template",

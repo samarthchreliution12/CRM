@@ -1,0 +1,79 @@
+.phone-input-group {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: var(--radius-sm, 6px);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  overflow: hidden;
+}
+
+.phone-input-group:focus-within {
+  border-color: #9E241E;
+  box-shadow: 0 0 0 3px rgba(158, 36, 30, 0.15);
+}
+
+.phone-input-group.is-invalid {
+  border-color: #ef4444;
+}
+
+.phone-input-group.is-invalid:focus-within {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+.phone-input-group.is-disabled {
+  background-color: #f8fafc;
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+.phone-country-select {
+  border: none;
+  background: #f8fafc;
+  padding: 0.625rem 0.5rem 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  outline: none;
+  min-width: 95px;
+  border-right: 1px solid #e2e8f0;
+  font-family: inherit;
+  transition: background-color 0.15s ease;
+}
+
+.phone-country-select:hover:not(:disabled) {
+  background-color: #f1f5f9;
+}
+
+.phone-country-select:disabled {
+  cursor: not-allowed;
+  color: #94a3b8;
+  background-color: #f8fafc;
+}
+
+.phone-number-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  color: #0f172a;
+  outline: none;
+  font-family: inherit;
+  letter-spacing: 0.02em;
+}
+
+.phone-number-input::placeholder {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.phone-number-input:disabled,
+.phone-number-input:read-only {
+  background-color: #f8fafc;
+  color: #64748b;
+  cursor: not-allowed;
+}

@@ -511,22 +511,30 @@ class ClientService {
       }
 
       // 6. Validate Mobile Number (Mandatory & Valid format)
+      let normalizedMobile = null;
       if (!mobile_no) {
         rowErrors.push("Mobile number is required");
       } else {
-        const { isValidPhoneNumber } = require("../validators/client.validator");
-        if (!isValidPhoneNumber(mobile_no)) {
-          rowErrors.push("Please enter a valid mobile number.");
+        const { validateAndNormalizePhone } = require("../utils/phone.util");
+        const norm = validateAndNormalizePhone(mobile_no, "Mobile number");
+        if (!norm.isValid) {
+          rowErrors.push(norm.error);
+        } else {
+          normalizedMobile = norm.formatted;
         }
       }
 
       // 7. Validate WhatsApp Number (Mandatory & Valid format)
+      let normalizedWhatsApp = null;
       if (!whatsapp_no) {
         rowErrors.push("WhatsApp number is required");
       } else {
-        const { isValidPhoneNumber } = require("../validators/client.validator");
-        if (!isValidPhoneNumber(whatsapp_no)) {
-          rowErrors.push("Please enter a valid WhatsApp number.");
+        const { validateAndNormalizePhone } = require("../utils/phone.util");
+        const norm = validateAndNormalizePhone(whatsapp_no, "WhatsApp number");
+        if (!norm.isValid) {
+          rowErrors.push(norm.error);
+        } else {
+          normalizedWhatsApp = norm.formatted;
         }
       }
 
@@ -621,8 +629,8 @@ class ClientService {
           ucc_no: autoUcc,
           name,
           business_name,
-          mobile_no,
-          whatsapp_no,
+          mobile_no: normalizedMobile || mobile_no,
+          whatsapp_no: normalizedWhatsApp || whatsapp_no,
           email,
           pan: panClean,
           dob: formattedDob,

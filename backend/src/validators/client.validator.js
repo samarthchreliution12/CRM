@@ -18,10 +18,11 @@ function isValidEmail(email) {
   return emailRegex.test(trimmed);
 }
 
+const { validateAndNormalizePhone } = require("../utils/phone.util");
+
 function isValidPhoneNumber(phone) {
   if (!phone || typeof phone !== "string") return false;
-  const clean = phone.trim().replace(/[\s\-()]/g, "");
-  return /^[0-9]{10,15}$/.test(clean);
+  return validateAndNormalizePhone(phone).isValid;
 }
 
 function validateCreateClientInput(data) {
@@ -35,15 +36,25 @@ function validateCreateClientInput(data) {
   // 2. Mobile Number (Mandatory)
   if (!data.mobile_no || !data.mobile_no.toString().trim()) {
     errors.push({ field: "mobile_no", message: "Mobile number is required" });
-  } else if (!isValidPhoneNumber(data.mobile_no.toString())) {
-    errors.push({ field: "mobile_no", message: "Please enter a valid mobile number." });
+  } else {
+    const norm = validateAndNormalizePhone(data.mobile_no.toString(), "Mobile number");
+    if (!norm.isValid) {
+      errors.push({ field: "mobile_no", message: norm.error });
+    } else {
+      data.mobile_no = norm.formatted;
+    }
   }
 
   // 4. WhatsApp Number (Mandatory)
   if (!data.whatsapp_no || !data.whatsapp_no.toString().trim()) {
     errors.push({ field: "whatsapp_no", message: "WhatsApp number is required" });
-  } else if (!isValidPhoneNumber(data.whatsapp_no.toString())) {
-    errors.push({ field: "whatsapp_no", message: "Please enter a valid WhatsApp number." });
+  } else {
+    const norm = validateAndNormalizePhone(data.whatsapp_no.toString(), "WhatsApp number");
+    if (!norm.isValid) {
+      errors.push({ field: "whatsapp_no", message: norm.error });
+    } else {
+      data.whatsapp_no = norm.formatted;
+    }
   }
 
   // 5. Email Address (Mandatory)
@@ -161,16 +172,26 @@ function validateUpdateClientInput(data) {
   if (data.mobile_no !== undefined) {
     if (!data.mobile_no || !data.mobile_no.toString().trim()) {
       errors.push({ field: "mobile_no", message: "Mobile number cannot be empty" });
-    } else if (!isValidPhoneNumber(data.mobile_no.toString())) {
-      errors.push({ field: "mobile_no", message: "Please enter a valid mobile number." });
+    } else {
+      const norm = validateAndNormalizePhone(data.mobile_no.toString(), "Mobile number");
+      if (!norm.isValid) {
+        errors.push({ field: "mobile_no", message: norm.error });
+      } else {
+        data.mobile_no = norm.formatted;
+      }
     }
   }
 
   if (data.whatsapp_no !== undefined) {
     if (!data.whatsapp_no || !data.whatsapp_no.toString().trim()) {
       errors.push({ field: "whatsapp_no", message: "WhatsApp number cannot be empty" });
-    } else if (!isValidPhoneNumber(data.whatsapp_no.toString())) {
-      errors.push({ field: "whatsapp_no", message: "Please enter a valid WhatsApp number." });
+    } else {
+      const norm = validateAndNormalizePhone(data.whatsapp_no.toString(), "WhatsApp number");
+      if (!norm.isValid) {
+        errors.push({ field: "whatsapp_no", message: norm.error });
+      } else {
+        data.whatsapp_no = norm.formatted;
+      }
     }
   }
 
