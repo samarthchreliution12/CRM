@@ -14,6 +14,7 @@ import {
   CheckSquare,
   Plus,
   Calendar as CalendarIcon,
+  SlidersHorizontal,
 } from "lucide-react";
 import headerLogo from "../../../assets/website/logo/header-logo.png";
 import useAuth from "../../../hooks/useAuth";
@@ -564,6 +565,15 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
               </Link>
 
               <Link
+                to="/communication/whatsapp-configuration"
+                className={`submenu-link ${location.pathname === "/communication/whatsapp-configuration" ? "active" : ""}`}
+                onClick={onClose}
+              >
+                <SlidersHorizontal size={14} className="submenu-icon" />
+                <span>WhatsApp Configuration</span>
+              </Link>
+
+              <Link
                 to="/communication/whatsapp-settings"
                 className={`submenu-link ${location.pathname === "/communication/whatsapp-settings" ? "active" : ""}`}
                 onClick={onClose}
@@ -606,6 +616,19 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
               >
                 <FileText size={14} />
                 <span>WhatsApp Templates</span>
+              </Link>
+
+              <Link
+                to="/communication/whatsapp-configuration"
+                className={`flyout-link ${location.pathname === "/communication/whatsapp-configuration" ? "active" : ""}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowCommunicationFlyout(false);
+                  onClose();
+                }}
+              >
+                <SlidersHorizontal size={14} />
+                <span>WhatsApp Configuration</span>
               </Link>
 
               <Link

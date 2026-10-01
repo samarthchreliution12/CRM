@@ -611,6 +611,254 @@ class WhatsAppService {
       buttonVariables: button_variable_values,
     });
   }
+
+  /**
+   * Get active recipient count for manual template sending.
+   */
+  static async getManualRecipientsCount({ sendToType = "ALL", clientTypeId = null, clientIds = [] }) {
+    if (sendToType === "CLIENT_TYPE") {
+      if (!clientTypeId) return { count: 0 };
+      const res = await pool.query(
+        `SELECT COUNT(*) as count FROM clients 
+         WHERE status = 'active' AND client_type_id = $1 
+           AND ((mobile_no IS NOT NULL AND TRIM(mobile_no) <> '') OR (whatsapp_no IS NOT NULL AND TRIM(whatsapp_no) <> ''))`,
+        [clientTypeId]
+      );
+      return { count: parseInt(res.rows[0]?.count || 0, 10) };
+    }
+
+    if (sendToType === "SELECTED") {
+      if (!Array.isArray(clientIds) || clientIds.length === 0) return { count: 0 };
+      const res = await pool.query(
+        `SELECT COUNT(*) as count FROM clients 
+         WHERE id = ANY($1::int[]) AND status = 'active' 
+           AND ((mobile_no IS NOT NULL AND TRIM(mobile_no) <> '') OR (whatsapp_no IS NOT NULL AND TRIM(whatsapp_no) <> ''))`,
+        [clientIds]
+      );
+      return { count: parseInt(res.rows[0]?.count || 0, 10) };
+    }
+
+    // Default "ALL"
+    const res = await pool.query(
+      `SELECT COUNT(*) as count FROM clients 
+       WHERE status = 'active' 
+         AND ((mobile_no IS NOT NULL AND TRIM(mobile_no) <> '') OR (whatsapp_no IS NOT NULL AND TRIM(whatsapp_no) <> ''))`
+    );
+    return { count: parseInt(res.rows[0]?.count || 0, 10) };
+  }
+
+  /**
+   * Send approved WhatsApp template directly to selected clients (Manual Send).
+   */
+  static async sendManualTemplateMessage({
+    templateId,
+    sendToType = "ALL",
+    clientTypeId = null,
+    clientIds = [],
+    variableMappings = {},
+    userId = null,
+  }) {
+    if (!templateId || !String(templateId).trim()) {
+      const err = new Error("template_id is required.");
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const template = await WhatsAppTemplateModel.findByTemplateId(String(templateId).trim());
+    if (!template) {
+      const err = new Error(`Template with ID '${templateId}' was not found in CRM. Please sync templates first.`);
+      err.statusCode = 404;
+      throw err;
+    }
+
+    if (String(template.status).toUpperCase() !== "APPROVED") {
+      const err = new Error(`Cannot send template '${template.template_name}' because its status is ${template.status}. Only APPROVED templates can be sent.`);
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const creds = await this.getDecryptedCredentials();
+
+    // 1. Fetch targeted active clients
+    let clients = [];
+    if (sendToType === "CLIENT_TYPE") {
+      if (!clientTypeId) {
+        const err = new Error("client_type_id is required when send_to_type is CLIENT_TYPE.");
+        err.statusCode = 400;
+        throw err;
+      }
+      const res = await pool.query(
+        `SELECT id, name, mobile_no, whatsapp_no, email, client_type_id 
+         FROM clients 
+         WHERE status = 'active' AND client_type_id = $1 
+           AND ((mobile_no IS NOT NULL AND TRIM(mobile_no) <> '') OR (whatsapp_no IS NOT NULL AND TRIM(whatsapp_no) <> ''))
+         ORDER BY name ASC`,
+        [clientTypeId]
+      );
+      clients = res.rows;
+    } else if (sendToType === "SELECTED") {
+      if (!Array.isArray(clientIds) || clientIds.length === 0) {
+        const err = new Error("Please select at least one client recipient.");
+        err.statusCode = 400;
+        throw err;
+      }
+      const res = await pool.query(
+        `SELECT id, name, mobile_no, whatsapp_no, email, client_type_id 
+         FROM clients 
+         WHERE id = ANY($1::int[]) AND status = 'active' 
+           AND ((mobile_no IS NOT NULL AND TRIM(mobile_no) <> '') OR (whatsapp_no IS NOT NULL AND TRIM(whatsapp_no) <> ''))
+         ORDER BY name ASC`,
+        [clientIds]
+      );
+      clients = res.rows;
+    } else {
+      // ALL
+      const res = await pool.query(
+        `SELECT id, name, mobile_no, whatsapp_no, email, client_type_id 
+         FROM clients 
+         WHERE status = 'active' 
+           AND ((mobile_no IS NOT NULL AND TRIM(mobile_no) <> '') OR (whatsapp_no IS NOT NULL AND TRIM(whatsapp_no) <> ''))
+         ORDER BY name ASC`
+      );
+      clients = res.rows;
+    }
+
+    if (clients.length === 0) {
+      const err = new Error("No active clients with valid mobile numbers were found matching your criteria.");
+      err.statusCode = 400;
+      throw err;
+    }
+
+    // 2. Parse template variable keys (e.g. ['1', '2'] or ['name', 'date'])
+    let varKeys = [];
+    if (template.variables) {
+      try {
+        varKeys = typeof template.variables === "string" ? JSON.parse(template.variables) : template.variables;
+      } catch (e) {
+        varKeys = [];
+      }
+    }
+    if (!Array.isArray(varKeys) || varKeys.length === 0) {
+      const matches = [];
+      const varRegex = /{{\s*([a-zA-Z0-9_-]+)\s*}}/g;
+      let m;
+      while ((m = varRegex.exec(template.body_content || "")) !== null) {
+        if (!matches.includes(m[1])) matches.push(m[1]);
+      }
+      varKeys = matches;
+    }
+
+    varKeys.sort((a, b) => {
+      const nA = parseInt(a, 10);
+      const nB = parseInt(b, 10);
+      if (!isNaN(nA) && !isNaN(nB)) return nA - nB;
+      return String(a).localeCompare(String(b));
+    });
+
+    let sent = 0;
+    let failed = 0;
+    const failures = [];
+    const currentYear = new Date().getFullYear();
+
+    for (const client of clients) {
+      const rawPhone = (client.whatsapp_no || client.mobile_no || "").trim();
+      const cleanMobile = formatForWhatsAppApi(rawPhone);
+
+      if (!cleanMobile) {
+        failed++;
+        failures.push({
+          client_id: client.id,
+          client_name: client.name,
+          mobile: rawPhone || "Missing",
+          reason: "Invalid or empty phone number.",
+        });
+        continue;
+      }
+
+      // Map body variable values for this client
+      const bodyValues = varKeys.map((vKey) => {
+        const val = variableMappings[vKey] ?? "";
+        if (val === "{{client_name}}" || val === "CLIENT_NAME" || (!val && vKey === "1")) {
+          return client.name;
+        }
+        if (val === "{{client_mobile}}" || val === "CLIENT_MOBILE") {
+          return client.mobile_no || "";
+        }
+        return String(val);
+      });
+
+      try {
+        const providerRes = await ChatterPillarService.sendTemplateMessage({
+          apiKey: creds.apiKey,
+          whatsappAccountId: creds.whatsappAccountId,
+          templateId: template.template_id,
+          mobile: cleanMobile,
+          fullName: client.name,
+          bodyVariables: bodyValues.length > 0 ? bodyValues : undefined,
+        });
+
+        let providerMessageId = null;
+        if (Array.isArray(providerRes?.data) && providerRes.data.length > 0) {
+          providerMessageId = providerRes.data[0].id || providerRes.data[0].message_id || null;
+        } else if (providerRes?.message_id || providerRes?.id) {
+          providerMessageId = providerRes.message_id || providerRes.id;
+        }
+
+        await WhatsAppMessageModel.create({
+          clientId: client.id,
+          templateId: template.template_id,
+          templateName: template.template_name,
+          userId,
+          messageType: "MANUAL",
+          recipientMobile: cleanMobile,
+          recipientName: client.name,
+          messageContent: template.body_content,
+          variableValues: bodyValues,
+          provider: "ChatterPillar",
+          providerMessageId,
+          status: "SENT",
+          errorDetails: null,
+          sentYear: currentYear,
+        });
+
+        sent++;
+      } catch (err) {
+        failed++;
+        failures.push({
+          client_id: client.id,
+          client_name: client.name,
+          mobile: cleanMobile,
+          reason: err.message || "Failed to dispatch message.",
+        });
+
+        await WhatsAppMessageModel.create({
+          clientId: client.id,
+          templateId: template.template_id,
+          templateName: template.template_name,
+          userId,
+          messageType: "MANUAL",
+          recipientMobile: cleanMobile,
+          recipientName: client.name,
+          messageContent: template.body_content,
+          variableValues: bodyValues,
+          provider: "ChatterPillar",
+          providerMessageId: null,
+          status: "FAILED",
+          errorDetails: err.message,
+          sentYear: currentYear,
+        });
+      }
+    }
+
+    return {
+      success: true,
+      message: `Message sending completed. Sent: ${sent}, Failed: ${failed}.`,
+      total: clients.length,
+      sent,
+      failed,
+      failures,
+    };
+  }
 }
 
 module.exports = WhatsAppService;

@@ -33,6 +33,7 @@ import ClientDetails from "./pages/clients/ClientDetails";
 import Documents from "./pages/documents/Documents";
 import Communication from "./pages/communication/Communication";
 import WhatsAppTemplates from "./pages/communication/WhatsAppTemplates";
+import WhatsAppConfiguration from "./pages/communication/WhatsAppConfiguration";
 import WhatsAppSettings from "./pages/communication/WhatsAppSettings";
 import Settings from "./pages/settings/Settings";
 import UserAccess from "./pages/settings/users/UserAccess";
@@ -324,6 +325,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <WhatsAppTemplates />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/communication/whatsapp-configuration"
+            element={
+              <ProtectedRoute>
+                <WhatsAppConfiguration />
               </ProtectedRoute>
             }
           />

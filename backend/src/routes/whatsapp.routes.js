@@ -122,4 +122,18 @@ router.post(
   WhatsAppController.getWhatsAppAccountInfo
 );
 
+// 6. Manual Send Endpoints
+router.get(
+  "/manual-recipients/count",
+  requirePermission(["whatsapp.view", "whatsapp.read", "whatsapp.send"]),
+  WhatsAppController.getManualRecipientsCount
+);
+
+router.post(
+  "/manual-send",
+  requirePermission(["whatsapp.send", "whatsapp.edit", "whatsapp.update"]),
+  WhatsAppController.sendManualTemplateMessage
+);
+
 module.exports = router;
+

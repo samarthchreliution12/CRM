@@ -189,6 +189,38 @@ class WhatsAppService {
       token
     );
   }
+
+  /**
+   * Fetch recipient count for manual sending
+   */
+  static async getManualRecipientsCount(
+    { sendToType = "ALL", clientTypeId = null, clientIds = [] } = {},
+    token
+  ) {
+    const params = new URLSearchParams();
+    if (sendToType) params.append("send_to_type", sendToType);
+    if (clientTypeId) params.append("client_type_id", clientTypeId);
+    if (Array.isArray(clientIds) && clientIds.length > 0) {
+      params.append("client_ids", clientIds.join(","));
+    }
+    const query = params.toString() ? `?${params.toString()}` : "";
+    return this.request(`/whatsapp/manual-recipients/count${query}`, { method: "GET" }, token);
+  }
+
+  /**
+   * Dispatch manual WhatsApp template message to selected audience
+   */
+  static async sendManualTemplateMessage(data, token) {
+    return this.request(
+      "/whatsapp/manual-send",
+      {
+        method: "POST",
+        body: JSON.stringify(data),
+      },
+      token
+    );
+  }
 }
 
 export default WhatsAppService;
+

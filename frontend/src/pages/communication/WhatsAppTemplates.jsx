@@ -8,15 +8,12 @@ import {
   CheckCircle2,
   AlertCircle,
   Send,
-  Cake,
-  Star,
   Loader2,
   X,
   Smartphone,
   User,
   SlidersHorizontal,
   Info,
-  ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import WhatsAppService from "../../services/whatsapp.service";
@@ -30,8 +27,6 @@ const WhatsAppTemplates = () => {
   const [settings, setSettings] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [isSettingBirthday, setIsSettingBirthday] = useState(null);
-  const [isSettingOtp, setIsSettingOtp] = useState(null);
 
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState("");
@@ -109,77 +104,6 @@ const WhatsAppTemplates = () => {
     }
   };
 
-  // Select Active Birthday Template Action
-  const handleSelectBirthday = async (template) => {
-    if (String(template.status).toUpperCase() !== "APPROVED") {
-      showAlert("Only APPROVED templates can be designated as Birthday Template.", "danger");
-      return;
-    }
-
-    setIsSettingBirthday(template.template_id);
-    try {
-      const response = await WhatsAppService.selectBirthdayTemplate(template.template_id, token);
-      if (response && response.success) {
-        showAlert(
-          `'${template.template_name}' is now set as the active Birthday Greeting Template!`
-        );
-        // Refresh local settings state
-        setSettings((prev) => ({
-          ...prev,
-          birthday_template_id: template.template_id,
-          birthday_template_data: {
-            template_id: template.template_id,
-            template_name: template.template_name,
-            category: template.category,
-            body_content: template.body_content,
-          },
-        }));
-      } else {
-        showAlert(response?.message || "Failed to set birthday template.", "danger");
-      }
-    } catch (err) {
-      console.error("Select birthday template error:", err);
-      showAlert(err.message || "Failed to select birthday template.", "danger");
-    } finally {
-      setIsSettingBirthday(null);
-    }
-  };
-
-  // Select Active Client Portal OTP Template Action
-  const handleSelectOtp = async (template) => {
-    if (String(template.status).toUpperCase() !== "APPROVED") {
-      showAlert("Only APPROVED templates can be designated as Client Portal OTP Template.", "danger");
-      return;
-    }
-
-    setIsSettingOtp(template.template_id);
-    try {
-      const response = await WhatsAppService.selectOtpTemplate(template.template_id, token);
-      if (response && response.success) {
-        showAlert(
-          `'${template.template_name}' is now set as the active Client Portal OTP Template!`
-        );
-        // Refresh local settings state
-        setSettings((prev) => ({
-          ...prev,
-          otp_template_id: template.template_id,
-          otp_template_data: {
-            template_id: template.template_id,
-            template_name: template.template_name,
-            category: template.category,
-            body_content: template.body_content,
-          },
-        }));
-      } else {
-        showAlert(response?.message || "Failed to set OTP template.", "danger");
-      }
-    } catch (err) {
-      console.error("Select OTP template error:", err);
-      showAlert(err.message || "Failed to select OTP template.", "danger");
-    } finally {
-      setIsSettingOtp(null);
-    }
-  };
 
   // Robust helper to extract template body from all possible API response formats
   const getTemplateBody = useCallback((tpl) => {
@@ -395,8 +319,6 @@ const WhatsAppTemplates = () => {
   }, [templates, searchQuery, selectedCategory, getTemplateBody]);
 
   const isConnected = Boolean(settings?.is_connected);
-  const activeBirthdayId = settings?.birthday_template_id;
-  const activeOtpId = settings?.otp_template_id;
 
   return (
     <AppLayout title="WhatsApp Templates">
@@ -406,7 +328,7 @@ const WhatsAppTemplates = () => {
           <div>
             <h1 className="wa-templates-title">WhatsApp Templates</h1>
             <p className="wa-templates-subtitle">
-              Browse, test, and manage ChatterPillar approved message templates.
+              Manage approved WhatsApp message templates available for CRM communication.
             </p>
           </div>
 
@@ -475,92 +397,6 @@ const WhatsAppTemplates = () => {
           </div>
         )}
 
-        {/* 3. ACTIVE BIRTHDAY TEMPLATE BANNER */}
-        {settings?.birthday_template_data && (
-          <div className="wa-birthday-banner">
-            <div className="wa-birthday-banner-left">
-              <div className="wa-birthday-icon-badge">
-                <Cake size={22} />
-              </div>
-              <div>
-                <h3 className="wa-birthday-banner-title">
-                  Active Birthday Greeting Template: {settings.birthday_template_data.template_name}
-                </h3>
-                <p className="wa-birthday-banner-desc">
-                  This template is designated for sending automated client birthday greetings across the CRM.
-                </p>
-              </div>
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <span
-                style={{
-                  fontSize: "0.75rem",
-                  backgroundColor: "#ffffff",
-                  color: "#854d0e",
-                  border: "1px solid #fde047",
-                  padding: "0.3rem 0.65rem",
-                  borderRadius: "20px",
-                  fontWeight: 700,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0.35rem",
-                }}
-              >
-                <Star size={14} style={{ fill: "#ca8a04", color: "#ca8a04" }} />
-                DESIGNATED BIRTHDAY TEMPLATE
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* 3.1 ACTIVE CLIENT PORTAL OTP TEMPLATE BANNER */}
-        {settings?.otp_template_data && (
-          <div
-            className="wa-birthday-banner"
-            style={{
-              background: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)",
-              border: "1px solid #93c5fd",
-            }}
-          >
-            <div className="wa-birthday-banner-left">
-              <div
-                className="wa-birthday-icon-badge"
-                style={{ backgroundColor: "#2563eb", color: "#ffffff" }}
-              >
-                <ShieldCheck size={22} />
-              </div>
-              <div>
-                <h3 className="wa-birthday-banner-title" style={{ color: "#1e3a8a" }}>
-                  Active Client Portal OTP Template: {settings.otp_template_data.template_name}
-                </h3>
-                <p className="wa-birthday-banner-desc" style={{ color: "#1e40af" }}>
-                  This template is designated for delivering secure WhatsApp OTP codes to clients logging into the Client Portal.
-                </p>
-              </div>
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <span
-                style={{
-                  fontSize: "0.75rem",
-                  backgroundColor: "#ffffff",
-                  color: "#1d4ed8",
-                  border: "1px solid #60a5fa",
-                  padding: "0.3rem 0.65rem",
-                  borderRadius: "20px",
-                  fontWeight: 700,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "0.35rem",
-                }}
-              >
-                <ShieldCheck size={14} style={{ color: "#2563eb" }} />
-                DESIGNATED OTP TEMPLATE
-              </span>
-            </div>
-          </div>
-        )}
 
         {/* 4. SEARCH & FILTER TOOLBAR */}
         <div className="wa-toolbar-card">
@@ -668,8 +504,6 @@ const WhatsAppTemplates = () => {
         ) : (
           <div className="wa-templates-grid">
             {filteredTemplates.map((tpl) => {
-              const isBirthday = activeBirthdayId === tpl.template_id;
-              const isOtp = activeOtpId === tpl.template_id;
               const isApproved = String(tpl.status).toUpperCase() === "APPROVED";
 
               let buttonsList = [];
@@ -685,7 +519,7 @@ const WhatsAppTemplates = () => {
               return (
                 <div
                   key={tpl.template_id || tpl.id}
-                  className={`wa-tpl-card ${isBirthday ? "active-birthday" : ""} ${isOtp ? "active-otp" : ""}`}
+                  className="wa-tpl-card"
                 >
                   {/* Card Header */}
                   <div className="wa-tpl-card-header">
@@ -766,79 +600,10 @@ const WhatsAppTemplates = () => {
 
                   {/* Card Actions Footer */}
                   <div className="wa-tpl-card-footer">
-                    {/* Birthday Template Selection Button */}
-                    <button
-                      type="button"
-                      className={`wa-btn-birthday ${isBirthday ? "active" : ""}`}
-                      onClick={() => handleSelectBirthday(tpl)}
-                      disabled={!isApproved || isBirthday || isSettingBirthday === tpl.template_id}
-                      title={
-                        !isApproved
-                          ? "Only APPROVED templates can be selected"
-                          : isBirthday
-                          ? "Currently selected birthday template"
-                          : "Set as active birthday greeting template"
-                      }
-                    >
-                      {isSettingBirthday === tpl.template_id ? (
-                        <>
-                          <Loader2 size={14} className="wa-spinner" />
-                          <span>Setting...</span>
-                        </>
-                      ) : isBirthday ? (
-                        <>
-                          <Cake size={14} />
-                          <span>Active Birthday</span>
-                        </>
-                      ) : (
-                        <>
-                          <Cake size={14} />
-                          <span>Use for Birthday</span>
-                        </>
-                      )}
-                    </button>
-
-                    {/* Client Portal OTP Template Selection Button */}
-                    <button
-                      type="button"
-                      className={`wa-btn-birthday ${isOtp ? "active" : ""}`}
-                      style={
-                        isOtp
-                          ? { backgroundColor: "#eff6ff", borderColor: "#3b82f6", color: "#1d4ed8" }
-                          : { backgroundColor: "#f8fafc", borderColor: "#e2e8f0", color: "#475569" }
-                      }
-                      onClick={() => handleSelectOtp(tpl)}
-                      disabled={!isApproved || isOtp || isSettingOtp === tpl.template_id}
-                      title={
-                        !isApproved
-                          ? "Only APPROVED templates can be selected"
-                          : isOtp
-                          ? "Currently selected Client Portal OTP template"
-                          : "Set as active Client Portal OTP template"
-                      }
-                    >
-                      {isSettingOtp === tpl.template_id ? (
-                        <>
-                          <Loader2 size={14} className="wa-spinner" />
-                          <span>Setting...</span>
-                        </>
-                      ) : isOtp ? (
-                        <>
-                          <ShieldCheck size={14} />
-                          <span>Active OTP</span>
-                        </>
-                      ) : (
-                        <>
-                          <ShieldCheck size={14} />
-                          <span>Use for OTP</span>
-                        </>
-                      )}
-                    </button>
-
-                    {/* Test Send Button */}
                     <button
                       type="button"
                       className="wa-btn-test-send"
+                      style={{ width: "100%", justifyContent: "center" }}
                       onClick={() => handleOpenTestModal(tpl)}
                       title="Send test message to your phone"
                     >

@@ -207,6 +207,63 @@ class WhatsAppController {
       return sendError(res, error.statusCode || 500, error.message);
     }
   }
+
+  /**
+   * GET /api/whatsapp/manual-recipients/count
+   * Returns count of eligible active clients for manual send.
+   */
+  static async getManualRecipientsCount(req, res) {
+    try {
+      const { send_to_type, client_type_id, client_ids } = req.query;
+      let parsedClientIds = [];
+      if (client_ids) {
+        if (Array.isArray(client_ids)) {
+          parsedClientIds = client_ids.map((id) => parseInt(id, 10)).filter(Boolean);
+        } else if (typeof client_ids === "string") {
+          parsedClientIds = client_ids
+            .split(",")
+            .map((id) => parseInt(id.trim(), 10))
+            .filter(Boolean);
+        }
+      }
+
+      const result = await WhatsAppService.getManualRecipientsCount({
+        sendToType: send_to_type,
+        clientTypeId: client_type_id ? parseInt(client_type_id, 10) : null,
+        clientIds: parsedClientIds,
+      });
+
+      return sendSuccess(res, 200, "Recipients count fetched successfully.", result);
+    } catch (error) {
+      return sendError(res, error.statusCode || 500, error.message);
+    }
+  }
+
+  /**
+   * POST /api/whatsapp/manual-send
+   * Dispatches approved template to selected clients.
+   */
+  static async sendManualTemplateMessage(req, res) {
+    try {
+      const { template_id, send_to_type, client_type_id, client_ids, variable_mappings } =
+        req.body || {};
+      const userId = req.user ? req.user.id : null;
+
+      const result = await WhatsAppService.sendManualTemplateMessage({
+        templateId: template_id,
+        sendToType: send_to_type,
+        clientTypeId: client_type_id ? parseInt(client_type_id, 10) : null,
+        clientIds: Array.isArray(client_ids) ? client_ids : [],
+        variableMappings: variable_mappings || {},
+        userId,
+      });
+
+      return sendSuccess(res, 200, result.message || "Manual WhatsApp send completed.", result);
+    } catch (error) {
+      return sendError(res, error.statusCode || 500, error.message);
+    }
+  }
 }
 
 module.exports = WhatsAppController;
+
