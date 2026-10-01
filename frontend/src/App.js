@@ -323,7 +323,7 @@ function App() {
           <Route
             path="/communication/whatsapp-templates"
             element={
-              <ProtectedRoute requiredPermission={["whatsapp_template.view", "whatsapp.view", "whatsapp.read"]}>
+              <ProtectedRoute requiredPermission={["whatsapp.view", "whatsapp.read"]}>
                 <WhatsAppTemplates />
               </ProtectedRoute>
             }

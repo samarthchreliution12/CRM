@@ -65,11 +65,8 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
     isAdmin || permissions.includes("communication.view") || permissions.includes("communication.read");
   const canAccessWhatsAppTemplates =
     isAdmin ||
-    permissions.includes("whatsapp_template.view") ||
-    permissions.includes("whatsapp_template.read") ||
     permissions.includes("whatsapp.view") ||
-    permissions.includes("whatsapp.read") ||
-    permissions.includes("whatsapp.template.select");
+    permissions.includes("whatsapp.read");
   const canAccessWhatsAppConfig =
     isAdmin ||
     permissions.includes("whatsapp_config.view") ||

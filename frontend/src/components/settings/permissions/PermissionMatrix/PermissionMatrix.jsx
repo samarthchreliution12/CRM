@@ -119,8 +119,7 @@ export const MODULES_CONFIG = [
       },
       {
         name: "WhatsApp Templates",
-        prefix: "whatsapp_template",
-        fallbackPrefix: "whatsapp",
+        prefix: "whatsapp",
         icon: FileText,
         allowedActions: ["view", "create", "edit"],
         description: "Approved message templates repository",
@@ -129,7 +128,7 @@ export const MODULES_CONFIG = [
         name: "WhatsApp Configuration",
         prefix: "whatsapp_config",
         icon: SlidersHorizontal,
-        allowedActions: ["view", "create", "edit"],
+        allowedActions: ["view", "edit"],
         description: "Workflow template triggers & automated events",
       },
     ],
