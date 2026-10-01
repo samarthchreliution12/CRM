@@ -180,6 +180,8 @@ const GroupsTab = () => {
             <tbody>
               {groups.map((g) => {
                 const count = parseInt(g.member_count || g.memberCount || 0, 10);
+                const isSystem = g.is_system || ["admin", "staff"].includes(g.name?.toLowerCase());
+
                 return (
                   <tr key={g.id}>
                     <td>
@@ -189,8 +191,8 @@ const GroupsTab = () => {
                             width: "36px",
                             height: "36px",
                             borderRadius: "8px",
-                            backgroundColor: "#eff6ff",
-                            color: "#2563eb",
+                            backgroundColor: isSystem ? "#f1f5f9" : "#eff6ff",
+                            color: isSystem ? "#475569" : "#2563eb",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -201,9 +203,26 @@ const GroupsTab = () => {
                         >
                           <Users size={18} />
                         </div>
-                        <span className="staff-name-text" style={{ fontSize: "0.9rem" }}>
-                          {g.name}
-                        </span>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                          <span className="staff-name-text" style={{ fontSize: "0.9rem" }}>
+                            {g.name}
+                          </span>
+                          {isSystem && (
+                            <span
+                              style={{
+                                fontSize: "0.7rem",
+                                fontWeight: "600",
+                                color: "#64748b",
+                                backgroundColor: "#f1f5f9",
+                                border: "1px solid #e2e8f0",
+                                padding: "1px 6px",
+                                borderRadius: "4px",
+                              }}
+                            >
+                              Default Role
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td style={{ color: "#64748b", fontSize: "0.85rem" }}>
@@ -240,21 +259,35 @@ const GroupsTab = () => {
                           <span>Manage</span>
                         </button>
 
-                        <button
-                          type="button"
-                          style={{
-                            padding: "6px 8px",
-                            backgroundColor: "transparent",
-                            color: "#94a3b8",
-                            border: "none",
-                            borderRadius: "6px",
-                            cursor: "pointer",
-                          }}
-                          title="Delete Group"
-                          onClick={() => handleOpenDelete(g)}
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        {!isSystem ? (
+                          <button
+                            type="button"
+                            style={{
+                              padding: "6px 8px",
+                              backgroundColor: "transparent",
+                              color: "#94a3b8",
+                              border: "none",
+                              borderRadius: "6px",
+                              cursor: "pointer",
+                            }}
+                            title="Delete Group"
+                            onClick={() => handleOpenDelete(g)}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        ) : (
+                          <span
+                            title="Default system role cannot be deleted"
+                            style={{
+                              display: "inline-flex",
+                              padding: "6px 8px",
+                              color: "#cbd5e1",
+                              cursor: "not-allowed",
+                            }}
+                          >
+                            <Trash2 size={16} />
+                          </span>
+                        )}
                       </div>
                     </td>
                   </tr>

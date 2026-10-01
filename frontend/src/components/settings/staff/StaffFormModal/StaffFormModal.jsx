@@ -15,7 +15,7 @@ const StaffFormModal = ({ isOpen, onClose, onSubmit, initialData = null, isSubmi
     confirmPassword: "",
   });
 
-  const [customGroups, setCustomGroups] = useState([]);
+  const [allGroups, setAllGroups] = useState([]);
   const [fieldErrors, setFieldErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -27,7 +27,7 @@ const StaffFormModal = ({ isOpen, onClose, onSubmit, initialData = null, isSubmi
         const token = localStorage.getItem("token");
         const res = await GroupService.getGroups(token);
         if (isMounted && res && res.data && res.data.groups) {
-          setCustomGroups(res.data.groups);
+          setAllGroups(res.data.groups);
         }
       } catch (e) {
         // Ignore group fetch error
@@ -41,13 +41,16 @@ const StaffFormModal = ({ isOpen, onClose, onSubmit, initialData = null, isSubmi
     };
   }, [isOpen]);
 
+  const staffRole = allGroups.find((g) => g.name?.toLowerCase() === "staff");
+  const defaultStaffRoleId = staffRole ? staffRole.id : 3;
+
   useEffect(() => {
     if (initialData) {
       setFormData({
         name: initialData.name || "",
         email: initialData.email || "",
         mobile: initialData.mobile || "",
-        role_id: initialData.role?.id || initialData.role_id || 2,
+        role_id: initialData.role?.id || initialData.role_id || defaultStaffRoleId,
         password: "",
         confirmPassword: "",
       });
@@ -56,13 +59,13 @@ const StaffFormModal = ({ isOpen, onClose, onSubmit, initialData = null, isSubmi
         name: "",
         email: "",
         mobile: "",
-        role_id: 2,
+        role_id: defaultStaffRoleId,
         password: "",
         confirmPassword: "",
       });
     }
     setFieldErrors({});
-  }, [initialData, isOpen]);
+  }, [initialData, isOpen, defaultStaffRoleId]);
 
   if (!isOpen) return null;
 
@@ -215,22 +218,36 @@ const StaffFormModal = ({ isOpen, onClose, onSubmit, initialData = null, isSubmi
               <label className="modal-form-label">Role / Group</label>
               <select
                 name="role_id"
-                value={formData.role_id || 2}
+                value={formData.role_id || defaultStaffRoleId}
                 onChange={handleChange}
                 className="modal-form-input"
                 disabled={isSubmitting}
               >
                 <optgroup label="System Roles">
-                  <option value={2}>Staff</option>
-                  <option value={1}>Admin</option>
+                  {allGroups.filter((g) => g.is_system || ["admin", "staff"].includes(g.name?.toLowerCase())).length > 0 ? (
+                    allGroups
+                      .filter((g) => g.is_system || ["admin", "staff"].includes(g.name?.toLowerCase()))
+                      .map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.name}
+                        </option>
+                      ))
+                  ) : (
+                    <>
+                      <option value={3}>Staff</option>
+                      <option value={1}>Admin</option>
+                    </>
+                  )}
                 </optgroup>
-                {customGroups.length > 0 && (
+                {allGroups.filter((g) => !g.is_system && !["admin", "staff"].includes(g.name?.toLowerCase())).length > 0 && (
                   <optgroup label="Custom Groups">
-                    {customGroups.map((g) => (
-                      <option key={g.id} value={g.id}>
-                        {g.name}
-                      </option>
-                    ))}
+                    {allGroups
+                      .filter((g) => !g.is_system && !["admin", "staff"].includes(g.name?.toLowerCase()))
+                      .map((g) => (
+                        <option key={g.id} value={g.id}>
+                          {g.name}
+                        </option>
+                      ))}
                   </optgroup>
                 )}
               </select>

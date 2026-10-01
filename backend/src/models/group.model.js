@@ -32,7 +32,7 @@ class GroupModel {
     return result.rows[0] || null;
   }
 
-  // Find all custom groups (excluding system roles Admin, Staff, Client)
+  // Find all groups/roles (including system roles Admin, Staff, and custom groups; excluding external Client role)
   static async findAllCustomGroups() {
     const query = `
       SELECT 
@@ -42,15 +42,24 @@ class GroupModel {
         r.status, 
         r.created_at, 
         r.updated_at,
+        CASE 
+          WHEN LOWER(r.name) IN ('admin', 'staff') OR r.id IN (1, 3) THEN true 
+          ELSE false 
+        END AS is_system,
         COALESCE(COUNT(u.id)::int, 0) AS member_count,
         COALESCE(COUNT(u.id)::int, 0) AS "memberCount"
       FROM roles r
       LEFT JOIN users u ON u.role_id = r.id
       WHERE r.status = 'active' 
-        AND r.id NOT IN (1, 2, 3) 
-        AND LOWER(r.name) NOT IN ('admin', 'staff', 'client')
+        AND LOWER(r.name) != 'client'
       GROUP BY r.id
-      ORDER BY r.id ASC
+      ORDER BY 
+        CASE 
+          WHEN LOWER(r.name) = 'admin' THEN 1
+          WHEN LOWER(r.name) = 'staff' THEN 2
+          ELSE 3
+        END,
+        r.id ASC
     `;
     const result = await pool.query(query);
     return result.rows;
@@ -104,7 +113,7 @@ class GroupModel {
   }
 
   // Remove member (reassign user's role_id back to default Staff role)
-  static async removeMember(groupId, userId, defaultStaffRoleId = 2) {
+  static async removeMember(groupId, userId, defaultStaffRoleId = 3) {
     const query = `
       UPDATE users
       SET role_id = $2, updated_at = CURRENT_TIMESTAMP
@@ -119,7 +128,7 @@ class GroupModel {
   static async getDefaultStaffRoleId() {
     const query = `SELECT id FROM roles WHERE LOWER(name) = 'staff' LIMIT 1`;
     const result = await pool.query(query);
-    return result.rows[0] ? result.rows[0].id : 2;
+    return result.rows[0] ? result.rows[0].id : 3;
   }
 
   // Delete a group role and its role_permissions records

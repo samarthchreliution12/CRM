@@ -11,31 +11,13 @@ class PermissionService {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
 
-    let systemRoles = sysResult.data.roles || [];
-    systemRoles = systemRoles.filter((r) => ["Admin", "Staff", "Client"].includes(r.name));
-
-    try {
-      const groupsResult = await apiFetch("/roles/groups", {
-        method: "GET",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      const customGroups = groupsResult.data?.groups || [];
-
-      const allRoles = [...systemRoles, ...customGroups];
-      return {
-        ...sysResult,
-        data: {
-          roles: allRoles,
-        },
-      };
-    } catch (e) {
-      return {
-        ...sysResult,
-        data: {
-          roles: systemRoles,
-        },
-      };
-    }
+    const roles = sysResult.data?.roles || [];
+    return {
+      ...sysResult,
+      data: {
+        roles,
+      },
+    };
   }
 
   /**

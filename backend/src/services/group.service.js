@@ -352,8 +352,8 @@ class GroupService {
       throw err;
     }
 
-    if (["admin", "staff", "client"].includes(group.name.toLowerCase()) || parsedGroupId <= 3) {
-      const err = new Error("Cannot delete system default roles.");
+    if (group.is_system || ["admin", "staff", "client"].includes(group.name.toLowerCase()) || parsedGroupId <= 4) {
+      const err = new Error(`System role '${group.name}' cannot be deleted.`);
       err.statusCode = 400;
       throw err;
     }
