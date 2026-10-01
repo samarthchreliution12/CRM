@@ -9,73 +9,73 @@ const {
   validateCreateSettings,
   validateUpdateSettings,
 } = require("../validators/whatsapp.validator");
-const { authenticate, requirePermission } = require("../middleware/auth.middleware");
+const { authenticate, requirePermission, requireRole } = require("../middleware/auth.middleware");
 
 // Require authenticated CRM user for all WhatsApp endpoints
 router.use(authenticate);
 
-// 1. WhatsApp Settings Endpoints
+// 1. WhatsApp Settings Endpoints - One-time setup: Mutating actions restricted strictly to Admin
 router.get(
   "/settings",
-  requirePermission(["whatsapp.view", "whatsapp.read", "whatsapp.edit"]),
+  requirePermission(["whatsapp.view", "whatsapp.read", "whatsapp.edit", "whatsapp_config.view", "whatsapp_config.edit"]),
   WhatsAppSettingsController.getSettings
 );
 
 router.post(
   "/settings",
-  requirePermission(["whatsapp.create", "whatsapp.edit", "whatsapp.update"]),
+  requireRole("Admin"),
   validateCreateSettings,
   WhatsAppSettingsController.createSettings
 );
 
 router.put(
   "/settings",
-  requirePermission(["whatsapp.update", "whatsapp.edit"]),
+  requireRole("Admin"),
   validateUpdateSettings,
   WhatsAppSettingsController.updateSettings
 );
 
 router.post(
   "/settings/test-connection",
-  requirePermission(["whatsapp.update", "whatsapp.edit", "whatsapp.view"]),
+  requireRole("Admin"),
   WhatsAppSettingsController.testConnection
 );
 
 router.post(
   "/settings/disconnect",
-  requirePermission(["whatsapp.update", "whatsapp.edit"]),
+  requireRole("Admin"),
   WhatsAppSettingsController.disconnect
 );
 
 router.get(
   "/settings/status",
-  requirePermission(["whatsapp.view", "whatsapp.read", "whatsapp.edit"]),
+  requireRole("Admin"),
   WhatsAppSettingsController.getStatus
 );
 
 // 2. WhatsApp Templates Endpoints
 router.get(
   "/templates",
-  requirePermission(["whatsapp.view", "whatsapp.read", "whatsapp.edit"]),
+  requirePermission(["whatsapp_template.view", "whatsapp_template.edit", "whatsapp.view", "whatsapp.read", "whatsapp_config.view", "whatsapp.edit"]),
   WhatsAppController.getTemplateList
 );
 
 router.post(
   "/templates/sync",
-  requirePermission(["whatsapp.template.sync", "whatsapp.update", "whatsapp.edit"]),
+  requirePermission(["whatsapp_template.edit", "whatsapp.template.sync", "whatsapp.update", "whatsapp.edit"]),
   WhatsAppController.syncTemplates
 );
 
 router.post(
   "/templates/birthday-select",
-  requirePermission(["whatsapp.template.select", "whatsapp.update", "whatsapp.edit"]),
+  requirePermission(["whatsapp_config.edit", "whatsapp.template.select", "whatsapp.update", "whatsapp.edit"]),
   validateSelectBirthdayTemplate,
   WhatsAppController.selectBirthdayTemplate
 );
 
 router.post(
   "/templates/otp-select",
-  requirePermission(["whatsapp.template.select", "whatsapp.update", "whatsapp.edit"]),
+  requirePermission(["whatsapp_config.edit", "whatsapp.template.select", "whatsapp.update", "whatsapp.edit"]),
   validateSelectBirthdayTemplate,
   WhatsAppController.selectOtpTemplate
 );
@@ -125,13 +125,13 @@ router.post(
 // 6. Manual Send Endpoints
 router.get(
   "/manual-recipients/count",
-  requirePermission(["whatsapp.view", "whatsapp.read", "whatsapp.send"]),
+  requirePermission(["whatsapp_config.view", "whatsapp_config.edit", "whatsapp.view", "whatsapp.read", "whatsapp.send"]),
   WhatsAppController.getManualRecipientsCount
 );
 
 router.post(
   "/manual-send",
-  requirePermission(["whatsapp.send", "whatsapp.edit", "whatsapp.update"]),
+  requirePermission(["whatsapp_config.edit", "whatsapp.send", "whatsapp.edit", "whatsapp.update"]),
   WhatsAppController.sendManualTemplateMessage
 );
 

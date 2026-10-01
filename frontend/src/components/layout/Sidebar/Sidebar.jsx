@@ -64,11 +64,18 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
   const canAccessInternalComm =
     isAdmin || permissions.includes("communication.view") || permissions.includes("communication.read");
   const canAccessWhatsAppTemplates =
-    isAdmin || permissions.includes("whatsapp.view") || permissions.includes("whatsapp.read") || permissions.includes("whatsapp.template.select");
+    isAdmin ||
+    permissions.includes("whatsapp_template.view") ||
+    permissions.includes("whatsapp_template.read") ||
+    permissions.includes("whatsapp.view") ||
+    permissions.includes("whatsapp.read") ||
+    permissions.includes("whatsapp.template.select");
   const canAccessWhatsAppConfig =
-    isAdmin || permissions.includes("whatsapp.edit") || permissions.includes("whatsapp.update") || permissions.includes("whatsapp.view");
-  const canAccessWhatsAppSettings =
-    isAdmin || permissions.includes("whatsapp.edit") || permissions.includes("whatsapp.update");
+    isAdmin ||
+    permissions.includes("whatsapp_config.view") ||
+    permissions.includes("whatsapp_config.read") ||
+    permissions.includes("whatsapp_config.edit");
+  const canAccessWhatsAppSettings = isAdmin; // WhatsApp Settings is one-time setup: strictly Admin only!
   const canAccessCommunicationParent =
     isAdmin || canAccessInternalComm || canAccessWhatsAppTemplates || canAccessWhatsAppConfig || canAccessWhatsAppSettings;
 

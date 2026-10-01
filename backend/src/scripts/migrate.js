@@ -582,7 +582,11 @@ async function runMigrations() {
         ('calendar.view', 'calendar', 'view', 'View calendar schedules and events'),
         ('calendar.create', 'calendar', 'create', 'Create calendar events and scheduled tasks'),
         ('calendar.edit', 'calendar', 'edit', 'Update calendar events and schedules'),
-        ('calendar.delete', 'calendar', 'delete', 'Delete calendar events and schedules')
+        ('calendar.delete', 'calendar', 'delete', 'Delete calendar events and schedules'),
+        ('whatsapp_config.view', 'whatsapp_config', 'view', 'View automated templates & campaign configurations'),
+        ('whatsapp_config.edit', 'whatsapp_config', 'edit', 'Configure automated templates & trigger campaign sends'),
+        ('whatsapp_template.view', 'whatsapp_template', 'view', 'View approved WhatsApp templates library'),
+        ('whatsapp_template.edit', 'whatsapp_template', 'edit', 'Sync and manage WhatsApp templates library')
       ON CONFLICT (permission_key) DO UPDATE
       SET description = EXCLUDED.description,
           module = EXCLUDED.module,

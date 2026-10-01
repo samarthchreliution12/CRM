@@ -105,6 +105,14 @@ const PERMISSIONS = [
   { permission_key: "calendar.create", module: "calendar", action: "create", description: "Create calendar events and scheduled tasks" },
   { permission_key: "calendar.edit", module: "calendar", action: "edit", description: "Update calendar events and schedules" },
   { permission_key: "calendar.delete", module: "calendar", action: "delete", description: "Delete calendar events and schedules" },
+
+  // Communication: WhatsApp Configuration Module
+  { permission_key: "whatsapp_config.view", module: "whatsapp_config", action: "view", description: "View automated templates & campaign configurations" },
+  { permission_key: "whatsapp_config.edit", module: "whatsapp_config", action: "edit", description: "Configure automated templates & trigger campaign sends" },
+
+  // Communication: WhatsApp Templates Module
+  { permission_key: "whatsapp_template.view", module: "whatsapp_template", action: "view", description: "View approved WhatsApp templates library" },
+  { permission_key: "whatsapp_template.edit", module: "whatsapp_template", action: "edit", description: "Sync and manage WhatsApp templates library" },
 ];
 
 const ROLE_PERMISSION_MAP = {

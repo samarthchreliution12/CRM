@@ -323,7 +323,7 @@ function App() {
           <Route
             path="/communication/whatsapp-templates"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredPermission={["whatsapp_template.view", "whatsapp.view", "whatsapp.read"]}>
                 <WhatsAppTemplates />
               </ProtectedRoute>
             }
@@ -331,7 +331,7 @@ function App() {
           <Route
             path="/communication/whatsapp-configuration"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredPermission={["whatsapp_config.view", "whatsapp_config.edit"]}>
                 <WhatsAppConfiguration />
               </ProtectedRoute>
             }
@@ -340,7 +340,9 @@ function App() {
             path="/communication/whatsapp-settings"
             element={
               <ProtectedRoute>
-                <WhatsAppSettings />
+                <AdminRoute>
+                  <WhatsAppSettings />
+                </AdminRoute>
               </ProtectedRoute>
             }
           />
