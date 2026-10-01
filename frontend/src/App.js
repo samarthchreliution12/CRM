@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "./context/AuthContext";
 import PublicRoute from "./routes/PublicRoute";
@@ -47,7 +47,6 @@ import { ClientAuthProvider } from "./context/ClientAuthContext";
 import ClientProtectedRoute from "./routes/ClientProtectedRoute";
 import ClientPublicRoute from "./routes/ClientPublicRoute";
 import ClientLogin from "./pages/clientPortal/ClientLogin";
-import ClientDashboard from "./pages/clientPortal/ClientDashboard";
 import ClientProfile from "./pages/clientPortal/ClientProfile";
 import ClientDocuments from "./pages/clientPortal/ClientDocuments";
 
@@ -156,19 +155,15 @@ function App() {
           {/* Client Portal Protected Routes */}
           <Route
             path="/client/dashboard"
-            element={
-              <ClientProtectedRoute>
-                <ClientDashboard />
-              </ClientProtectedRoute>
-            }
+            element={<Navigate to="/client/documents" replace />}
           />
           <Route
             path="/client-portal"
-            element={
-              <ClientProtectedRoute>
-                <ClientDashboard />
-              </ClientProtectedRoute>
-            }
+            element={<Navigate to="/client/documents" replace />}
+          />
+          <Route
+            path="/client-portal/dashboard"
+            element={<Navigate to="/client/documents" replace />}
           />
           <Route
             path="/client/profile"

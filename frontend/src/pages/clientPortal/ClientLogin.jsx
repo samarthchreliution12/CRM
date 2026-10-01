@@ -124,7 +124,7 @@ const ClientLogin = () => {
     setIsSubmitting(true);
     try {
       await verifyOtp(mobileNo.trim(), cleanOtp, rememberMe);
-      navigate("/client/dashboard", { replace: true });
+      navigate("/client/documents", { replace: true });
     } catch (err) {
       if (err.statusCode === 429 || err.message?.toLowerCase().includes("too many")) {
         setErrorMessage("Too many incorrect attempts. Please request a new OTP.");

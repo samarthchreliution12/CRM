@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard,
   User,
   FileText,
   LogOut,
@@ -36,12 +35,6 @@ const ClientPortalLayout = ({ children }) => {
 
   const navLinks = [
     {
-      to: "/client/dashboard",
-      label: "Dashboard",
-      icon: LayoutDashboard,
-      end: true,
-    },
-    {
       to: "/client/documents",
       label: "My Documents",
       icon: FileText,
@@ -70,7 +63,7 @@ const ClientPortalLayout = ({ children }) => {
         <div className="client-header-inner">
           {/* Logo & Portal Badge */}
           <div className="client-header-brand">
-            <Link to="/client/dashboard" className="client-logo-link" title="Client Portal">
+            <Link to="/client/documents" className="client-logo-link" title="Client Portal">
               <img src={headerLogo} alt="Parshwa Consultancy" className="client-header-logo" />
             </Link>
             <div className="client-portal-tag">

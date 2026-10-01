@@ -12,6 +12,7 @@ import {
   Check,
 } from "lucide-react";
 import ClientPortalLayout from "../../components/clientPortal/ClientPortalLayout";
+import useClientAuth from "../../hooks/useClientAuth";
 import ClientPortalService from "../../services/clientPortal.service";
 import UploadDocumentModal from "../../components/clientPortal/UploadDocumentModal";
 import DocumentViewerModal from "../../components/clientPortal/DocumentViewerModal";
@@ -19,6 +20,8 @@ import SEO from "../../components/SEO";
 import "./ClientDocuments.css";
 
 const ClientDocuments = () => {
+  const { client } = useClientAuth();
+  const [profile, setProfile] = useState(null);
   const [documents, setDocuments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -45,8 +48,14 @@ const ClientDocuments = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await ClientPortalService.getDocuments();
+      const [data, profileData] = await Promise.all([
+        ClientPortalService.getDocuments(),
+        ClientPortalService.getProfile().catch(() => null),
+      ]);
       setDocuments(data || []);
+      if (profileData) {
+        setProfile(profileData);
+      }
     } catch (err) {
       console.error("Error loading client documents:", err);
       setError(err.message || "Failed to retrieve documents list.");
@@ -122,6 +131,8 @@ const ClientDocuments = () => {
     }
   };
 
+  const displayClient = profile || client;
+
   return (
     <ClientPortalLayout>
       <SEO title="My Documents - Client Portal" noindex={true} />
@@ -134,26 +145,76 @@ const ClientDocuments = () => {
         </div>
       )}
 
-      {/* Page Header */}
-      <div className="client-docs-header">
-        <div>
-          <h1 className="docs-page-title">My Documents</h1>
-          <p className="docs-page-subtitle">
-            Upload and view your KYC, tax identification, and account compliance documents.
+      {/* 1. Welcome & Overview Banner (Simple, direct, NO duplicate buttons) */}
+      <div className="client-welcome-banner">
+        <div className="welcome-banner-content">
+          <div className="welcome-top-meta">
+            <span className="client-welcome-badge">CLIENT PORTAL</span>
+            {displayClient?.ucc_no && (
+              <span className="welcome-ucc">
+                UCC: <strong>{displayClient.ucc_no}</strong>
+              </span>
+            )}
+          </div>
+          <h1 className="welcome-title">Welcome, {displayClient?.name || "Client"}</h1>
+          <p className="welcome-subtitle">
+            Upload your pending documents and track verification status in real-time.
           </p>
         </div>
 
-        <button
-          type="button"
-          className="docs-refresh-btn"
-          onClick={fetchDocuments}
-          disabled={isLoading}
-          title="Refresh documents list"
-        >
-          <RefreshCw size={15} className={isLoading ? "rotating-icon" : ""} />
-          <span>Refresh</span>
-        </button>
+        {/* Quick Document Status Stats Chips */}
+        <div className="welcome-quick-stats">
+          <div className="welcome-stat-pill total">
+            <span className="stat-pill-num">{counts.ALL}</span>
+            <span className="stat-pill-label">Total Docs</span>
+          </div>
+
+          <div className={`welcome-stat-pill ${counts.PENDING > 0 ? "pending" : "neutral"}`}>
+            <span className="stat-pill-num">{counts.PENDING}</span>
+            <span className="stat-pill-label">Pending</span>
+          </div>
+
+          <div className="welcome-stat-pill approved">
+            <span className="stat-pill-num">{counts.APPROVED}</span>
+            <span className="stat-pill-label">Approved</span>
+          </div>
+
+          <button
+            type="button"
+            className="docs-refresh-btn"
+            onClick={fetchDocuments}
+            disabled={isLoading}
+            title="Refresh documents list"
+          >
+            <RefreshCw size={15} className={isLoading ? "rotating-icon" : ""} />
+            <span>Refresh</span>
+          </button>
+        </div>
       </div>
+
+      {/* Rejection Alert Banner if any document is rejected */}
+      {counts.REJECTED > 0 && (
+        <div className="rejected-alert-banner">
+          <div className="alert-left">
+            <div className="alert-icon-wrap">
+              <AlertTriangle size={22} />
+            </div>
+            <div>
+              <strong>Action Required: {counts.REJECTED} Document(s) Rejected</strong>
+              <p>
+                One or more documents require re-upload. Please upload clear, readable copies.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="alert-action-btn"
+            onClick={() => setActiveTab("REJECTED")}
+          >
+            Fix Documents Now ({counts.REJECTED})
+          </button>
+        </div>
+      )}
 
       {error && (
         <div className="docs-error-banner">
