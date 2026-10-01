@@ -83,9 +83,9 @@ const ClientDashboard = () => {
             {client?.ucc_no && <span className="welcome-ucc">UCC: <strong>{client.ucc_no}</strong></span>}
           </div>
           <h1 className="welcome-title">Welcome, {client?.name || "Client"}</h1>
-          <p className="welcome-subtitle">
+          {/* <p className="welcome-subtitle">
             Manage your profile and submit your required documents securely.
-          </p>
+          </p> */}
         </div>
 
         <div className="welcome-banner-actions">
@@ -101,7 +101,7 @@ const ClientDashboard = () => {
       </div>
 
       {/* Rejected Documents Immediate Alert */}
-      {rejectedDocs.length > 0 && (
+      {/* {rejectedDocs.length > 0 && (
         <div className="rejected-alert-banner">
           <div className="alert-left">
             <div className="alert-icon-wrap">
@@ -118,10 +118,10 @@ const ClientDashboard = () => {
             Fix Documents Now <ArrowRight size={14} />
           </Link>
         </div>
-      )}
+      )} */}
 
       {/* Summary KPI Cards */}
-      <div className="client-stats-grid">
+      {/* <div className="client-stats-grid">
         <div className="client-stat-card">
           <div className="stat-header">
             <span className="stat-label">Total Required</span>
@@ -165,7 +165,7 @@ const ClientDashboard = () => {
           <div className="stat-number success">{isLoading ? "..." : approvedCount}</div>
           <span className="stat-subtext">Active on your account</span>
         </div>
-      </div>
+      </div> */}
 
       {/* Main Checklist Section */}
       <div className="client-dashboard-section">
