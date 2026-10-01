@@ -76,16 +76,16 @@ const ClientDashboard = () => {
       <SEO title="Client Dashboard - Parshwa Consultancy" noindex={true} />
 
       {/* Welcome Banner */}
-      <div className="client-welcome-banner">
+      {/* <div className="client-welcome-banner">
         <div className="welcome-banner-content">
           <div className="welcome-top-meta">
             <span className="client-welcome-badge">INVESTOR PORTAL</span>
             {client?.ucc_no && <span className="welcome-ucc">UCC: <strong>{client.ucc_no}</strong></span>}
           </div>
           <h1 className="welcome-title">Welcome, {client?.name || "Client"}</h1>
-          {/* <p className="welcome-subtitle">
+          <p className="welcome-subtitle">
             Manage your profile and submit your required documents securely.
-          </p> */}
+          </p>
         </div>
 
         <div className="welcome-banner-actions">
@@ -98,7 +98,7 @@ const ClientDashboard = () => {
             <span>View Profile</span>
           </Link>
         </div>
-      </div>
+      </div> */}
 
       {/* Rejected Documents Immediate Alert */}
       {/* {rejectedDocs.length > 0 && (
