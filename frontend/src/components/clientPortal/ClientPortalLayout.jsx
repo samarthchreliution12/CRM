@@ -199,7 +199,7 @@ const ClientPortalLayout = ({ children }) => {
         <div className="client-footer-inner">
           <div className="client-footer-security">
             <Shield size={14} className="shield-icon" />
-            <span>Bank-grade 256-bit AES Encryption • All uploaded documents are stored securely</span>
+            <span>• All uploaded documents are stored securely</span>
           </div>
           <div className="client-footer-links">
             <span>© {new Date().getFullYear()} Parshwa Consultancy. All rights reserved.</span>
