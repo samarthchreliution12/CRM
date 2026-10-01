@@ -3,7 +3,53 @@ const { sendSuccess, sendError } = require("../utils/response.util");
 
 class ClientPortalController {
   /**
-   * Client Login via mobile number.
+   * Client Send OTP via registered mobile number.
+   * POST /api/client-portal/auth/send-otp
+   */
+  static async sendOtp(req, res) {
+    try {
+      const { mobile_no, mobile } = req.body || {};
+      const ipAddress = req.ip || (req.socket ? req.socket.remoteAddress : null);
+      const userAgent = req.headers["user-agent"] || null;
+
+      const result = await ClientPortalService.sendOtp({
+        mobileNo: mobile_no || mobile,
+        ipAddress,
+        userAgent,
+      });
+
+      return sendSuccess(res, 200, result.message, result);
+    } catch (error) {
+      return sendError(res, error.statusCode || 500, error.message, error.errors);
+    }
+  }
+
+  /**
+   * Client Verify OTP and authenticate.
+   * POST /api/client-portal/auth/verify-otp
+   */
+  static async verifyOtp(req, res) {
+    try {
+      const { mobile_no, mobile, otp, remember_me, rememberMe } = req.body || {};
+      const ipAddress = req.ip || (req.socket ? req.socket.remoteAddress : null);
+      const userAgent = req.headers["user-agent"] || null;
+
+      const result = await ClientPortalService.verifyOtp({
+        mobileNo: mobile_no || mobile,
+        otp,
+        rememberMe: remember_me !== undefined ? remember_me : (rememberMe !== undefined ? rememberMe : true),
+        ipAddress,
+        userAgent,
+      });
+
+      return sendSuccess(res, 200, "Client authenticated successfully.", result);
+    } catch (error) {
+      return sendError(res, error.statusCode || 500, error.message, error.errors);
+    }
+  }
+
+  /**
+   * Client Login via mobile number (legacy direct login).
    * POST /api/client-portal/auth/login or /api/client-portal/login
    */
   static async login(req, res) {
@@ -90,7 +136,7 @@ class ClientPortalController {
     try {
       const clientId = req.client.id;
       const { documentId } = req.params;
-      const { document_type, document_name } = req.body || {};
+      const { document_type, document_name, description } = req.body || {};
       const file = req.file;
       const ipAddress = req.ip || (req.socket ? req.socket.remoteAddress : null);
 
@@ -99,6 +145,7 @@ class ClientPortalController {
         documentId: documentId || null,
         documentType: document_type || null,
         documentName: document_name || null,
+        description: description || null,
         file,
         ipAddress,
       });

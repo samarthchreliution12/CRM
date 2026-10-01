@@ -151,6 +151,72 @@ class WhatsAppService {
   }
 
   /**
+   * Select an approved template as the active Client Portal OTP Template.
+   */
+  static async selectOtpTemplate({ templateId, userId = null }) {
+    if (!templateId || !String(templateId).trim()) {
+      const err = new Error("template_id is required.");
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const cleanId = String(templateId).trim();
+    const template = await WhatsAppTemplateModel.findByTemplateId(cleanId);
+
+    if (!template) {
+      const err = new Error(`Template with ID '${cleanId}' was not found in CRM. Please sync templates first.`);
+      err.statusCode = 404;
+      throw err;
+    }
+
+    if (String(template.status).toUpperCase() !== "APPROVED") {
+      const err = new Error(`Cannot select template '${template.template_name}' because its status is ${template.status}. Only APPROVED templates can be designated as OTP Template.`);
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const settingRow = await WhatsAppSettingsModel.getSettings();
+    if (!settingRow) {
+      const err = new Error("WhatsApp settings not configured. Please save your API key first.");
+      err.statusCode = 400;
+      throw err;
+    }
+
+    let parsedVariables = [];
+    if (template.variables) {
+      try {
+        parsedVariables = typeof template.variables === "string" ? JSON.parse(template.variables) : template.variables;
+      } catch (e) {
+        parsedVariables = [];
+      }
+    }
+
+    const templateSummary = {
+      template_id: template.template_id,
+      template_name: template.template_name,
+      category: template.category,
+      language: template.language,
+      body_content: template.body_content,
+      header_content: template.header_content,
+      footer_content: template.footer_content,
+      variable_count: template.variable_count,
+      variables: parsedVariables,
+    };
+
+    const updatedRow = await WhatsAppSettingsModel.update(settingRow.id, {
+      otp_template_id: template.template_id,
+      otp_template_data: templateSummary,
+    });
+
+    return {
+      success: true,
+      message: `Template '${template.template_name}' successfully set as Client Portal OTP Template.`,
+      otp_template_id: updatedRow.otp_template_id,
+      otp_template_data: templateSummary,
+    };
+  }
+
+  /**
    * Prepare and validate birthday preview for a specific client.
    * Calculates age, verifies birthday is today, loads the selected template,
    * replaces visible variables ({{1}} -> client name, {{2}} -> client age),

@@ -66,8 +66,64 @@ function validateDocumentIdParam(req, res, next) {
   next();
 }
 
+/**
+ * Validator for Client Send OTP request.
+ */
+function validateSendOtp(req, res, next) {
+  const { mobile_no, mobile } = req.body || {};
+  const rawMobile = mobile_no || mobile;
+
+  if (!rawMobile || (typeof rawMobile !== "string" && typeof rawMobile !== "number")) {
+    return sendError(res, 400, "Registered mobile number is required", [
+      { field: "mobile_no", message: "Mobile number is required" },
+    ]);
+  }
+
+  const digits = String(rawMobile).replace(/\D/g, "");
+  if (digits.length < 10 || digits.length > 15) {
+    return sendError(res, 400, "Please provide a valid 10 to 15 digit mobile number", [
+      { field: "mobile_no", message: "Mobile number must be between 10 and 15 digits" },
+    ]);
+  }
+
+  next();
+}
+
+/**
+ * Validator for Client Verify OTP request.
+ */
+function validateVerifyOtp(req, res, next) {
+  const { mobile_no, mobile, otp } = req.body || {};
+  const rawMobile = mobile_no || mobile;
+
+  if (!rawMobile || (typeof rawMobile !== "string" && typeof rawMobile !== "number")) {
+    return sendError(res, 400, "Registered mobile number is required", [
+      { field: "mobile_no", message: "Mobile number is required" },
+    ]);
+  }
+
+  const digits = String(rawMobile).replace(/\D/g, "");
+  if (digits.length < 10 || digits.length > 15) {
+    return sendError(res, 400, "Please provide a valid 10 to 15 digit mobile number", [
+      { field: "mobile_no", message: "Mobile number must be between 10 and 15 digits" },
+    ]);
+  }
+
+  const cleanOtp = String(otp || "").trim();
+  if (!cleanOtp || cleanOtp.length !== 6 || !/^\d{6}$/.test(cleanOtp)) {
+    return sendError(res, 400, "Please enter a valid 6-digit verification code", [
+      { field: "otp", message: "OTP must be a 6-digit number" },
+    ]);
+  }
+
+  next();
+}
+
 module.exports = {
   validateClientLogin,
+  validateSendOtp,
+  validateVerifyOtp,
   validateDocumentUpload,
   validateDocumentIdParam,
 };
+

@@ -272,17 +272,17 @@ const Login = () => {
               textAlign: "center",
             }}
           >
-            <span style={{ fontSize: "0.875rem", color: "#6B7280" }}>Are you an investor/client? </span>
+            <span style={{ fontSize: "0.875rem", color: "#6B7280" }}>Are you a client? </span>
             <Link
-              to="/client-login"
+              to="/client/login"
               style={{
                 fontSize: "0.875rem",
                 fontWeight: "600",
-                color: "#9E241D",
+                color: "#8B231D",
                 textDecoration: "none",
               }}
             >
-              Client Portal Login →
+              Client Login →
             </Link>
           </div>
         </form>

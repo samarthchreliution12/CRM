@@ -7,6 +7,8 @@ const { clientAuthMiddleware } = require("../middleware/clientAuth.middleware");
 const { clientLoginLimiter } = require("../middleware/rateLimiter.middleware");
 const {
   validateClientLogin,
+  validateSendOtp,
+  validateVerifyOtp,
   validateDocumentUpload,
   validateDocumentIdParam,
 } = require("../validators/clientPortal.validator");
@@ -20,6 +22,12 @@ const upload = multer({
 });
 
 // 1. Client Authentication
+router.post("/auth/send-otp", clientLoginLimiter, validateSendOtp, ClientPortalController.sendOtp);
+router.post("/send-otp", clientLoginLimiter, validateSendOtp, ClientPortalController.sendOtp);
+
+router.post("/auth/verify-otp", clientLoginLimiter, validateVerifyOtp, ClientPortalController.verifyOtp);
+router.post("/verify-otp", clientLoginLimiter, validateVerifyOtp, ClientPortalController.verifyOtp);
+
 router.post("/login", clientLoginLimiter, validateClientLogin, ClientPortalController.login);
 router.post("/auth/login", clientLoginLimiter, validateClientLogin, ClientPortalController.login);
 
@@ -28,6 +36,7 @@ router.post("/auth/logout", clientAuthMiddleware, ClientPortalController.logout)
 
 // 2. Client Profile
 router.get("/profile", clientAuthMiddleware, ClientPortalController.getProfile);
+router.get("/me", clientAuthMiddleware, ClientPortalController.getProfile);
 
 // 3. Client Documents
 router.get("/documents", clientAuthMiddleware, ClientPortalController.getDocuments);

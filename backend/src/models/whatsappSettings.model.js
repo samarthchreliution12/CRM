@@ -9,7 +9,8 @@ class WhatsAppSettingsModel {
     const query = `
       SELECT id, provider, cp_api_key_encrypted, cp_api_key_iv, cp_api_key_tag,
              whatsapp_account_id, whatsapp_mobile, is_connected,
-             birthday_template_id, birthday_template_data, created_by,
+             birthday_template_id, birthday_template_data,
+             otp_template_id, otp_template_data, created_by,
              created_at, updated_at
       FROM whatsapp_settings
       ORDER BY id DESC
@@ -134,6 +135,16 @@ class WhatsAppSettingsModel {
       values.push(birthday_template_data ? JSON.stringify(birthday_template_data) : null);
     }
 
+    if (otp_template_id !== undefined) {
+      updates.push(`otp_template_id = $${paramIndex++}`);
+      values.push(otp_template_id ? String(otp_template_id).trim() : null);
+    }
+
+    if (otp_template_data !== undefined) {
+      updates.push(`otp_template_data = $${paramIndex++}`);
+      values.push(otp_template_data ? JSON.stringify(otp_template_data) : null);
+    }
+
     updates.push(`updated_at = CURRENT_TIMESTAMP`);
 
     values.push(id);
@@ -143,7 +154,8 @@ class WhatsAppSettingsModel {
       WHERE id = $${paramIndex}
       RETURNING id, provider, cp_api_key_encrypted, cp_api_key_iv, cp_api_key_tag,
                 whatsapp_account_id, whatsapp_mobile, is_connected,
-                birthday_template_id, birthday_template_data, created_by,
+                birthday_template_id, birthday_template_data,
+                otp_template_id, otp_template_data, created_by,
                 created_at, updated_at
     `;
 
@@ -161,7 +173,8 @@ class WhatsAppSettingsModel {
       WHERE id = $1
       RETURNING id, provider, cp_api_key_encrypted, cp_api_key_iv, cp_api_key_tag,
                 whatsapp_account_id, whatsapp_mobile, is_connected,
-                birthday_template_id, birthday_template_data, created_by,
+                birthday_template_id, birthday_template_data,
+                otp_template_id, otp_template_data, created_by,
                 created_at, updated_at
     `;
     const result = await pool.query(query, [id]);
@@ -180,6 +193,8 @@ class WhatsAppSettingsModel {
         is_connected: false,
         birthday_template_id: null,
         birthday_template_data: null,
+        otp_template_id: null,
+        otp_template_data: null,
         cp_api_key: "",
         created_at: null,
         updated_at: null,
@@ -200,6 +215,17 @@ class WhatsAppSettingsModel {
       }
     }
 
+    let parsedOtpData = null;
+    if (row.otp_template_data) {
+      try {
+        parsedOtpData = typeof row.otp_template_data === "string"
+          ? JSON.parse(row.otp_template_data)
+          : row.otp_template_data;
+      } catch (e) {
+        parsedOtpData = row.otp_template_data;
+      }
+    }
+
     return {
       id: row.id,
       provider: row.provider || "ChatterPillar",
@@ -208,6 +234,8 @@ class WhatsAppSettingsModel {
       is_connected: Boolean(row.is_connected),
       birthday_template_id: row.birthday_template_id || null,
       birthday_template_data: parsedBirthdayData,
+      otp_template_id: row.otp_template_id || null,
+      otp_template_data: parsedOtpData,
       cp_api_key: maskedKey,
       created_at: row.created_at,
       updated_at: row.updated_at,

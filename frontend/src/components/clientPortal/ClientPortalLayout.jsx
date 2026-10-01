@@ -25,10 +25,10 @@ const ClientPortalLayout = ({ children }) => {
     setIsLoggingOut(true);
     try {
       await logout();
-      navigate("/client-login", { replace: true });
+      navigate("/client/login", { replace: true });
     } catch (err) {
       console.error("Logout error:", err);
-      navigate("/client-login", { replace: true });
+      navigate("/client/login", { replace: true });
     } finally {
       setIsLoggingOut(false);
     }
@@ -36,20 +36,20 @@ const ClientPortalLayout = ({ children }) => {
 
   const navLinks = [
     {
-      to: "/client-portal",
+      to: "/client/dashboard",
       label: "Dashboard",
       icon: LayoutDashboard,
       end: true,
     },
     {
-      to: "/client-portal/profile",
-      label: "My Profile",
-      icon: User,
-    },
-    {
-      to: "/client-portal/documents",
+      to: "/client/documents",
       label: "My Documents",
       icon: FileText,
+    },
+    {
+      to: "/client/profile",
+      label: "My Profile",
+      icon: User,
     },
   ];
 
@@ -70,7 +70,7 @@ const ClientPortalLayout = ({ children }) => {
         <div className="client-header-inner">
           {/* Logo & Portal Badge */}
           <div className="client-header-brand">
-            <Link to="/client-portal" className="client-logo-link" title="Client Portal">
+            <Link to="/client/dashboard" className="client-logo-link" title="Client Portal">
               <img src={headerLogo} alt="Parshwa Consultancy" className="client-header-logo" />
             </Link>
             <div className="client-portal-tag">

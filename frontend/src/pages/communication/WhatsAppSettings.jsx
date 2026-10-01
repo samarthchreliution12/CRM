@@ -188,6 +188,7 @@ const WhatsAppSettings = () => {
 
   const isConnected = Boolean(settings?.is_connected);
   const birthdayTemplate = settings?.birthday_template_data;
+  const otpTemplate = settings?.otp_template_data;
 
   return (
     <AppLayout title="WhatsApp Settings">
@@ -479,6 +480,110 @@ const WhatsAppSettings = () => {
                 }}
               >
                 Choose an approved template from WhatsApp Templates &rarr;
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* 3.1 CLIENT PORTAL OTP TEMPLATE CARD */}
+        <div className="wa-settings-card">
+          <div className="wa-card-header">
+            <div className="wa-card-title-group">
+              <div className="wa-card-icon" style={{ backgroundColor: "#eff6ff", color: "#2563eb" }}>
+                <ShieldCheck size={20} />
+              </div>
+              <div>
+                <h2 className="wa-card-title">Client Portal WhatsApp OTP Template</h2>
+                <span style={{ fontSize: "0.8rem", color: "#64748b" }}>
+                  Used to deliver 6-digit verification codes to clients logging into Client Portal
+                </span>
+              </div>
+            </div>
+
+            {otpTemplate && (
+              <span
+                style={{
+                  fontSize: "0.75rem",
+                  fontWeight: 600,
+                  backgroundColor: "#dcfce7",
+                  color: "#15803d",
+                  padding: "0.25rem 0.6rem",
+                  borderRadius: "9999px",
+                }}
+              >
+                Template Configured
+              </span>
+            )}
+          </div>
+
+          {otpTemplate ? (
+            <div
+              style={{
+                backgroundColor: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                borderRadius: "8px",
+                padding: "1rem",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "0.5rem",
+                }}
+              >
+                <strong>{otpTemplate.template_name}</strong>
+                <Link
+                  to="/communication/whatsapp-templates"
+                  style={{
+                    fontSize: "0.8rem",
+                    color: "#9e241d",
+                    fontWeight: 600,
+                    textDecoration: "underline",
+                  }}
+                >
+                  Change Template
+                </Link>
+              </div>
+
+              <p
+                style={{
+                  fontSize: "0.875rem",
+                  color: "#334155",
+                  margin: 0,
+                  lineHeight: 1.5,
+                  whiteSpace: "pre-wrap",
+                }}
+              >
+                {otpTemplate.body_content || "No body content preview available."}
+              </p>
+            </div>
+          ) : (
+            <div
+              style={{
+                backgroundColor: "#f8fafc",
+                border: "1px dashed #cbd5e1",
+                borderRadius: "8px",
+                padding: "1.25rem",
+                textAlign: "center",
+                color: "#64748b",
+                fontSize: "0.875rem",
+              }}
+            >
+              <ShieldCheck size={24} style={{ margin: "0 auto 0.5rem auto", color: "#94a3b8" }} />
+              <div>Auto-detecting approved OTP / Authentication template, with automatic direct text message fallback.</div>
+              <Link
+                to="/communication/whatsapp-templates"
+                style={{
+                  color: "#9e241d",
+                  fontWeight: 600,
+                  display: "inline-block",
+                  marginTop: "0.5rem",
+                  textDecoration: "underline",
+                }}
+              >
+                Designate a specific template from WhatsApp Templates &rarr;
               </Link>
             </div>
           )}

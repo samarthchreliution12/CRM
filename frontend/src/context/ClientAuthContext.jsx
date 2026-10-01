@@ -43,7 +43,25 @@ export const ClientAuthProvider = ({ children }) => {
     initClientAuth();
   }, [initClientAuth]);
 
-  // Client Login
+  // Client Send OTP
+  const sendOtp = async (mobileNo) => {
+    return ClientPortalService.sendOtp(mobileNo);
+  };
+
+  // Client Verify OTP
+  const verifyOtp = async (mobileNo, otp, rememberMe = true) => {
+    setIsLoading(true);
+    try {
+      const result = await ClientPortalService.verifyOtp(mobileNo, otp, rememberMe);
+      setToken(result.token);
+      setClient(result.client);
+      return result;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Client Login (direct/legacy)
   const login = async (mobileNo, rememberMe = true) => {
     setIsLoading(true);
     try {
@@ -88,6 +106,8 @@ export const ClientAuthProvider = ({ children }) => {
     token,
     isLoading,
     isAuthenticated: !!token && !!client,
+    sendOtp,
+    verifyOtp,
     login,
     logout,
     refreshProfile,

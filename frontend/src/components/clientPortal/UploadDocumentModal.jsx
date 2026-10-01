@@ -17,6 +17,7 @@ const ALLOWED_EXTENSIONS = [".pdf", ".jpeg", ".jpg", ".png"];
 
 const UploadDocumentModal = ({ document, onClose, onSuccess }) => {
   const [file, setFile] = useState(null);
+  const [description, setDescription] = useState("");
   const [dragActive, setDragActive] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -96,8 +97,8 @@ const UploadDocumentModal = ({ document, onClose, onSuccess }) => {
 
     try {
       // document.id is the requirement ID from GET /api/client-portal/documents
-      await ClientPortalService.uploadDocument(document.id, file);
-      setSuccessMessage(`${document.document_name} uploaded successfully!`);
+      await ClientPortalService.uploadDocument(document.id, file, description);
+      setSuccessMessage("Document uploaded successfully.");
       setTimeout(() => {
         if (onSuccess) onSuccess();
       }, 900);
@@ -198,6 +199,38 @@ const UploadDocumentModal = ({ document, onClose, onSuccess }) => {
               )}
             </div>
           )}
+
+          {/* Optional Description */}
+          <div style={{ marginTop: "1rem", marginBottom: "0.5rem" }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: "0.8125rem",
+                fontWeight: "600",
+                color: "#374151",
+                marginBottom: "4px",
+              }}
+            >
+              Optional Description / Notes
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="e.g. Front side / self-attested copy"
+              disabled={isUploading}
+              rows={2}
+              style={{
+                width: "100%",
+                padding: "8px 12px",
+                borderRadius: "6px",
+                border: "1px solid #D1D5DB",
+                fontSize: "0.875rem",
+                fontFamily: "inherit",
+                boxSizing: "border-box",
+                resize: "vertical",
+              }}
+            />
+          </div>
 
           {/* Security note */}
           <div className="upload-security-note">

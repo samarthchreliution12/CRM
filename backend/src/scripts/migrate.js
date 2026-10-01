@@ -544,6 +544,23 @@ async function runMigrations() {
       CREATE INDEX IF NOT EXISTS idx_cdr_client_id ON client_document_requirements(client_id);
       CREATE INDEX IF NOT EXISTS idx_cdr_status ON client_document_requirements(status);
       CREATE INDEX IF NOT EXISTS idx_cdr_uploaded_doc ON client_document_requirements(uploaded_document_id);
+
+      -- Migration step 21: Create client_otps table for WhatsApp OTP authentication
+      CREATE TABLE IF NOT EXISTS client_otps (
+        mobile_no VARCHAR(20) PRIMARY KEY,
+        otp_hash VARCHAR(255) NOT NULL,
+        otp_plain VARCHAR(10),
+        attempts INTEGER DEFAULT 0 NOT NULL,
+        expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+        last_sent_at TIMESTAMP WITH TIME ZONE NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_client_otps_expires_at ON client_otps(expires_at);
+
+      -- Migration step 22: Add OTP template configuration to whatsapp_settings
+      ALTER TABLE whatsapp_settings ADD COLUMN IF NOT EXISTS otp_template_id VARCHAR(100);
+      ALTER TABLE whatsapp_settings ADD COLUMN IF NOT EXISTS otp_template_data JSONB;
     `);
 
     console.log("Database migrations completed successfully.");

@@ -155,6 +155,14 @@ function App() {
 
           {/* Client Portal Protected Routes */}
           <Route
+            path="/client/dashboard"
+            element={
+              <ClientProtectedRoute>
+                <ClientDashboard />
+              </ClientProtectedRoute>
+            }
+          />
+          <Route
             path="/client-portal"
             element={
               <ClientProtectedRoute>
@@ -163,10 +171,26 @@ function App() {
             }
           />
           <Route
+            path="/client/profile"
+            element={
+              <ClientProtectedRoute>
+                <ClientProfile />
+              </ClientProtectedRoute>
+            }
+          />
+          <Route
             path="/client-portal/profile"
             element={
               <ClientProtectedRoute>
                 <ClientProfile />
+              </ClientProtectedRoute>
+            }
+          />
+          <Route
+            path="/client/documents"
+            element={
+              <ClientProtectedRoute>
+                <ClientDocuments />
               </ClientProtectedRoute>
             }
           />
@@ -442,16 +466,6 @@ function App() {
                   <AuditLogs />
                 </AdminRoute>
               </ProtectedRoute>
-            }
-          />
-
-          {/* Client Portal Route Shell (Placeholder for future client portal expansion) */}
-          <Route
-            path="/client/*"
-            element={
-              <WebsiteLayout>
-                <NotFound />
-              </WebsiteLayout>
             }
           />
 

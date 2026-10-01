@@ -88,8 +88,8 @@ class ClientPortalService {
     // Handle 401 Unauthorized / Expired Session
     if (response.status === 401) {
       this.clearStorage();
-      if (!window.location.pathname.includes("/client-login")) {
-        window.location.href = "/client-login";
+      if (!window.location.pathname.includes("/client/login") && !window.location.pathname.includes("/client-login")) {
+        window.location.href = "/client/login";
       }
       const errorData = await response.json().catch(() => ({}));
       const err = new Error(errorData.message || "Your session has expired. Please log in again.");
@@ -132,7 +132,41 @@ class ClientPortalService {
   }
 
   /**
-   * 1. Client Login via mobile number.
+   * 1. Send OTP to client's registered mobile number via WhatsApp.
+   * POST /api/client-portal/auth/send-otp
+   */
+  static async sendOtp(mobileNo) {
+    const response = await this.request("/auth/send-otp", {
+      method: "POST",
+      body: JSON.stringify({ mobile_no: mobileNo }),
+    });
+    return response.data || response;
+  }
+
+  /**
+   * 2. Verify WhatsApp OTP and establish authenticated client session.
+   * POST /api/client-portal/auth/verify-otp
+   */
+  static async verifyOtp(mobileNo, otp, rememberMe = true) {
+    const response = await this.request("/auth/verify-otp", {
+      method: "POST",
+      body: JSON.stringify({
+        mobile_no: mobileNo,
+        otp,
+        remember_me: rememberMe,
+      }),
+    });
+
+    if (response && response.success && response.data) {
+      this.setToken(response.data.token, rememberMe);
+      this.setStoredClient(response.data.client, rememberMe);
+    }
+
+    return response.data || response;
+  }
+
+  /**
+   * 3. Client Login via mobile number (legacy direct login).
    * POST /api/client-portal/login
    */
   static async login(mobileNo, rememberMe = true) {
@@ -191,9 +225,12 @@ class ClientPortalService {
    * 5. Upload Document against requirement.
    * POST /api/client-portal/documents/:documentId/upload
    */
-  static async uploadDocument(documentId, file) {
+  static async uploadDocument(documentId, file, description = "") {
     const formData = new FormData();
     formData.append("file", file);
+    if (description) {
+      formData.append("description", description);
+    }
 
     const endpoint = documentId
       ? `/documents/${documentId}/upload`

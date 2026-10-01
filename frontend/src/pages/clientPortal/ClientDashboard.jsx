@@ -8,8 +8,15 @@ import {
   ArrowRight,
   Upload,
   User,
+  Phone,
+  Mail,
+  CreditCard,
+  Calendar,
+  Layers,
   RefreshCw,
   Eye,
+  Shield,
+  Check,
 } from "lucide-react";
 import ClientPortalLayout from "../../components/clientPortal/ClientPortalLayout";
 import useClientAuth from "../../hooks/useClientAuth";
@@ -22,9 +29,11 @@ import "./ClientDashboard.css";
 const ClientDashboard = () => {
   const { client } = useClientAuth();
 
+  const [profile, setProfile] = useState(null);
   const [documents, setDocuments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [toastMessage, setToastMessage] = useState(null);
 
   // Upload Modal State
   const [activeUploadDoc, setActiveUploadDoc] = useState(null);
@@ -32,42 +41,104 @@ const ClientDashboard = () => {
   // Document Viewer Modal State
   const [viewerDoc, setViewerDoc] = useState(null);
 
-  const fetchDocuments = useCallback(async () => {
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 4500);
+  };
+
+  const loadDashboardData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const docs = await ClientPortalService.getDocuments();
-      setDocuments(docs || []);
+      const [docsData, profileData] = await Promise.all([
+        ClientPortalService.getDocuments().catch((err) => {
+          console.warn("Error fetching documents:", err);
+          return [];
+        }),
+        ClientPortalService.getProfile().catch((err) => {
+          console.warn("Error fetching profile:", err);
+          return null;
+        }),
+      ]);
+
+      setDocuments(docsData || []);
+      if (profileData) {
+        setProfile(profileData);
+      }
     } catch (err) {
-      console.error("Error loading documents:", err);
-      setError(err.message || "Failed to load document status.");
+      console.error("Dashboard data load error:", err);
+      setError(err.message || "Failed to load client information.");
     } finally {
       setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchDocuments();
-  }, [fetchDocuments]);
+    loadDashboardData();
+  }, [loadDashboardData]);
 
-  // Document stats calculation
-  const requiredCount = documents.filter((d) => d.required).length;
-  const pendingCount = documents.filter((d) => d.status === "PENDING").length;
-  const underReviewCount = documents.filter((d) => d.status === "UNDER_REVIEW").length;
-  const approvedCount = documents.filter((d) => d.status === "APPROVED").length;
+  // Display helpers
+  const displayClient = profile || client;
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "Not provided";
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const formatMobile = (num) => {
+    if (!num) return "—";
+    const clean = String(num).trim();
+    return clean.startsWith("+") ? clean : `+91 ${clean}`;
+  };
+
+  const getClientTypeName = (type) => {
+    if (!type) return "Individual";
+    if (typeof type === "object" && type.name) return type.name;
+    return String(type);
+  };
+
+  // Document counts
   const rejectedDocs = documents.filter((d) => d.status === "REJECTED");
 
   const getStatusBadge = (status) => {
     switch (status) {
       case "APPROVED":
-        return <span className="doc-badge badge-approved"><CheckCircle2 size={13} /> Approved</span>;
+        return (
+          <span className="doc-badge badge-approved">
+            <CheckCircle2 size={13} /> Approved
+          </span>
+        );
       case "UNDER_REVIEW":
-        return <span className="doc-badge badge-review"><Clock size={13} /> Under Review</span>;
+        return (
+          <span className="doc-badge badge-review">
+            <Clock size={13} /> Under Review
+          </span>
+        );
       case "REJECTED":
-        return <span className="doc-badge badge-rejected"><AlertTriangle size={13} /> Rejected</span>;
+        return (
+          <span className="doc-badge badge-rejected">
+            <AlertTriangle size={13} /> Rejected
+          </span>
+        );
       case "PENDING":
       default:
-        return <span className="doc-badge badge-pending"><Clock size={13} /> Pending Upload</span>;
+        return (
+          <span className="doc-badge badge-pending">
+            <Clock size={13} /> Pending
+          </span>
+        );
     }
   };
 
@@ -75,33 +146,45 @@ const ClientDashboard = () => {
     <ClientPortalLayout>
       <SEO title="Client Dashboard - Parshwa Consultancy" noindex={true} />
 
-      {/* Welcome Banner */}
-      {/* <div className="client-welcome-banner">
+      {/* Floating Success Toast */}
+      {toastMessage && (
+        <div className="client-toast-notification">
+          <Check size={18} />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* 1. Welcome Section */}
+      <div className="client-welcome-banner">
         <div className="welcome-banner-content">
           <div className="welcome-top-meta">
-            <span className="client-welcome-badge">INVESTOR PORTAL</span>
-            {client?.ucc_no && <span className="welcome-ucc">UCC: <strong>{client.ucc_no}</strong></span>}
+            <span className="client-welcome-badge">CLIENT PORTAL</span>
+            {displayClient?.ucc_no && (
+              <span className="welcome-ucc">
+                UCC: <strong>{displayClient.ucc_no}</strong>
+              </span>
+            )}
           </div>
-          <h1 className="welcome-title">Welcome, {client?.name || "Client"}</h1>
+          <h1 className="welcome-title">Welcome, {displayClient?.name || "Client"}</h1>
           <p className="welcome-subtitle">
-            Manage your profile and submit your required documents securely.
+            Manage your profile and complete your pending documents.
           </p>
         </div>
 
         <div className="welcome-banner-actions">
-          <Link to="/client-portal/documents" className="welcome-cta-btn primary">
+          <Link to="/client/documents" className="welcome-cta-btn primary">
             <FileText size={16} />
-            <span>Manage Documents</span>
+            <span>My Documents</span>
           </Link>
-          <Link to="/client-portal/profile" className="welcome-cta-btn secondary">
+          <Link to="/client/profile" className="welcome-cta-btn secondary">
             <User size={16} />
-            <span>View Profile</span>
+            <span>My Profile</span>
           </Link>
         </div>
-      </div> */}
+      </div>
 
-      {/* Rejected Documents Immediate Alert */}
-      {/* {rejectedDocs.length > 0 && (
+      {/* Rejection Alert Banner if any document is rejected */}
+      {rejectedDocs.length > 0 && (
         <div className="rejected-alert-banner">
           <div className="alert-left">
             <div className="alert-icon-wrap">
@@ -110,85 +193,119 @@ const ClientDashboard = () => {
             <div>
               <strong>Action Required: {rejectedDocs.length} Document(s) Rejected</strong>
               <p>
-                One or more documents require your immediate attention. Please re-upload with clear copies.
+                One or more documents require your immediate attention. Please re-upload with clear, readable copies.
               </p>
             </div>
           </div>
-          <Link to="/client-portal/documents" className="alert-action-btn">
+          <Link to="/client/documents" className="alert-action-btn">
             Fix Documents Now <ArrowRight size={14} />
           </Link>
         </div>
-      )} */}
+      )}
 
-      {/* Summary KPI Cards */}
-      {/* <div className="client-stats-grid">
-        <div className="client-stat-card">
-          <div className="stat-header">
-            <span className="stat-label">Total Required</span>
-            <div className="stat-icon-wrap neutral">
-              <FileText size={18} />
+      {/* Error Alert */}
+      {error && (
+        <div className="section-error-msg">
+          <AlertTriangle size={18} />
+          <span>{error}</span>
+          <button type="button" onClick={loadDashboardData} className="retry-btn">
+            <RefreshCw size={14} /> Retry
+          </button>
+        </div>
+      )}
+
+      {/* 2. Profile Summary Card */}
+      <div className="client-profile-summary-card">
+        <div className="summary-card-header">
+          <div className="summary-header-left">
+            <div className="summary-icon-wrap">
+              <User size={18} />
+            </div>
+            <div>
+              <h2 className="summary-card-title">Profile Summary</h2>
+              <span className="summary-card-desc">Your registered details on file</span>
             </div>
           </div>
-          <div className="stat-number">{isLoading ? "..." : requiredCount}</div>
-          <span className="stat-subtext">Mandatory portfolio documents</span>
-        </div>
-
-        <div className="client-stat-card">
-          <div className="stat-header">
-            <span className="stat-label">Pending Uploads</span>
-            <div className="stat-icon-wrap warning">
-              <Clock size={18} />
-            </div>
-          </div>
-          <div className="stat-number warning">{isLoading ? "..." : pendingCount}</div>
-          <span className="stat-subtext">Waiting for your submission</span>
-        </div>
-
-        <div className="client-stat-card">
-          <div className="stat-header">
-            <span className="stat-label">Under Review</span>
-            <div className="stat-icon-wrap info">
-              <RefreshCw size={18} />
-            </div>
-          </div>
-          <div className="stat-number info">{isLoading ? "..." : underReviewCount}</div>
-          <span className="stat-subtext">Being verified by staff</span>
-        </div>
-
-        <div className="client-stat-card">
-          <div className="stat-header">
-            <span className="stat-label">Verified & Approved</span>
-            <div className="stat-icon-wrap success">
-              <CheckCircle2 size={18} />
-            </div>
-          </div>
-          <div className="stat-number success">{isLoading ? "..." : approvedCount}</div>
-          <span className="stat-subtext">Active on your account</span>
-        </div>
-      </div> */}
-
-      {/* Main Checklist Section */}
-      <div className="client-dashboard-section">
-        <div className="section-header">
-          <div>
-            <h2 className="section-title">Your Documents Checklist</h2>
-            <p className="section-subtitle">
-              Upload all required identity, tax, and address proof documents for compliance.
-            </p>
-          </div>
-          <Link to="/client-portal/documents" className="section-view-all">
-            <span>View All</span>
-            <ArrowRight size={15} />
+          <Link to="/client/profile" className="summary-header-link">
+            <span>View Full Profile</span>
+            <ArrowRight size={14} />
           </Link>
         </div>
 
-        {error && (
-          <div className="section-error-msg">
-            <AlertTriangle size={18} />
-            <span>{error}</span>
-            <button type="button" onClick={fetchDocuments} className="retry-btn">Retry</button>
+        <div className="summary-grid">
+          <div className="summary-item">
+            <span className="summary-label">
+              <User size={14} /> Full Name
+            </span>
+            <span className="summary-value highlight">{displayClient?.name || "—"}</span>
           </div>
-        )}
+
+          <div className="summary-item">
+            <span className="summary-label">
+              <Phone size={14} /> Mobile Number
+            </span>
+            <span className="summary-value">{formatMobile(displayClient?.mobile_no)}</span>
+          </div>
+
+          <div className="summary-item">
+            <span className="summary-label">
+              <Mail size={14} /> Email
+            </span>
+            <span className="summary-value">{displayClient?.email || "Not registered"}</span>
+          </div>
+
+          <div className="summary-item">
+            <span className="summary-label">
+              <CreditCard size={14} /> PAN (Tax ID)
+            </span>
+            <span className="summary-value pan-value">
+              <Shield size={12} />
+              {displayClient?.pan || displayClient?.masked_pan || "Not linked"}
+            </span>
+          </div>
+
+          <div className="summary-item">
+            <span className="summary-label">
+              <Calendar size={14} /> Date of Birth
+            </span>
+            <span className="summary-value">{formatDate(displayClient?.dob)}</span>
+          </div>
+
+          <div className="summary-item">
+            <span className="summary-label">
+              <Layers size={14} /> Client Type
+            </span>
+            <span className="summary-value">{getClientTypeName(displayClient?.client_type)}</span>
+          </div>
+
+          <div className="summary-item">
+            <span className="summary-label">
+              <CheckCircle2 size={14} /> Status
+            </span>
+            <span className="summary-value">
+              <span className="summary-status-pill active">
+                <CheckCircle2 size={12} />
+                {displayClient?.status ? displayClient.status.toUpperCase() : "ACTIVE"}
+              </span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Pending Documents Section */}
+      <div className="client-dashboard-section">
+        <div className="section-header">
+          <div>
+            <h2 className="section-title">Pending Documents</h2>
+            <p className="section-subtitle">
+              Upload required identity and compliance documents for account verification.
+            </p>
+          </div>
+          <Link to="/client/documents" className="section-view-all">
+            <span>View All ({documents.length})</span>
+            <ArrowRight size={15} />
+          </Link>
+        </div>
 
         {isLoading ? (
           <div className="dashboard-loading-skeleton">
@@ -196,24 +313,44 @@ const ClientDashboard = () => {
             <div className="skeleton-bar" />
             <div className="skeleton-bar" />
           </div>
+        ) : documents.length === 0 ? (
+          <div className="docs-empty-state">
+            <FileText size={40} />
+            <h3>No pending documents</h3>
+            <p>All your required compliance documents are in order.</p>
+          </div>
         ) : (
           <div className="checklist-cards-container">
-            {documents.slice(0, 5).map((doc) => (
-              <div key={doc.id} className="checklist-card">
+            {documents.map((doc) => (
+              <div
+                key={doc.id}
+                className={`checklist-card ${doc.status === "REJECTED" ? "rejected-card" : ""}`}
+              >
                 <div className="checklist-card-main">
-                  <div className="doc-icon-container">
+                  <div
+                    className={`doc-icon-container ${
+                      doc.status === "APPROVED"
+                        ? "approved"
+                        : doc.status === "REJECTED"
+                        ? "rejected"
+                        : doc.status === "UNDER_REVIEW"
+                        ? "review"
+                        : "pending"
+                    }`}
+                  >
                     <FileText size={20} />
                   </div>
                   <div className="doc-meta">
                     <div className="doc-name-row">
                       <span className="doc-title">{doc.document_name}</span>
+                      <span className="doc-type-code">{doc.document_type}</span>
                       {doc.required ? (
                         <span className="doc-type-pill required">Required</span>
                       ) : (
                         <span className="doc-type-pill optional">Optional</span>
                       )}
                     </div>
-                    <p className="doc-description">{doc.description}</p>
+                    <p className="doc-description">{doc.description || "Required for account compliance"}</p>
                     {doc.status === "REJECTED" && doc.rejection_reason && (
                       <div className="rejection-note">
                         <strong>Reason:</strong> {doc.rejection_reason}
@@ -227,7 +364,8 @@ const ClientDashboard = () => {
                     {getStatusBadge(doc.status)}
                     {doc.uploaded_at && (
                       <span className="doc-date-text">
-                        Uploaded {new Date(doc.uploaded_at).toLocaleDateString("en-IN", {
+                        Uploaded{" "}
+                        {new Date(doc.uploaded_at).toLocaleDateString("en-IN", {
                           day: "numeric",
                           month: "short",
                           year: "numeric",
@@ -244,7 +382,7 @@ const ClientDashboard = () => {
                         onClick={() => setActiveUploadDoc(doc)}
                       >
                         <Upload size={14} />
-                        <span>{doc.status === "REJECTED" ? "Re-upload" : "Upload"}</span>
+                        <span>{doc.status === "REJECTED" ? "Re-upload Document" : "Upload Document"}</span>
                       </button>
                     )}
 
@@ -266,14 +404,15 @@ const ClientDashboard = () => {
         )}
       </div>
 
-      {/* Upload Modal */}
+      {/* Upload Document Modal */}
       {activeUploadDoc && (
         <UploadDocumentModal
           document={activeUploadDoc}
           onClose={() => setActiveUploadDoc(null)}
           onSuccess={() => {
+            showToast(`${activeUploadDoc.document_name} uploaded successfully.`);
             setActiveUploadDoc(null);
-            fetchDocuments();
+            loadDashboardData();
           }}
         />
       )}

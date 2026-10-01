@@ -131,6 +131,20 @@ class WhatsAppService {
   }
 
   /**
+   * Set an approved template as the active Client Portal OTP Template.
+   */
+  static async selectOtpTemplate(templateId, token) {
+    return this.request(
+      "/whatsapp/templates/otp-select",
+      {
+        method: "POST",
+        body: JSON.stringify({ template_id: templateId }),
+      },
+      token
+    );
+  }
+
+  /**
    * Load birthday preview for a specific client (variables, calculated age, validation).
    */
   static async getBirthdayPreview(clientId, token, referenceDate = null) {

@@ -268,6 +268,90 @@ class ChatterPillarService {
       throw error;
     }
   }
+
+  /**
+   * Send WhatsApp simple text message through ChatterPillar.
+   * Calls: POST /sendMessage with message_type: "text" (Doc Page 2)
+   */
+  static async sendTextMessage({
+    apiKey,
+    whatsappAccountId = null,
+    mobile,
+    fullName,
+    body,
+  }) {
+    if (!apiKey || !String(apiKey).trim()) {
+      const err = new Error("ChatterPillar API key is required.");
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const baseUrl = this.getBaseUrl();
+    const headers = this.buildHeaders(apiKey, whatsappAccountId);
+    const timeout = this.getTimeout();
+
+    // Recipient mobile format: 918888888888
+    const { formatForWhatsAppApi } = require("../utils/phone.util");
+    const cleanMobile = formatForWhatsAppApi(mobile);
+
+    const payloadObj = {
+      message_type: "text",
+      text: {
+        body: String(body || "").trim(),
+      },
+      send_to_type: "individual",
+      send_to: [
+        {
+          mobile: cleanMobile,
+          full_name: String(fullName || "").trim(),
+        },
+      ],
+    };
+
+    const rawBody = JSON.stringify(payloadObj);
+
+    try {
+      const response = await axios.post(`${baseUrl}/sendMessage`, rawBody, {
+        headers,
+        timeout,
+      });
+
+      const resData = response.data || {};
+
+      if (
+        (resData.code && parseInt(resData.code, 10) >= 400) ||
+        resData.status === false ||
+        resData.status === "failed" ||
+        resData.error
+      ) {
+        const errorMsg =
+          resData.message ||
+          (resData.errors && resData.errors[0]?.title) ||
+          (resData.errors && resData.errors[0]?.message) ||
+          resData.error ||
+          "ChatterPillar rejected the text message.";
+        const error = new Error(`ChatterPillar send text failed: ${errorMsg}`);
+        error.statusCode = 400;
+        error.details = resData;
+        throw error;
+      }
+
+      return resData || { success: true, message: "Text message dispatched." };
+    } catch (err) {
+      const errorMsg =
+        err.response?.data?.message ||
+        (err.response?.data?.errors && err.response.data.errors[0]?.title) ||
+        (err.response?.data?.errors && err.response.data.errors[0]?.message) ||
+        err.response?.data?.error ||
+        (typeof err.response?.data === "string" ? err.response.data : null) ||
+        err.message ||
+        "Failed to send text message.";
+      const error = new Error(`ChatterPillar send text failed: ${errorMsg}`);
+      error.statusCode = err.response?.status || err.statusCode || 502;
+      error.details = err.response?.data || err.details || null;
+      throw error;
+    }
+  }
 }
 
 module.exports = ChatterPillarService;

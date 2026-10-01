@@ -70,6 +70,24 @@ class WhatsAppController {
   }
 
   /**
+   * POST /api/whatsapp/templates/otp-select
+   * Designate an approved template as the active Client Portal OTP Template.
+   */
+  static async selectOtpTemplate(req, res) {
+    try {
+      const { template_id } = req.body || {};
+      const userId = req.user ? req.user.id : null;
+      const result = await WhatsAppService.selectOtpTemplate({
+        templateId: template_id,
+        userId,
+      });
+      return sendSuccess(res, 200, result.message || "OTP template updated successfully.", result);
+    } catch (error) {
+      return sendError(res, error.statusCode || 400, error.message);
+    }
+  }
+
+  /**
    * GET /api/whatsapp/birthday/preview/:clientId
    * Retrieve calculated client info, mapped template variables, and send validation.
    */

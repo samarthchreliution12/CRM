@@ -73,6 +73,13 @@ router.post(
   WhatsAppController.selectBirthdayTemplate
 );
 
+router.post(
+  "/templates/otp-select",
+  requirePermission(["whatsapp.template.select", "whatsapp.update", "whatsapp.edit"]),
+  validateSelectBirthdayTemplate,
+  WhatsAppController.selectOtpTemplate
+);
+
 // 3. Birthday Greeting Flow Endpoints
 router.get(
   "/birthday/preview/:clientId",
