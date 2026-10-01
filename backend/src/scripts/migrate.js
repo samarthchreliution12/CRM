@@ -561,6 +561,41 @@ async function runMigrations() {
       -- Migration step 22: Add OTP template configuration to whatsapp_settings
       ALTER TABLE whatsapp_settings ADD COLUMN IF NOT EXISTS otp_template_id VARCHAR(100);
       ALTER TABLE whatsapp_settings ADD COLUMN IF NOT EXISTS otp_template_data JSONB;
+
+      -- Migration step 23: Seed sidebar menu permissions
+      INSERT INTO permissions (permission_key, module, action, description)
+      VALUES
+        ('staff.view', 'staff', 'view', 'View staff user directory and profiles'),
+        ('staff.create', 'staff', 'create', 'Create and invite new staff members'),
+        ('staff.edit', 'staff', 'edit', 'Update staff member profiles and access status'),
+        ('staff.delete', 'staff', 'delete', 'Delete staff user accounts'),
+        ('role.view', 'role', 'view', 'View user roles and groups'),
+        ('role.create', 'role', 'create', 'Create user roles and access groups'),
+        ('role.edit', 'role', 'edit', 'Update user roles and assigned capabilities'),
+        ('role.delete', 'role', 'delete', 'Delete user roles and groups'),
+        ('permission.view', 'permission', 'view', 'View system permission matrix'),
+        ('permission.edit', 'permission', 'edit', 'Configure role-permission assignments'),
+        ('audit.view', 'audit', 'view', 'View system audit logs and activity history'),
+        ('communication.view', 'communication', 'view', 'View internal chat conversations and messages'),
+        ('communication.create', 'communication', 'create', 'Create internal chat channels and send messages'),
+        ('communication.edit', 'communication', 'edit', 'Edit or manage internal chat messages'),
+        ('calendar.view', 'calendar', 'view', 'View calendar schedules and events'),
+        ('calendar.create', 'calendar', 'create', 'Create calendar events and scheduled tasks'),
+        ('calendar.edit', 'calendar', 'edit', 'Update calendar events and schedules'),
+        ('calendar.delete', 'calendar', 'delete', 'Delete calendar events and schedules')
+      ON CONFLICT (permission_key) DO UPDATE
+      SET description = EXCLUDED.description,
+          module = EXCLUDED.module,
+          action = EXCLUDED.action,
+          updated_at = CURRENT_TIMESTAMP;
+
+      -- Grant newly added permissions to Admin role (ID 1)
+      INSERT INTO role_permissions (role_id, permission_id)
+      SELECT r.id, p.id
+      FROM roles r
+      CROSS JOIN permissions p
+      WHERE r.name = 'Admin'
+      ON CONFLICT (role_id, permission_id) DO NOTHING;
     `);
 
     console.log("Database migrations completed successfully.");

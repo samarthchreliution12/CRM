@@ -15,9 +15,19 @@ import { ArrowLeft, Plus, Search, Users as UsersIcon, FolderGit2, KeyRound, Aler
 import "./UserAccess.css";
 
 const UserAccess = () => {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+
+  const isAdmin = user?.role?.name === "Admin";
+  const permissions = user?.permissions || [];
+
+  const canViewUsersTab =
+    isAdmin || permissions.includes("staff.view") || permissions.includes("staff.read");
+  const canViewGroupsTab =
+    isAdmin || permissions.includes("role.view") || permissions.includes("role.read");
+  const canViewPermissionsTab =
+    isAdmin || permissions.includes("permission.view") || permissions.includes("permission.read");
 
   // Tab State derived from URL: "users", "groups", or "permissions"
   const getTabFromPath = (pathname) => {
@@ -279,32 +289,38 @@ const UserAccess = () => {
 
         {/* Main Navigation Tabs: Users | Groups | Permissions */}
         <div className="main-navigation-tabs">
-          <button
-            type="button"
-            className={`nav-tab-button ${activeTab === "users" ? "active" : ""}`}
-            onClick={() => navigate("/settings/users")}
-          >
-            <UsersIcon size={18} />
-            <span>Users</span>
-          </button>
+          {canViewUsersTab && (
+            <button
+              type="button"
+              className={`nav-tab-button ${activeTab === "users" ? "active" : ""}`}
+              onClick={() => navigate("/settings/users")}
+            >
+              <UsersIcon size={18} />
+              <span>Users</span>
+            </button>
+          )}
 
-          <button
-            type="button"
-            className={`nav-tab-button ${activeTab === "groups" ? "active" : ""}`}
-            onClick={() => navigate("/settings/groups")}
-          >
-            <FolderGit2 size={18} />
-            <span>Groups</span>
-          </button>
+          {canViewGroupsTab && (
+            <button
+              type="button"
+              className={`nav-tab-button ${activeTab === "groups" ? "active" : ""}`}
+              onClick={() => navigate("/settings/groups")}
+            >
+              <FolderGit2 size={18} />
+              <span>Groups</span>
+            </button>
+          )}
 
-          <button
-            type="button"
-            className={`nav-tab-button ${activeTab === "permissions" ? "active" : ""}`}
-            onClick={() => navigate("/settings/permissions")}
-          >
-            <KeyRound size={18} />
-            <span>Permissions</span>
-          </button>
+          {canViewPermissionsTab && (
+            <button
+              type="button"
+              className={`nav-tab-button ${activeTab === "permissions" ? "active" : ""}`}
+              onClick={() => navigate("/settings/permissions")}
+            >
+              <KeyRound size={18} />
+              <span>Permissions</span>
+            </button>
+          )}
         </div>
 
         {activeTab === "users" ? (

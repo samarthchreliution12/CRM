@@ -16,10 +16,20 @@ const Settings = () => {
   const { user } = useAuth();
   const permissions = user?.permissions || [];
   const isAdmin = user?.role?.name === "Admin";
-
-  const canViewUsers = isAdmin || permissions.includes("staff.view");
+  const canViewUsers =
+    isAdmin ||
+    permissions.includes("staff.view") ||
+    permissions.includes("staff.read") ||
+    permissions.includes("role.view") ||
+    permissions.includes("permission.view");
   const canViewConfig =
-    isAdmin || permissions.includes("client_type.view") || permissions.includes("client_service.view");
+    isAdmin ||
+    permissions.includes("client_type.view") ||
+    permissions.includes("client_type.read") ||
+    permissions.includes("client_service.view") ||
+    permissions.includes("client_service.read");
+  const canViewAuditLogs =
+    isAdmin || permissions.includes("audit.view") || permissions.includes("audit.read");
 
   return (
     <AppLayout title="Settings">
@@ -108,8 +118,8 @@ const Settings = () => {
             </div>
           )}
 
-          {/* 3. Audit Logs Card (Admin Only) */}
-          {isAdmin && (
+          {/* 3. Audit Logs Card */}
+          {canViewAuditLogs && (
             <div
               className="settings-card-item"
               onClick={() => navigate("/settings/audit-logs")}

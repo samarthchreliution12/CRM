@@ -43,7 +43,7 @@ class PermissionService {
    * GET /api/admin/permissions?limit=100
    */
   static async getAllPermissions(token = null) {
-    return apiFetch("/admin/permissions?limit=100", {
+    return apiFetch("/admin/permissions?limit=500", {
       method: "GET",
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });

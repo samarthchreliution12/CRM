@@ -1,5 +1,24 @@
 import React from "react";
-import { UserCheck, Users, FileText, LayoutDashboard, Shield, Loader2, UserPlus, List, CheckSquare } from "lucide-react";
+import {
+  UserCheck,
+  Users,
+  FileText,
+  LayoutDashboard,
+  Shield,
+  Loader2,
+  UserPlus,
+  List,
+  CheckSquare,
+  Calendar as CalendarIcon,
+  MessageSquare,
+  SlidersHorizontal,
+  Settings,
+  FolderGit2,
+  KeyRound,
+  Tag,
+  Briefcase,
+  ShieldAlert,
+} from "lucide-react";
 import "./PermissionMatrix.css";
 
 export const MODULES_CONFIG = [
@@ -7,6 +26,7 @@ export const MODULES_CONFIG = [
     name: "Dashboard",
     prefix: "dashboard",
     icon: LayoutDashboard,
+    allowedActions: ["view"],
     description: "System overview, KPIs & analytics",
   },
   {
@@ -19,6 +39,7 @@ export const MODULES_CONFIG = [
         name: "Client List",
         prefix: "client",
         icon: List,
+        allowedActions: ["view", "create", "edit", "delete"],
         description: "Manage client directory & profiles",
       },
       {
@@ -33,21 +54,141 @@ export const MODULES_CONFIG = [
         name: "Documents",
         prefix: "document",
         icon: FileText,
-        description: "File vault & document attachments",
+        allowedActions: ["view", "create", "edit", "verify"],
+        description: "File vault, document attachments & verification",
       },
     ],
   },
   {
-    name: "Lead",
-    prefix: "lead",
+    name: "Leads",
+    isGroupHeader: true,
     icon: Users,
     description: "Lead pipeline & prospect assignments",
+    submodules: [
+      {
+        name: "Lead List",
+        prefix: "lead",
+        icon: Users,
+        allowedActions: ["view", "create", "edit", "delete"],
+        description: "Prospect inquiries & conversion pipeline",
+      },
+    ],
   },
   {
     name: "Tasks",
-    prefix: "task",
+    isGroupHeader: true,
     icon: CheckSquare,
-    description: "Manage task assignments & activities",
+    description: "Task activities & milestone management",
+    submodules: [
+      {
+        name: "My Tasks",
+        prefix: "task",
+        icon: CheckSquare,
+        allowedActions: ["view", "create", "edit", "delete"],
+        description: "Personal assigned tasks & milestones",
+      },
+      {
+        name: "All Tasks",
+        prefix: "task",
+        icon: List,
+        allowedActions: ["view", "create", "edit", "delete"],
+        description: "Company-wide task management & activities",
+      },
+    ],
+  },
+  {
+    name: "Calendar",
+    prefix: "calendar",
+    fallbackPrefix: "task",
+    icon: CalendarIcon,
+    allowedActions: ["view", "create", "edit", "delete"],
+    description: "Scheduled appointments, deadlines & event timelines",
+  },
+  {
+    name: "Communication",
+    isGroupHeader: true,
+    icon: MessageSquare,
+    description: "Internal messaging & WhatsApp communication",
+    submodules: [
+      {
+        name: "Internal Communication",
+        prefix: "communication",
+        icon: MessageSquare,
+        allowedActions: ["view", "create", "edit"],
+        description: "Team chat channels & direct messaging",
+      },
+      {
+        name: "WhatsApp Templates",
+        prefix: "whatsapp",
+        icon: FileText,
+        allowedActions: ["view", "create", "edit"],
+        description: "Approved message templates repository",
+      },
+      {
+        name: "WhatsApp Configuration",
+        prefix: "whatsapp",
+        icon: SlidersHorizontal,
+        allowedActions: ["view", "create", "edit"],
+        description: "Workflow template triggers & automated events",
+      },
+      {
+        name: "WhatsApp Settings",
+        prefix: "whatsapp",
+        icon: Settings,
+        allowedActions: ["view", "edit"],
+        description: "API gateway credentials & webhook status",
+      },
+    ],
+  },
+  {
+    name: "Settings",
+    isGroupHeader: true,
+    icon: Settings,
+    description: "System administration & access configurations",
+    submodules: [
+      {
+        name: "Users",
+        prefix: "staff",
+        icon: Users,
+        allowedActions: ["view", "create", "edit", "delete"],
+        description: "Staff accounts & team invitations",
+      },
+      {
+        name: "Groups / Roles",
+        prefix: "role",
+        icon: FolderGit2,
+        allowedActions: ["view", "create", "edit", "delete"],
+        description: "Access levels & security role definitions",
+      },
+      {
+        name: "Permissions",
+        prefix: "permission",
+        icon: KeyRound,
+        allowedActions: ["view", "edit"],
+        description: "Role capability matrix & permission controls",
+      },
+      {
+        name: "Client Types",
+        prefix: "client_type",
+        icon: Tag,
+        allowedActions: ["view", "create", "edit", "delete"],
+        description: "Client entity classifications (Individual, HUF, etc.)",
+      },
+      {
+        name: "Client Services",
+        prefix: "client_service",
+        icon: Briefcase,
+        allowedActions: ["view", "create", "edit", "delete"],
+        description: "Advisory services catalog (Demat, Trading, etc.)",
+      },
+      {
+        name: "Audit Logs",
+        prefix: "audit",
+        icon: ShieldAlert,
+        allowedActions: ["view"],
+        description: "Audit trail, security events & change logs",
+      },
+    ],
   },
 ];
 
@@ -89,16 +230,37 @@ const PermissionMatrix = ({
         );
       }
 
+      // 1. Primary lookup by prefix.suffix
       const permKey = `${prefix}.${col.suffix}`.toLowerCase();
       let perm = permissionMapByKey[permKey];
 
+      // Primary Suffix aliases:
+      // view -> read
+      if (!perm && col.suffix === "view") {
+        perm = permissionMapByKey[`${prefix}.read`.toLowerCase()];
+      }
+      // edit -> update
+      if (!perm && col.suffix === "edit") {
+        perm = permissionMapByKey[`${prefix}.update`.toLowerCase()];
+      }
+      // create -> add
+      if (!perm && col.suffix === "create") {
+        perm = permissionMapByKey[`${prefix}.add`.toLowerCase()];
+      }
+
+      // 2. Fallback prefix lookup
       if (!perm && fallbackPrefix) {
         const fallbackKey = `${fallbackPrefix}.${col.suffix}`.toLowerCase();
         perm = permissionMapByKey[fallbackKey];
-      }
-
-      if (!perm && prefix === "document" && col.suffix === "edit") {
-        perm = permissionMapByKey["document.update"];
+        if (!perm && col.suffix === "view") {
+          perm = permissionMapByKey[`${fallbackPrefix}.read`.toLowerCase()];
+        }
+        if (!perm && col.suffix === "edit") {
+          perm = permissionMapByKey[`${fallbackPrefix}.update`.toLowerCase()];
+        }
+        if (!perm && col.suffix === "create") {
+          perm = permissionMapByKey[`${fallbackPrefix}.add`.toLowerCase()];
+        }
       }
 
       if (!perm) {

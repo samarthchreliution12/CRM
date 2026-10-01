@@ -30,6 +30,11 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
   const permissions = user?.permissions || [];
 
   // Dynamic permission checks
+  // 1. Dashboard
+  const canAccessDashboard =
+    isAdmin || permissions.includes("dashboard.view") || permissions.includes("dashboard.read");
+
+  // 2. Clients Parent & Submenus
   const canAccessClientList =
     isAdmin || permissions.includes("client.view") || permissions.includes("client.read");
   const canAccessAddClient =
@@ -38,10 +43,56 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
     isAdmin || permissions.includes("document.view") || permissions.includes("document.read");
   const canAccessClientsParent =
     isAdmin || canAccessClientList || canAccessAddClient || canAccessDocuments;
+
+  // 3. Leads
+  const canAccessLeads =
+    isAdmin || permissions.includes("lead.view") || permissions.includes("lead.read");
+
+  // 4. Tasks Parent & Submenus
   const canAccessTasks =
     isAdmin || permissions.includes("task.view") || permissions.includes("task.read");
   const canCreateTask =
     isAdmin || permissions.includes("task.create") || permissions.includes("task.add");
+  const canAccessTasksParent =
+    isAdmin || canAccessTasks || canCreateTask;
+
+  // 5. Calendar
+  const canAccessCalendar =
+    isAdmin || permissions.includes("calendar.view") || permissions.includes("calendar.read") || canAccessTasks;
+
+  // 6. Communication Parent & Submenus
+  const canAccessInternalComm =
+    isAdmin || permissions.includes("communication.view") || permissions.includes("communication.read");
+  const canAccessWhatsAppTemplates =
+    isAdmin || permissions.includes("whatsapp.view") || permissions.includes("whatsapp.read") || permissions.includes("whatsapp.template.select");
+  const canAccessWhatsAppConfig =
+    isAdmin || permissions.includes("whatsapp.edit") || permissions.includes("whatsapp.update") || permissions.includes("whatsapp.view");
+  const canAccessWhatsAppSettings =
+    isAdmin || permissions.includes("whatsapp.edit") || permissions.includes("whatsapp.update");
+  const canAccessCommunicationParent =
+    isAdmin || canAccessInternalComm || canAccessWhatsAppTemplates || canAccessWhatsAppConfig || canAccessWhatsAppSettings;
+
+  // 7. Settings
+  const canAccessUsersSettings =
+    isAdmin || permissions.includes("staff.view") || permissions.includes("staff.read");
+  const canAccessRolesSettings =
+    isAdmin || permissions.includes("role.view") || permissions.includes("role.read");
+  const canAccessPermissionsSettings =
+    isAdmin || permissions.includes("permission.view") || permissions.includes("permission.read");
+  const canAccessClientTypes =
+    isAdmin || permissions.includes("client_type.view") || permissions.includes("client_type.read");
+  const canAccessClientServices =
+    isAdmin || permissions.includes("client_service.view") || permissions.includes("client_service.read");
+  const canAccessAuditLogs =
+    isAdmin || permissions.includes("audit.view") || permissions.includes("audit.read");
+  const canAccessSettings =
+    isAdmin ||
+    canAccessUsersSettings ||
+    canAccessRolesSettings ||
+    canAccessPermissionsSettings ||
+    canAccessClientTypes ||
+    canAccessClientServices ||
+    canAccessAuditLogs;
 
   // Check if current route belongs to Clients group
   const isClientGroupActive =
@@ -77,17 +128,17 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
 
   // Auto-expand Tasks menu when navigating to any Task group route
   useEffect(() => {
-    if (isTaskGroupActive && canAccessTasks) {
+    if (isTaskGroupActive && canAccessTasksParent) {
       setIsTasksExpanded(true);
     }
-  }, [location.pathname, isTaskGroupActive, canAccessTasks]);
+  }, [location.pathname, isTaskGroupActive, canAccessTasksParent]);
 
   // Auto-expand Communication menu when navigating to any Communication group route
   useEffect(() => {
-    if (isCommunicationGroupActive) {
+    if (isCommunicationGroupActive && canAccessCommunicationParent) {
       setIsCommunicationExpanded(true);
     }
-  }, [location.pathname, isCommunicationGroupActive]);
+  }, [location.pathname, isCommunicationGroupActive, canAccessCommunicationParent]);
 
   // Click Outside listener to close flyouts in collapsed mode
   useEffect(() => {
@@ -228,18 +279,20 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
       {/* Main Navigation */}
       <nav className="sidebar-nav">
         {/* 1. Dashboard */}
-        <Link
-          to="/dashboard"
-          className={`nav-link ${location.pathname === "/dashboard" ? "active" : ""}`}
-          onClick={onClose}
-          title={isCollapsed ? "Dashboard" : undefined}
-          data-tooltip="Dashboard"
-        >
-          <div className="nav-link-left">
-            <LayoutDashboard size={18} className="nav-icon" />
-            <span className="nav-label">Dashboard</span>
-          </div>
-        </Link>
+        {canAccessDashboard && (
+          <Link
+            to="/dashboard"
+            className={`nav-link ${location.pathname === "/dashboard" ? "active" : ""}`}
+            onClick={onClose}
+            title={isCollapsed ? "Dashboard" : undefined}
+            data-tooltip="Dashboard"
+          >
+            <div className="nav-link-left">
+              <LayoutDashboard size={18} className="nav-icon" />
+              <span className="nav-label">Dashboard</span>
+            </div>
+          </Link>
+        )}
 
         {/* 2. Clients Parent Menu */}
         {canAccessClientsParent && (
@@ -375,21 +428,23 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
         )}
 
         {/* 3. Leads */}
-        <Link
-          to="/leads"
-          className={`nav-link ${location.pathname === "/leads" ? "active" : ""}`}
-          onClick={onClose}
-          title={isCollapsed ? "Leads" : undefined}
-          data-tooltip="Leads"
-        >
-          <div className="nav-link-left">
-            <Users size={18} className="nav-icon" />
-            <span className="nav-label">Leads</span>
-          </div>
-        </Link>
+        {canAccessLeads && (
+          <Link
+            to="/leads"
+            className={`nav-link ${location.pathname === "/leads" ? "active" : ""}`}
+            onClick={onClose}
+            title={isCollapsed ? "Leads" : undefined}
+            data-tooltip="Leads"
+          >
+            <div className="nav-link-left">
+              <Users size={18} className="nav-icon" />
+              <span className="nav-label">Leads</span>
+            </div>
+          </Link>
+        )}
 
         {/* 5. Tasks Parent Menu */}
-        {canAccessTasks && (
+        {canAccessTasksParent && (
           <div
             className="nav-group-wrapper"
             ref={tasksFlyoutWrapperRef}
@@ -417,23 +472,27 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
             {/* Expanded Submenu (Desktop / Drawer OPEN state) */}
             {!isCollapsed && isTasksExpanded && (
               <div className="nav-submenu">
-                <Link
-                  to="/tasks/my"
-                  className={`submenu-link ${location.pathname === "/tasks/my" ? "active" : ""}`}
-                  onClick={onClose}
-                >
-                  <CheckSquare size={14} className="submenu-icon" />
-                  <span>My Tasks</span>
-                </Link>
+                {canAccessTasks && (
+                  <Link
+                    to="/tasks/my"
+                    className={`submenu-link ${location.pathname === "/tasks/my" ? "active" : ""}`}
+                    onClick={onClose}
+                  >
+                    <CheckSquare size={14} className="submenu-icon" />
+                    <span>My Tasks</span>
+                  </Link>
+                )}
 
-                <Link
-                  to="/tasks"
-                  className={`submenu-link ${location.pathname === "/tasks" ? "active" : ""}`}
-                  onClick={onClose}
-                >
-                  <List size={14} className="submenu-icon" />
-                  <span>All Tasks</span>
-                </Link>
+                {canAccessTasks && (
+                  <Link
+                    to="/tasks"
+                    className={`submenu-link ${location.pathname === "/tasks" ? "active" : ""}`}
+                    onClick={onClose}
+                  >
+                    <List size={14} className="submenu-icon" />
+                    <span>All Tasks</span>
+                  </Link>
+                )}
 
                 {canCreateTask && (
                   <Link
@@ -456,31 +515,35 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
                 onMouseLeave={handleTasksGroupMouseLeave}
               >
                 <div className="flyout-header">Tasks</div>
-                <Link
-                  to="/tasks/my"
-                  className={`flyout-link ${location.pathname === "/tasks/my" ? "active" : ""}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowTasksFlyout(false);
-                    onClose();
-                  }}
-                >
-                  <CheckSquare size={14} />
-                  <span>My Tasks</span>
-                </Link>
+                {canAccessTasks && (
+                  <Link
+                    to="/tasks/my"
+                    className={`flyout-link ${location.pathname === "/tasks/my" ? "active" : ""}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowTasksFlyout(false);
+                      onClose();
+                    }}
+                  >
+                    <CheckSquare size={14} />
+                    <span>My Tasks</span>
+                  </Link>
+                )}
 
-                <Link
-                  to="/tasks"
-                  className={`flyout-link ${location.pathname === "/tasks" ? "active" : ""}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowTasksFlyout(false);
-                    onClose();
-                  }}
-                >
-                  <List size={14} />
-                  <span>All Tasks</span>
-                </Link>
+                {canAccessTasks && (
+                  <Link
+                    to="/tasks"
+                    className={`flyout-link ${location.pathname === "/tasks" ? "active" : ""}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowTasksFlyout(false);
+                      onClose();
+                    }}
+                  >
+                    <List size={14} />
+                    <span>All Tasks</span>
+                  </Link>
+                )}
 
                 {canCreateTask && (
                   <Link
@@ -502,7 +565,7 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
         )}
 
         {/* 6. Calendar */}
-        {canAccessTasks && (
+        {canAccessCalendar && (
           <Link
             to="/calendar"
             className={`nav-link ${location.pathname === "/calendar" ? "active" : ""
@@ -519,137 +582,155 @@ const Sidebar = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
         )}
 
         {/* 4. Communication Parent Menu */}
-        <div
-          className="nav-group-wrapper"
-          ref={communicationFlyoutWrapperRef}
-          onMouseEnter={handleCommunicationGroupMouseEnter}
-          onMouseLeave={handleCommunicationGroupMouseLeave}
-        >
-          <button
-            type="button"
-            className={`nav-link nav-parent-link ${isCommunicationGroupActive ? "active" : ""}`}
-            onClick={handleCommunicationParentClick}
-            title={isCollapsed ? "Communication" : undefined}
-            data-tooltip={isCollapsed ? "Communication" : undefined}
+        {canAccessCommunicationParent && (
+          <div
+            className="nav-group-wrapper"
+            ref={communicationFlyoutWrapperRef}
+            onMouseEnter={handleCommunicationGroupMouseEnter}
+            onMouseLeave={handleCommunicationGroupMouseLeave}
           >
-            <div className="nav-link-left">
-              <MessageSquare size={18} className="nav-icon" />
-              <span className="nav-label">Communication</span>
-            </div>
-            {!isCollapsed && (
-              <span className="nav-chevron">
-                {isCommunicationExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-              </span>
-            )}
-          </button>
-
-          {/* Expanded Submenu (Desktop / Drawer OPEN state) */}
-          {!isCollapsed && isCommunicationExpanded && (
-            <div className="nav-submenu">
-              <Link
-                to="/communication"
-                className={`submenu-link ${location.pathname === "/communication" ? "active" : ""}`}
-                onClick={onClose}
-              >
-                <MessageSquare size={14} className="submenu-icon" />
-                <span>Internal Communication</span>
-              </Link>
-
-              <Link
-                to="/communication/whatsapp-templates"
-                className={`submenu-link ${location.pathname === "/communication/whatsapp-templates" ? "active" : ""}`}
-                onClick={onClose}
-              >
-                <FileText size={14} className="submenu-icon" />
-                <span>WhatsApp Templates</span>
-              </Link>
-
-              <Link
-                to="/communication/whatsapp-configuration"
-                className={`submenu-link ${location.pathname === "/communication/whatsapp-configuration" ? "active" : ""}`}
-                onClick={onClose}
-              >
-                <SlidersHorizontal size={14} className="submenu-icon" />
-                <span>WhatsApp Configuration</span>
-              </Link>
-
-              <Link
-                to="/communication/whatsapp-settings"
-                className={`submenu-link ${location.pathname === "/communication/whatsapp-settings" ? "active" : ""}`}
-                onClick={onClose}
-              >
-                <Settings size={14} className="submenu-icon" />
-                <span>WhatsApp Settings</span>
-              </Link>
-            </div>
-          )}
-
-          {/* Collapsed Sidebar Flyout Popover Menu */}
-          {isCollapsed && showCommunicationFlyout && (
-            <div
-              className="nav-flyout-menu"
-              onMouseEnter={handleCommunicationGroupMouseEnter}
-              onMouseLeave={handleCommunicationGroupMouseLeave}
+            <button
+              type="button"
+              className={`nav-link nav-parent-link ${isCommunicationGroupActive ? "active" : ""}`}
+              onClick={handleCommunicationParentClick}
+              title={isCollapsed ? "Communication" : undefined}
+              data-tooltip={isCollapsed ? "Communication" : undefined}
             >
-              <div className="flyout-header">Communication</div>
-              <Link
-                to="/communication"
-                className={`flyout-link ${location.pathname === "/communication" ? "active" : ""}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowCommunicationFlyout(false);
-                  onClose();
-                }}
-              >
-                <MessageSquare size={14} />
-                <span>Internal Communication</span>
-              </Link>
+              <div className="nav-link-left">
+                <MessageSquare size={18} className="nav-icon" />
+                <span className="nav-label">Communication</span>
+              </div>
+              {!isCollapsed && (
+                <span className="nav-chevron">
+                  {isCommunicationExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                </span>
+              )}
+            </button>
 
-              <Link
-                to="/communication/whatsapp-templates"
-                className={`flyout-link ${location.pathname === "/communication/whatsapp-templates" ? "active" : ""}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowCommunicationFlyout(false);
-                  onClose();
-                }}
-              >
-                <FileText size={14} />
-                <span>WhatsApp Templates</span>
-              </Link>
+            {/* Expanded Submenu (Desktop / Drawer OPEN state) */}
+            {!isCollapsed && isCommunicationExpanded && (
+              <div className="nav-submenu">
+                {canAccessInternalComm && (
+                  <Link
+                    to="/communication"
+                    className={`submenu-link ${location.pathname === "/communication" ? "active" : ""}`}
+                    onClick={onClose}
+                  >
+                    <MessageSquare size={14} className="submenu-icon" />
+                    <span>Internal Communication</span>
+                  </Link>
+                )}
 
-              <Link
-                to="/communication/whatsapp-configuration"
-                className={`flyout-link ${location.pathname === "/communication/whatsapp-configuration" ? "active" : ""}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowCommunicationFlyout(false);
-                  onClose();
-                }}
-              >
-                <SlidersHorizontal size={14} />
-                <span>WhatsApp Configuration</span>
-              </Link>
+                {canAccessWhatsAppTemplates && (
+                  <Link
+                    to="/communication/whatsapp-templates"
+                    className={`submenu-link ${location.pathname === "/communication/whatsapp-templates" ? "active" : ""}`}
+                    onClick={onClose}
+                  >
+                    <FileText size={14} className="submenu-icon" />
+                    <span>WhatsApp Templates</span>
+                  </Link>
+                )}
 
-              <Link
-                to="/communication/whatsapp-settings"
-                className={`flyout-link ${location.pathname === "/communication/whatsapp-settings" ? "active" : ""}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowCommunicationFlyout(false);
-                  onClose();
-                }}
+                {canAccessWhatsAppConfig && (
+                  <Link
+                    to="/communication/whatsapp-configuration"
+                    className={`submenu-link ${location.pathname === "/communication/whatsapp-configuration" ? "active" : ""}`}
+                    onClick={onClose}
+                  >
+                    <SlidersHorizontal size={14} className="submenu-icon" />
+                    <span>WhatsApp Configuration</span>
+                  </Link>
+                )}
+
+                {canAccessWhatsAppSettings && (
+                  <Link
+                    to="/communication/whatsapp-settings"
+                    className={`submenu-link ${location.pathname === "/communication/whatsapp-settings" ? "active" : ""}`}
+                    onClick={onClose}
+                  >
+                    <Settings size={14} className="submenu-icon" />
+                    <span>WhatsApp Settings</span>
+                  </Link>
+                )}
+              </div>
+            )}
+
+            {/* Collapsed Sidebar Flyout Popover Menu */}
+            {isCollapsed && showCommunicationFlyout && (
+              <div
+                className="nav-flyout-menu"
+                onMouseEnter={handleCommunicationGroupMouseEnter}
+                onMouseLeave={handleCommunicationGroupMouseLeave}
               >
-                <Settings size={14} />
-                <span>WhatsApp Settings</span>
-              </Link>
-            </div>
-          )}
-        </div>
+                <div className="flyout-header">Communication</div>
+                {canAccessInternalComm && (
+                  <Link
+                    to="/communication"
+                    className={`flyout-link ${location.pathname === "/communication" ? "active" : ""}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowCommunicationFlyout(false);
+                      onClose();
+                    }}
+                  >
+                    <MessageSquare size={14} />
+                    <span>Internal Communication</span>
+                  </Link>
+                )}
+
+                {canAccessWhatsAppTemplates && (
+                  <Link
+                    to="/communication/whatsapp-templates"
+                    className={`flyout-link ${location.pathname === "/communication/whatsapp-templates" ? "active" : ""}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowCommunicationFlyout(false);
+                      onClose();
+                    }}
+                  >
+                    <FileText size={14} />
+                    <span>WhatsApp Templates</span>
+                  </Link>
+                )}
+
+                {canAccessWhatsAppConfig && (
+                  <Link
+                    to="/communication/whatsapp-configuration"
+                    className={`flyout-link ${location.pathname === "/communication/whatsapp-configuration" ? "active" : ""}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowCommunicationFlyout(false);
+                      onClose();
+                    }}
+                  >
+                    <SlidersHorizontal size={14} />
+                    <span>WhatsApp Configuration</span>
+                  </Link>
+                )}
+
+                {canAccessWhatsAppSettings && (
+                  <Link
+                    to="/communication/whatsapp-settings"
+                    className={`flyout-link ${location.pathname === "/communication/whatsapp-settings" ? "active" : ""}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowCommunicationFlyout(false);
+                      onClose();
+                    }}
+                  >
+                    <Settings size={14} />
+                    <span>WhatsApp Settings</span>
+                  </Link>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </nav>
 
-      {/* Settings Page - Visible ONLY to Admin users */}
-      {isAdmin && (
+      {/* Settings Page - Visible to users with settings access or Admin */}
+      {canAccessSettings && (
         <div className="sidebar-footer">
           <Link
             to="/settings"

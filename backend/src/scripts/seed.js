@@ -75,6 +75,36 @@ const PERMISSIONS = [
   { permission_key: "whatsapp.create", module: "whatsapp", action: "create", description: "Create WhatsApp configuration" },
   { permission_key: "whatsapp.edit", module: "whatsapp", action: "edit", description: "Update WhatsApp settings and status" },
   { permission_key: "whatsapp.update", module: "whatsapp", action: "update", description: "Update WhatsApp settings and status" },
+
+  // Settings: Staff / Users Module
+  { permission_key: "staff.view", module: "staff", action: "view", description: "View staff user directory and profiles" },
+  { permission_key: "staff.create", module: "staff", action: "create", description: "Create and invite new staff members" },
+  { permission_key: "staff.edit", module: "staff", action: "edit", description: "Update staff member profiles and access status" },
+  { permission_key: "staff.delete", module: "staff", action: "delete", description: "Delete staff user accounts" },
+
+  // Settings: Roles & Groups Module
+  { permission_key: "role.view", module: "role", action: "view", description: "View user roles and groups" },
+  { permission_key: "role.create", module: "role", action: "create", description: "Create user roles and access groups" },
+  { permission_key: "role.edit", module: "role", action: "edit", description: "Update user roles and assigned capabilities" },
+  { permission_key: "role.delete", module: "role", action: "delete", description: "Delete user roles and groups" },
+
+  // Settings: Permissions Module
+  { permission_key: "permission.view", module: "permission", action: "view", description: "View system permission matrix" },
+  { permission_key: "permission.edit", module: "permission", action: "edit", description: "Configure role-permission assignments" },
+
+  // Settings: Audit Logs Module
+  { permission_key: "audit.view", module: "audit", action: "view", description: "View system audit logs and activity history" },
+
+  // Communication: Internal Communication Module
+  { permission_key: "communication.view", module: "communication", action: "view", description: "View internal chat conversations and messages" },
+  { permission_key: "communication.create", module: "communication", action: "create", description: "Create internal chat channels and send messages" },
+  { permission_key: "communication.edit", module: "communication", action: "edit", description: "Edit or manage internal chat messages" },
+
+  // Calendar Module
+  { permission_key: "calendar.view", module: "calendar", action: "view", description: "View calendar schedules and events" },
+  { permission_key: "calendar.create", module: "calendar", action: "create", description: "Create calendar events and scheduled tasks" },
+  { permission_key: "calendar.edit", module: "calendar", action: "edit", description: "Update calendar events and schedules" },
+  { permission_key: "calendar.delete", module: "calendar", action: "delete", description: "Delete calendar events and schedules" },
 ];
 
 const ROLE_PERMISSION_MAP = {
@@ -137,9 +167,6 @@ async function seedDatabase() {
         [cs.name, cs.description, cs.status]
       );
     }
-
-    // Remove old communication permissions
-    await client.query("DELETE FROM permissions WHERE module = 'communication' OR permission_key LIKE 'communication.%'");
 
     // 4. Seed Permissions
     const permMap = {};
